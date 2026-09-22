@@ -123,19 +123,46 @@ class ScoreConversionCrawler:
             # Fallback: nếu không có bảng HTML, thử bóc từ RSC payload
             if not rows:
                 rows = self._extract_tables_from_rsc(res.text, code, name, year, url)
+            # Fallback ảnh: chỉ khi DOM không có ảnh trong nội dung (tránh nhiễu RSC)
+            if not images:
+                images = self._extract_images_from_rsc(
+                    res.text, code, name, year, url, existing=images
+                )
+
+            # Trường chỉ có ảnh (VD: DTF): ghi chú ngắn để UI không trống hoàn toàn
+            if images and not rows and not any(
+                "ảnh bảng" in (n.tieu_de or "").lower() or "chỉ đăng ảnh" in (n.noi_dung or "").lower()
+                for n in notes
+            ):
+                notes.append(
+                    MethodConversionNote(
+                        ma_truong=code,
+                        ten_truong=name,
+                        tieu_de="Trường công bố bảng quy đổi dạng ảnh",
+                        noi_dung=(
+                            f"{name} đăng bảng quy đổi dưới dạng ảnh "
+                            f"({len(images)} ảnh) trên trang quy đổi điểm — "
+                            "xem tab Ảnh bảng. Không có bảng HTML để tính quy đổi tự động."
+                        ),
+                        nam=year,
+                        url_nguon=url,
+                    )
+                )
 
             bundle.rows.extend(rows)
             bundle.notes.extend(notes)
             bundle.images.extend(images)
             bundle.ranges.extend(ranges)
 
+            has_data = bool(rows or notes or images or ranges)
             meta.update({
-                "ok": True,
+                "ok": has_data,
                 "tables": len({r.tieu_de_bang for r in rows}),
                 "row_count": len(rows),
                 "notes": len(notes),
                 "images": len(images),
                 "ranges": len(ranges),
+                "error": "" if has_data else "Trang không có bảng/ảnh/ghi chú quy đổi.",
             })
         except Exception as e:
             meta["error"] = str(e)
@@ -331,6 +358,90 @@ class ScoreConversionCrawler:
             )
         return notes
 
+    @staticmethod
+    def _normalize_img_src(src: str) -> str:
+        src = (src or "").strip()
+        if not src:
+            return ""
+        if src.startswith("//"):
+            return "https:" + src
+        if src.startswith("/"):
+            return ScoreConversionCrawler.BASE_URL + src
+        return src
+
+    @staticmethod
+    def _is_noise_image(src: str, alt: str = "") -> bool:
+        """Bỏ logo / icon / banner / tài liệu không phải bảng quy đổi."""
+        blob = strip_accents(f"{src} {alt}").lower()
+        noise = [
+            "logo", "icon", "menu", "favicon", "avatar", "banner-diem-thi",
+            "thongbao", "thong-bao", "dathongbao", "simages/", "/images/icon",
+            "sprite", "placeholder", "loading.gif",
+            "exam_room", "thanh-toan", "thanh_toan", "xac-thuc", "xac_thuc",
+            "flyer-tuyen-sinh", "de-an-tuyen-sinh", "de-an-ts",
+            ".pdf", "diem-chuan-", "diem_chuan",
+        ]
+        return any(k in blob for k in noise)
+
+    @staticmethod
+    def _looks_like_content_image(src: str) -> bool:
+        src_l = (src or "").lower()
+        if not src_l:
+            return False
+        # Ảnh bảng trên CDN / images domain (kể cả tên file kiểu nl1.jpg của DTF)
+        if any(
+            d in src_l
+            for d in (
+                "cdn.tuyensinh247.com/picture",
+                "images.tuyensinh247.com/picture",
+            )
+        ):
+            return True
+        return bool(re.search(r"\.(jpe?g|png|webp|gif)(\?|$)", src_l))
+
+    def _image_description(self, alt: str, name: str, year: Optional[int], index: int) -> str:
+        alt = clean_text(alt or "")
+        # Alt hay bị copy nhầm trường khác — ưu tiên mô tả chuẩn nếu alt không nhắc quy đổi
+        alt_l = strip_accents(alt).lower()
+        if alt and any(k in alt_l for k in ["quy doi", "tuong duong", "bang diem", "convert"]):
+            return alt
+        label = f"Ảnh bảng quy đổi điểm — {name}"
+        if year:
+            label += f" {year}"
+        if index > 1:
+            label += f" ({index})"
+        return label
+
+    def _append_image(
+        self,
+        images: List[MethodConversionImage],
+        seen: set,
+        src: str,
+        alt: str,
+        code: str,
+        name: str,
+        year: Optional[int],
+        url: str,
+    ) -> None:
+        src = self._normalize_img_src(src)
+        if not src or src in seen:
+            return
+        if self._is_noise_image(src, alt):
+            return
+        if not self._looks_like_content_image(src):
+            return
+        seen.add(src)
+        images.append(
+            MethodConversionImage(
+                ma_truong=code,
+                ten_truong=name,
+                url_anh=src,
+                mo_ta=self._image_description(alt, name, year, len(images) + 1),
+                nam=year,
+                url_nguon=url,
+            )
+        )
+
     def _extract_images(
         self,
         soup: BeautifulSoup,
@@ -340,37 +451,103 @@ class ScoreConversionCrawler:
         url: str,
     ) -> List[MethodConversionImage]:
         images: List[MethodConversionImage] = []
-        seen = set()
+        seen: set = set()
+
+        # 1) Ảnh trong khối nội dung chính — nhiều trường (VD: DTF) chỉ đăng ảnh,
+        # tên file không chứa "quy-doi" nên filter theo keyword sẽ bỏ sót.
+        content_roots = soup.select(".post-content, .content-detail")
+        if not content_roots:
+            # Một số trang bọc nội dung trong #post-list mà không có class post-content
+            post_list = soup.select_one("#post-list")
+            if post_list:
+                content_roots = [post_list]
+        for root in content_roots:
+            for img in root.find_all("img"):
+                src = img.get("src") or img.get("data-src") or img.get("data-lazy-src") or ""
+                alt = img.get("alt") or ""
+                self._append_image(images, seen, src, alt, code, name, year, url)
+
+        # 2) Fallback toàn trang: ảnh có dấu hiệu quy đổi trên URL/alt
+        keyword_keys = [
+            "quy-doi", "quy_doi", "quydoi", "convert", "bang",
+            "tuong-quan", "tuong_quan", "phan-vi", "phan_vi",
+        ]
         for img in soup.find_all("img"):
-            src = img.get("src") or img.get("data-src") or ""
+            src = img.get("src") or img.get("data-src") or img.get("data-lazy-src") or ""
             if not src:
                 continue
             src_l = src.lower()
             alt = clean_text(img.get("alt") or "")
-            # Ảnh quy đổi / bảng điểm
-            if not any(k in src_l or k in alt.lower() for k in ["quy-doi", "quy_doi", "quydoi", "convert", "bang"]):
-                # vẫn lấy ảnh CDN picture năm tuyển sinh nếu nằm trong nội dung chính
-                if "cdn.tuyensinh247.com/picture" not in src_l:
+            if not any(k in src_l or k in alt.lower() for k in keyword_keys):
+                if "cdn.tuyensinh247.com/picture" not in src_l and "images.tuyensinh247.com/picture" not in src_l:
                     continue
-                if not any(k in src_l for k in ["quy", "doi", "convert", "bang", "tuong-quan", "phan-vi"]):
+                if not any(k in src_l for k in keyword_keys + ["quy", "doi"]):
                     continue
-            if src in seen:
-                continue
-            seen.add(src)
-            if src.startswith("//"):
-                src = "https:" + src
-            elif src.startswith("/"):
-                src = self.BASE_URL + src
-            images.append(
-                MethodConversionImage(
-                    ma_truong=code,
-                    ten_truong=name,
-                    url_anh=src,
-                    mo_ta=alt or "Ảnh bảng quy đổi điểm",
-                    nam=year,
-                    url_nguon=url,
-                )
+            self._append_image(images, seen, src, alt, code, name, year, url)
+
+        return images
+
+    def _extract_images_from_rsc(
+        self,
+        html: str,
+        code: str,
+        name: str,
+        year: Optional[int],
+        url: str,
+        existing: Optional[List[MethodConversionImage]] = None,
+    ) -> List[MethodConversionImage]:
+        """
+        Bóc ảnh từ field content của bài quy đổi trong RSC khi DOM thiếu.
+        Chỉ lấy ảnh trong đoạn content/post gần cụm 'post-content' hoặc
+        chuỗi content chứa img của bài quy đổi — tránh ảnh đề án/điểm chuẩn lẫn trong payload.
+        """
+        images: List[MethodConversionImage] = list(existing or [])
+        seen = {img.url_anh for img in images}
+
+        # Ưu tiên HTML của khối post-content trong payload
+        chunks: List[str] = []
+        for m in re.finditer(
+            r'post-content\\?"?\s*,?\s*\\?"?children\\?"?\s*.{0,50}?(\\u003cimg[\s\S]{0,12000}?post-content|\\\\?n\s*<p>[\s\S]{0,12000}?</p>)',
+            html,
+            flags=re.I,
+        ):
+            chunks.append(m.group(0))
+
+        # Field "content":"<p>...<img ...>" của bài quy đổi điểm
+        for m in re.finditer(
+            r'"content":"(\\u003cp[\s\S]{20,20000}?)"\s*,\s*"image"',
+            html,
+        ):
+            chunks.append(m.group(1))
+        for m in re.finditer(
+            r'"content":"(\\u003cp[\s\S]{20,20000}?)"\s*,\s*"status"',
+            html,
+        ):
+            chunks.append(m.group(1))
+
+        if not chunks:
+            # Fallback hẹp: chỉ img CDN picture năm hiện tại gần slug trường
+            slug_hint = (url or "").rsplit("/", 1)[-1].replace(".html", "")
+            code_l = (code or "").lower()
+            window = html
+            if slug_hint and slug_hint in html:
+                i = html.find(slug_hint)
+                window = html[max(0, i - 5000): i + 25000]
+            chunks = [window]
+
+        src_re = re.compile(
+            r'(https?://(?:cdn|images)\.tuyensinh247\.com/picture/[^"\'\\\s>]+\.(?:jpe?g|png|webp))',
+            flags=re.I,
+        )
+        for chunk in chunks:
+            decoded = unescape(
+                chunk.encode("utf-8").decode("unicode_escape", errors="ignore")
+                if "\\u003c" in chunk or "\\/" in chunk
+                else chunk
             )
+            for raw in src_re.findall(decoded) + src_re.findall(chunk.replace("\\/", "/")):
+                src = unescape(raw.replace("\\/", "/"))
+                self._append_image(images, seen, src, "", code, name, year, url)
         return images
 
     def _extract_method_ranges(

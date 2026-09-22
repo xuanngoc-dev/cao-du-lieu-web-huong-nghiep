@@ -371,6 +371,17 @@ function renderQuyDoi(data) {
       <td>${r.stt || ''}</td>${vals}</tr>`;
   }).join('');
   document.getElementById('qdRowsEmpty').style.display = rows.length ? 'none' : 'block';
+  const imgCount = (data.images || []).length;
+  if (!rows.length && imgCount) {
+    document.getElementById('qdRowsEmpty').innerHTML =
+      `Không có bảng HTML — trường đăng quy đổi dạng ảnh (${imgCount} ảnh). Xem tab <strong>Ảnh bảng</strong>.`;
+    // Ưu tiên mở tab ảnh để thấy dữ liệu ngay
+    const imgTabBtn = document.querySelector('[data-bs-target="#tabImages"]');
+    if (imgTabBtn) bootstrap.Tab.getOrCreateInstance(imgTabBtn).show();
+  } else if (!rows.length) {
+    document.getElementById('qdRowsEmpty').textContent =
+      'Chưa có dữ liệu — hãy lấy bảng quy đổi ở trên.';
+  }
 
   document.getElementById('qdNotesList').innerHTML = (data.notes || []).map(n => `
     <div class="border rounded-3 p-3 bg-white">
