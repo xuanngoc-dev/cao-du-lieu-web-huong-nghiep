@@ -131,15 +131,25 @@
   </div>
 </div>
 
-<ul class="nav nav-tabs" id="qdTabs" role="tablist">
-  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabRows" type="button">Bảng quy đổi</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabNotes" type="button">Ghi chú / công thức</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRanges" type="button">Khoảng điểm công cụ</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabImages" type="button">Ảnh bảng</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMeta" type="button">Theo trường</button></li>
+<ul class="nav nav-pills flex-wrap gap-1 mb-3" id="qdTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabRows" type="button" role="tab">Bảng quy đổi</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabNotes" type="button" role="tab">Ghi chú / công thức</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabRanges" type="button" role="tab">Khoảng điểm công cụ</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabImages" type="button" role="tab">Ảnh bảng</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabMeta" type="button" role="tab">Theo trường</button>
+  </li>
 </ul>
 
-<div class="tab-content border border-top-0 rounded-bottom panel-card p-3 mb-4" id="qdTabContent">
+<div class="tab-content panel-card border rounded-3 p-3 mb-4" id="qdTabContent">
   <div class="tab-pane fade show active" id="tabRows">
     <div class="table-responsive" style="max-height: 480px;">
       <table class="table table-sm table-bordered table-hover align-middle mb-0" id="qdRowsTable">

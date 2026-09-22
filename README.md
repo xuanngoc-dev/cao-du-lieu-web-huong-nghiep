@@ -87,9 +87,8 @@ Các thư viện chính bao gồm:
 
 ```bash
 pip install -r requirements.txt
-python3 main.py --mode ui
-# hoặc:
-python3 web/app.py
+./run.sh
+# tương đương: python3 main.py --mode ui
 ```
 
 Mở trình duyệt tại `http://127.0.0.1:8080` (không dùng cổng 5000 — trên macOS cổng này thường bị AirPlay chiếm):

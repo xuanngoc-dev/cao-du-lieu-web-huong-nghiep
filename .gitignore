@@ -1,0 +1,14 @@
+# Dữ liệu runtime / output — không đẩy lên git
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
