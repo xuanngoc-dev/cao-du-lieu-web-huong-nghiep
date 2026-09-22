@@ -35,18 +35,31 @@
              title="Bỏ cache trên máy, tải lại toàn bộ danh bạ mã trường từ web. Chỉ cần khi danh sách đã cũ hoặc thiếu trường."></i>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="schoolProfile" checked>
-          <label class="form-check-label" for="schoolProfile">Lấy hồ sơ giới thiệu trường</label>
+          <input class="form-check-input" type="checkbox" id="schoolProfile" disabled
+                 aria-disabled="true">
+          <label class="form-check-label text-muted" for="schoolProfile">
+            Lấy hồ sơ trường
+            <span class="badge text-bg-light border ms-1">tạm tắt</span>
+          </label>
           <i class="bi bi-info-circle text-muted ms-1"
-             role="button" tabindex="0" aria-label="Giải thích: Lấy hồ sơ giới thiệu trường"
+             role="button" tabindex="0" aria-label="Giải thích: Lấy hồ sơ trường"
              data-bs-toggle="tooltip" data-bs-placement="top"
-             title="Bổ sung địa chỉ, website, hotline, lĩnh vực/CTĐT, vị thế/thành tựu từ mục Giới thiệu trên trang đề án. Có thể mất thêm vài phút lần đầu hoặc khi làm mới."></i>
+             title="Tạm thời tắt hồ sơ đầy đủ (lĩnh vực/CTĐT, vị thế/thành tựu). Website và địa chỉ vẫn được lấy mặc định từ mục Giới thiệu."></i>
         </div>
       </div>
       <div class="col-md-2">
         <button id="btnFetchSchools" class="btn btn-teal w-100" type="button">
           <i class="bi bi-cloud-download"></i> Tải danh sách
         </button>
+      </div>
+    </div>
+    <div id="schoolFetchProgress" class="mt-3 d-none" aria-live="polite">
+      <div class="d-flex justify-content-between align-items-center small text-muted mb-1">
+        <span id="schoolFetchProgressLabel">Đang tải danh sách…</span>
+        <span class="spinner-border spinner-border-sm text-teal" role="status"></span>
+      </div>
+      <div class="progress" style="height: 8px;" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Đang tải danh sách">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-teal" style="width: 100%"></div>
       </div>
     </div>
   </div>
@@ -191,18 +204,31 @@ document.getElementById('btnFetchSchools').addEventListener('click', async () =>
   if (fetchInFlight) return;
   const msg = document.getElementById('schoolMsg');
   const btn = document.getElementById('btnFetchSchools');
-  const withProfile = document.getElementById('schoolProfile').checked;
+  const progress = document.getElementById('schoolFetchProgress');
+  const progressLabel = document.getElementById('schoolFetchProgressLabel');
+  // Hồ sơ giới thiệu tạm tắt — luôn gửi false
+  const withProfile = false;
   const refresh = document.getElementById('schoolRefresh').checked;
   const filter = document.getElementById('schoolFilter').value;
   const keyword = document.getElementById('schoolKeyword').value;
+
+  function setLoading(on, label) {
+    fetchInFlight = on;
+    btn.disabled = on;
+    if (on) {
+      progressLabel.textContent = label || 'Đang tải danh sách…';
+      progress.classList.remove('d-none');
+    } else {
+      progress.classList.add('d-none');
+    }
+  }
 
   // Đã có danh sách + không «Làm mới từ web» → chỉ áp dụng bộ lọc (tức thì)
   if (allSchoolsCache && allSchoolsCache.length && !refresh) {
     const rows = renderSchools(allSchoolsCache);
     msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đang hiện <b>${rows.length}</b> / ${allSchoolsCache.length} trường theo bộ lọc.</div>`;
-    // Xuất Excel đúng bộ lọc hiện tại (nhanh, không crawler hồ sơ)
-    fetchInFlight = true;
-    btn.disabled = true;
+    // Xuất Excel đúng bộ lọc hiện tại (nhanh, không crawler lại)
+    setLoading(true, 'Đang cập nhật Excel theo bộ lọc…');
     try {
       const res = await fetch('/api/schools/fetch', {
         method: 'POST',
@@ -210,6 +236,7 @@ document.getElementById('btnFetchSchools').addEventListener('click', async () =>
         body: JSON.stringify({
           refresh: false,
           include_profile: false,
+          include_contact: false,
           filter,
           keyword
         })
@@ -223,17 +250,15 @@ document.getElementById('btnFetchSchools').addEventListener('click', async () =>
       }
     } catch (_) { /* danh sách UI đã đúng */ }
     finally {
-      fetchInFlight = false;
-      btn.disabled = false;
+      setLoading(false);
     }
     return;
   }
 
-  fetchInFlight = true;
-  btn.disabled = true;
-  msg.innerHTML = withProfile
-    ? '<div class="spinner-border spinner-border-sm text-teal"></div> Đang tải danh bạ + hồ sơ giới thiệu (có thể mất vài phút)…'
-    : '<div class="spinner-border spinner-border-sm text-teal"></div> Đang tải danh sách…';
+  setLoading(true, refresh
+    ? 'Đang làm mới danh bạ + website/địa chỉ…'
+    : 'Đang tải danh sách + website/địa chỉ…');
+  msg.innerHTML = '';
 
   try {
     const res = await fetch('/api/schools/fetch', {
@@ -242,6 +267,7 @@ document.getElementById('btnFetchSchools').addEventListener('click', async () =>
       body: JSON.stringify({
         refresh,
         include_profile: withProfile,
+        include_contact: true,
         // Lấy full danh bạ; lọc ở client để đổi bộ lọc không bị kẹt
         filter: 'all',
         keyword: ''
@@ -259,15 +285,16 @@ document.getElementById('btnFetchSchools').addEventListener('click', async () =>
     allSchoolsCache = data.schools || [];
     lastExcelUrl = data.excel_url || null;
     const rows = renderSchools(allSchoolsCache);
+    const withContact = data.with_contact != null
+      ? data.with_contact
+      : rows.filter(r => r.website && r.dia_chi).length;
 
     msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đã tải ${allSchoolsCache.length} trường, đang hiện <b>${rows.length}</b> theo bộ lọc`
-      + (data.with_profile != null ? ` · ${data.with_profile} có hồ sơ giới thiệu` : '')
-      + `.</div>`;
+      + ` · ${withContact} có website/địa chỉ.</div>`;
   } catch (e) {
     msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
   } finally {
-    fetchInFlight = false;
-    btn.disabled = false;
+    setLoading(false);
   }
 });
 

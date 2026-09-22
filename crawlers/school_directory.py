@@ -40,6 +40,22 @@ PROFILE_KEYS = [
     "gioi_thieu_url",
 ]
 
+# Liên hệ cơ bản — luôn lấy kể cả khi tắt hồ sơ giới thiệu đầy đủ
+CONTACT_KEYS = ["dia_chi", "website", "hotline", "fanpage", "gioi_thieu_url"]
+
+
+def _has_contact(info: dict) -> bool:
+    """Đủ website + địa chỉ để hiển thị bảng danh bạ."""
+    return bool((info or {}).get("website")) and bool((info or {}).get("dia_chi"))
+
+
+def _has_full_profile(info: dict) -> bool:
+    return bool(
+        (info or {}).get("thong_tin_chung")
+        or (info or {}).get("vi_the_thanh_tuu")
+        or (info or {}).get("linh_vuc_chuong_trinh")
+    )
+
 _TRAINING_HINTS = (
     "đào tạo", "dao tao", "lĩnh vực", "linh vuc", "chương trình", "chuong trinh",
     "ngành", "nganh", "khối ngành", "chuyên ngành",
@@ -130,52 +146,85 @@ class SchoolDirectory:
         self.cache_file = os.path.join(self.cache_dir, "school_slugs_cache.json")
         self.schools: Dict[str, Dict[str, Any]] = {}
 
+    def _read_cache_file(self) -> Dict[str, Dict[str, Any]]:
+        if not os.path.exists(self.cache_file):
+            return {}
+        try:
+            with open(self.cache_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+
+    @staticmethod
+    def _merge_preserved_fields(
+        fetched: Dict[str, Dict[str, Any]],
+        previous: Dict[str, Dict[str, Any]],
+    ) -> Dict[str, Dict[str, Any]]:
+        """Giữ website/địa chỉ/hồ sơ cũ khi làm mới danh bạ từ web."""
+        if not previous:
+            return fetched
+        for code, entry in fetched.items():
+            prev = previous.get(code)
+            if not isinstance(prev, dict):
+                continue
+            for key in PROFILE_KEYS:
+                if not entry.get(key) and prev.get(key):
+                    entry[key] = prev[key]
+        return fetched
+
     def load(
         self,
         force_refresh: bool = False,
         include_dai_hoc: bool = True,
         include_cao_dang: bool = True,
         include_profile: bool = False,
+        include_contact: bool = True,
         profile_limit: int = 0,
     ) -> Dict[str, Dict[str, Any]]:
         """
         Nạp danh bạ từ cache hoặc cào mới từ web.
-        include_profile: bổ sung thông tin giới thiệu trường (chậm hơn).
+        include_profile: bổ sung hồ sơ giới thiệu đầy đủ (chậm hơn).
+        include_contact: bổ sung website + địa chỉ (mặc định bật, kể cả khi tắt hồ sơ).
         """
-        if not force_refresh and os.path.exists(self.cache_file):
+        previous_cache = self._read_cache_file()
+
+        if not force_refresh and previous_cache:
             try:
-                with open(self.cache_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                if data and isinstance(data, dict):
-                    # Cache cũ (không có type) → gắn type suy luận
-                    normalized = {}
-                    for code, info in data.items():
-                        if not isinstance(info, dict):
-                            continue
-                        item = dict(info)
-                        item.setdefault("code", code)
-                        item["type"] = item.get("type") or classify_school_type(
-                            item.get("name", ""), ""
+                data = previous_cache
+                # Cache cũ (không có type) → gắn type suy luận
+                normalized = {}
+                for code, info in data.items():
+                    if not isinstance(info, dict):
+                        continue
+                    item = dict(info)
+                    item.setdefault("code", code)
+                    item["type"] = item.get("type") or classify_school_type(
+                        item.get("name", ""), ""
+                    )
+                    item["type_label"] = TYPE_LABELS.get(item["type"], item["type"])
+                    normalized[code] = item
+                # Nếu cache chỉ có ĐH (không có CĐ) và user muốn CĐ → refresh
+                has_cd = any(v.get("type") == TYPE_CAO_DANG for v in normalized.values())
+                if include_cao_dang and not has_cd:
+                    print("[DANH_BA] Cache chưa có Cao đẳng → làm mới danh bạ...")
+                else:
+                    self.schools = self._filter_types(
+                        normalized, include_dai_hoc, include_cao_dang
+                    )
+                    full = dict(normalized)
+                    if include_profile:
+                        self.enrich_profiles(full, only_missing=True, limit=profile_limit)
+                        self._save_cache(full)
+                    elif include_contact:
+                        self.enrich_profiles(
+                            full, only_missing=True, contact_only=True, limit=profile_limit
                         )
-                        item["type_label"] = TYPE_LABELS.get(item["type"], item["type"])
-                        normalized[code] = item
-                    # Nếu cache chỉ có ĐH (không có CĐ) và user muốn CĐ → refresh
-                    has_cd = any(v.get("type") == TYPE_CAO_DANG for v in normalized.values())
-                    if include_cao_dang and not has_cd:
-                        print("[DANH_BA] Cache chưa có Cao đẳng → làm mới danh bạ...")
-                    else:
-                        self.schools = self._filter_types(
-                            normalized, include_dai_hoc, include_cao_dang
-                        )
-                        if include_profile:
-                            # Làm giàu trên bản full cache rồi filter lại
-                            full = dict(normalized)
-                            self.enrich_profiles(full, only_missing=True, limit=profile_limit)
-                            self._save_cache(full)
-                            self.schools = self._filter_types(
-                                full, include_dai_hoc, include_cao_dang
-                            )
-                        return self.schools
+                        self._save_cache(full)
+                    self.schools = self._filter_types(
+                        full, include_dai_hoc, include_cao_dang
+                    )
+                    return self.schools
             except Exception:
                 pass
 
@@ -183,8 +232,13 @@ class SchoolDirectory:
             include_dai_hoc=include_dai_hoc,
             include_cao_dang=include_cao_dang,
         )
+        fetched = self._merge_preserved_fields(fetched, previous_cache)
         if include_profile:
             self.enrich_profiles(fetched, only_missing=False, limit=profile_limit)
+        elif include_contact:
+            self.enrich_profiles(
+                fetched, only_missing=True, contact_only=True, limit=profile_limit
+            )
         self.schools = fetched
         self._save_cache(fetched)
         return self.schools
@@ -261,12 +315,16 @@ class SchoolDirectory:
         print(f"[DANH_BA] Hoàn tất: {len(directory)} trường (ĐH/HV/CĐ).")
         return directory
 
-    def fetch_school_profile(self, slug: str, code: str = "") -> Dict[str, str]:
+    def fetch_school_profile(
+        self,
+        slug: str,
+        code: str = "",
+        contact_only: bool = False,
+    ) -> Dict[str, str]:
         """
         Lấy hồ sơ giới thiệu trường từ trang đề án (#gioi-thieu):
-        - Thông tin chung & địa chỉ cơ sở (website, hotline, fanpage)
-        - Lĩnh vực / chương trình đào tạo
-        - Vị thế / thành tựu nổi bật
+        - contact_only=True: chỉ website + địa chỉ (+ hotline/fanpage nếu có)
+        - đầy đủ: thêm thông tin chung, lĩnh vực/CTĐT, vị thế/thành tựu
         """
         empty = {k: "" for k in PROFILE_KEYS}
         if not slug:
@@ -292,7 +350,7 @@ class SchoolDirectory:
                 return empty
 
             info_box = section.select_one(".basic-info__info") or section
-            achieve_box = section.select_one(".basic-info__achievement")
+            achieve_box = None if contact_only else section.select_one(".basic-info__achievement")
 
             info_lines: List[str] = []
             dia_chi_parts: List[str] = []
@@ -325,6 +383,18 @@ class SchoolDirectory:
                 )
                 if m:
                     hotline = clean_text(m.group(1))
+
+            if contact_only:
+                return {
+                    "thong_tin_chung": "",
+                    "dia_chi": "\n".join(dict.fromkeys(dia_chi_parts)),
+                    "website": website,
+                    "hotline": hotline,
+                    "fanpage": fanpage,
+                    "linh_vuc_chuong_trinh": "",
+                    "vi_the_thanh_tuu": "",
+                    "gioi_thieu_url": empty["gioi_thieu_url"],
+                }
 
             training_parts: List[str] = []
             achieve_parts: List[str] = []
@@ -373,9 +443,11 @@ class SchoolDirectory:
         only_missing: bool = True,
         max_workers: int = 6,
         limit: int = 0,
+        contact_only: bool = False,
     ) -> Dict[str, Dict[str, Any]]:
         """
-        Bổ sung hồ sơ giới thiệu cho danh bạ (song song, có cache từng trường).
+        Bổ sung hồ sơ / liên hệ cho danh bạ (song song, có cache từng trường).
+        contact_only=True: chỉ điền website + địa chỉ (và hotline/fanpage nếu có).
         """
         target = schools if schools is not None else self.schools
         if not target:
@@ -383,23 +455,30 @@ class SchoolDirectory:
 
         items = list(target.items())
         if only_missing:
-            items = [
-                (c, inf) for c, inf in items
-                if not (inf.get("thong_tin_chung") or inf.get("website") or inf.get("vi_the_thanh_tuu"))
-            ]
+            if contact_only:
+                items = [(c, inf) for c, inf in items if not _has_contact(inf)]
+            else:
+                items = [
+                    (c, inf) for c, inf in items
+                    if not (_has_full_profile(inf) or _has_contact(inf))
+                ]
         if limit and limit > 0:
             items = items[:limit]
 
         if not items:
-            print("[DANH_BA] Hồ sơ giới thiệu đã có sẵn — bỏ qua bước bổ sung.")
+            label = "Website/địa chỉ" if contact_only else "Hồ sơ giới thiệu"
+            print(f"[DANH_BA] {label} đã có sẵn — bỏ qua bước bổ sung.")
             return target
 
-        print(f"[DANH_BA] Đang lấy hồ sơ giới thiệu cho {len(items)} trường…")
+        label = "website/địa chỉ" if contact_only else "hồ sơ trường"
+        print(f"[DANH_BA] Đang lấy {label} cho {len(items)} trường…")
         done = 0
 
         def _job(code_info):
             code, info = code_info
-            profile = self.fetch_school_profile(info.get("slug") or "", code=code)
+            profile = self.fetch_school_profile(
+                info.get("slug") or "", code=code, contact_only=contact_only
+            )
             return code, profile
 
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
@@ -407,13 +486,24 @@ class SchoolDirectory:
             for fut in as_completed(futures):
                 code, profile = fut.result()
                 if code in target:
-                    target[code].update(profile)
-                # Đồng bộ vào self.schools nếu đang enrich bản sao / tập con
+                    if contact_only:
+                        for key in CONTACT_KEYS:
+                            val = profile.get(key) or ""
+                            if val and not target[code].get(key):
+                                target[code][key] = val
+                    else:
+                        target[code].update(profile)
                 if code in self.schools:
-                    self.schools[code].update(profile)
+                    if contact_only:
+                        for key in CONTACT_KEYS:
+                            val = profile.get(key) or ""
+                            if val and not self.schools[code].get(key):
+                                self.schools[code][key] = val
+                    else:
+                        self.schools[code].update(profile)
                 done += 1
                 if done % 25 == 0 or done == len(items):
-                    print(f"[DANH_BA] Hồ sơ: {done}/{len(items)}")
+                    print(f"[DANH_BA] {label.capitalize()}: {done}/{len(items)}")
 
         return target
 

@@ -118,6 +118,10 @@ def classify_method_column(header: str) -> str:
     if "dgnl" in h or "nang luc" in h:
         return "DGNL"
     if "xttn" in h or "tai nang" in h:
+        if "1.2" in h:
+            return "XTTN_1.2"
+        if "1.3" in h:
+            return "XTTN_1.3"
         return "XTTN"
     if "thpt" in h or "tot nghiep" in h or "tn thpt" in h:
         return "THPT"
@@ -139,6 +143,8 @@ METHOD_LABELS = {
     "TOEFL": "TOEFL",
     "TOEIC": "TOEIC",
     "XTTN": "Xét tuyển tài năng",
+    "XTTN_1.2": "XTTN Diện 1.2",
+    "XTTN_1.3": "XTTN Diện 1.3",
 }
 
 # Khi bảng quy đổi không tách HSA/V-ACT/TSA, dùng cột DGNL chung
@@ -165,6 +171,26 @@ class ConvertedMethodResult:
 
 
 @dataclass
+class ConversionGroupResult:
+    """Một nhóm quy đổi theo tổ hợp / bảng (VD: A00 · Ngành có tổ hợp gốc A00)."""
+    tieu_de: str
+    block: str = ""
+    applied: str = ""
+    khoang_khop: str = ""
+    diff: float = 0.0
+    equivalents: List[ConvertedMethodResult] = field(default_factory=list)
+    ok: bool = True
+    message: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = asdict(self)
+        d["equivalents"] = [
+            e if isinstance(e, dict) else e.to_dict() for e in self.equivalents
+        ]
+        return d
+
+
+@dataclass
 class ConversionCalcResult:
     ok: bool
     ma_truong: str = ""
@@ -175,15 +201,31 @@ class ConversionCalcResult:
     khoang_khop: str = ""
     message: str = ""
     equivalents: List[ConvertedMethodResult] = field(default_factory=list)
+    groups: List[ConversionGroupResult] = field(default_factory=list)
     all_methods: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
         d["equivalents"] = [e if isinstance(e, dict) else e.to_dict() for e in self.equivalents]
+        d["groups"] = [g if isinstance(g, dict) else g.to_dict() for g in self.groups]
         return d
 
 
-def _score_in_range(score: float, lo: float, hi: float, eps: float = 1e-9) -> bool:
+def _score_in_range(
+    score: float,
+    lo: float,
+    hi: float,
+    eps: float = 1e-9,
+    half_open: bool = True,
+) -> bool:
+    """
+    Mặc định nửa mở [lo, hi) giống công cụ tuyensinh247.
+    Khoảng suy biến (lo≈hi) hoặc half_open=False → đóng [lo, hi].
+    """
+    if abs(hi - lo) < eps:
+        return abs(score - lo) <= eps
+    if half_open:
+        return (lo - eps) <= score < hi
     return (lo - eps) <= score <= (hi + eps)
 
 
@@ -236,7 +278,7 @@ def merge_method_lists(*lists: List[Dict[str, str]]) -> List[Dict[str, str]]:
                 # Giữ label từ nguồn đầu; bổ sung column nếu thiếu
                 if not merged[mid].get("column") and item.get("column"):
                     merged[mid]["column"] = item["column"]
-    order = ["THPT", "HOC_BA", "HSA", "V-ACT", "TSA", "KET_HOP", "DGNL", "SAT", "ACT", "IELTS", "XTTN"]
+    order = ["THPT", "HOC_BA", "HSA", "V-ACT", "TSA", "KET_HOP", "DGNL", "SAT", "ACT", "IELTS", "XTTN", "XTTN_1.2", "XTTN_1.3"]
     out = list(merged.values())
     out.sort(key=lambda x: order.index(x["id"]) if x["id"] in order else 99)
     return out
@@ -252,6 +294,94 @@ def _method_match_ids(source_method: str) -> List[str]:
     return ids
 
 
+def _parse_group_meta(title: str) -> Tuple[str, str]:
+    """Tách 'Công cụ quy đổi BPV — A00 · Ngành có tổ hợp gốc A00' → (block, applied)."""
+    t = clean_text(title or "")
+    t = re.sub(r"^Công cụ quy đổi BPV\s*[—\-–]?\s*", "", t, flags=re.I).strip()
+    if "·" in t:
+        left, right = t.split("·", 1)
+        return clean_text(left), clean_text(right)
+    m = re.match(r"^(A00|A01|B00|D01|D04|D07|DD2|K01)\b(.*)$", t, flags=re.I)
+    if m:
+            return m.group(1).upper(), clean_text(m.group(2).lstrip("·—- "))
+    return "", t
+
+
+def _equivalents_from_row(
+    row: Dict[str, Any],
+    source_method: str,
+    score: float,
+    src_rng: Tuple[float, float],
+    thpt_diff: float = 0.0,
+) -> List[ConvertedMethodResult]:
+    order = [
+        "THPT", "HSA", "TSA", "V-ACT", "SAT", "ACT", "DGNL",
+        "HOC_BA", "KET_HOP", "XTTN", "XTTN_1.2", "XTTN_1.3",
+    ]
+    equivalents: List[ConvertedMethodResult] = []
+    for col, val in (row.get("cot_gia_tri") or {}).items():
+        method = classify_method_column(col)
+        dst_rng = parse_range(val)
+        est = None
+        min_v = max_v = None
+        khoang = str(val)
+        if dst_rng:
+            lo, hi = dst_rng
+            if method == "THPT" and abs(thpt_diff) > 1e-9:
+                lo, hi = lo + thpt_diff, hi + thpt_diff
+                khoang = f"{lo:g}-{hi:g}"
+            est = _interpolate(score, src_rng, (lo, hi))
+            min_v, max_v = lo, hi
+        equivalents.append(
+            ConvertedMethodResult(
+                phuong_thuc=method,
+                ten_hien_thi=METHOD_LABELS.get(method, method),
+                cot_goc=col,
+                khoang=khoang,
+                diem_uoc_tinh=est,
+                min_val=min_v,
+                max_val=max_v,
+            )
+        )
+    equivalents.sort(
+        key=lambda e: (
+            0 if e.phuong_thuc == source_method else 1,
+            order.index(e.phuong_thuc) if e.phuong_thuc in order else 99,
+        )
+    )
+    return equivalents
+
+
+def _best_candidate_in_rows(
+    rows_subset: List[Dict[str, Any]],
+    match_ids: set,
+    score: float,
+) -> Optional[Tuple[Dict, str, Tuple[float, float]]]:
+    def mid(rng: Tuple[float, float]) -> float:
+        return (rng[0] + rng[1]) / 2
+
+    candidates: List[Tuple[Dict, str, Tuple[float, float]]] = []
+
+    def collect(half_open: bool) -> None:
+        for r in rows_subset:
+            for col, val in (r.get("cot_gia_tri") or {}).items():
+                if classify_method_column(col) not in match_ids:
+                    continue
+                rng = parse_range(val)
+                if not rng:
+                    continue
+                if _score_in_range(score, rng[0], rng[1], half_open=half_open):
+                    candidates.append((r, col, rng))
+
+    collect(True)
+    if not candidates:
+        collect(False)
+    if not candidates:
+        return None
+    candidates.sort(key=lambda x: (abs(mid(x[2]) - score), -x[2][0]))
+    return candidates[0]
+
+
 def calculate_equivalence(
     rows: List[Dict[str, Any]],
     school_code: str,
@@ -261,7 +391,7 @@ def calculate_equivalence(
 ) -> ConversionCalcResult:
     """
     Tìm khoảng chứa điểm nguồn và trả về điểm/khoảng tương đương các phương thức khác.
-    rows: list dict từ MethodEquivalenceRow.to_dict()
+    Nếu có nhiều bảng BPV theo tổ hợp (A00/D01…), trả về `groups` cho từng tổ hợp.
     """
     school_rows = [r for r in rows if r.get("ma_truong") == school_code]
     if table_title:
@@ -270,7 +400,6 @@ def calculate_equivalence(
             if (r.get("tieu_de_bang") or "") == table_title
         ]
     if not school_rows:
-        # Nếu lọc theo tiêu đề làm rỗng, nới điều kiện
         school_rows = [r for r in rows if r.get("ma_truong") == school_code]
     if not school_rows:
         return ConversionCalcResult(
@@ -282,22 +411,69 @@ def calculate_equivalence(
 
     source_method = (source_method or "").upper().replace("VACT", "V-ACT")
     match_ids = set(_method_match_ids(source_method))
-    # Map method -> list of (row, col_name, range)
-    candidates: List[Tuple[Dict, str, Tuple[float, float]]] = []
-    for r in school_rows:
-        for col, val in (r.get("cot_gia_tri") or {}).items():
-            if classify_method_column(col) not in match_ids:
-                continue
-            rng = parse_range(val)
-            if not rng:
-                continue
-            if _score_in_range(score, rng[0], rng[1]):
-                candidates.append((r, col, rng))
+    all_methods = [m["id"] for m in list_methods_from_rows(school_rows)]
 
-    if not candidates:
-        # Gợi ý khoảng hợp lệ
+    bpv_rows = [r for r in school_rows if "BPV" in (r.get("tieu_de_bang") or "").upper()]
+    work_rows = bpv_rows or school_rows
+
+    # Nhóm theo tiêu đề bảng (mỗi tổ hợp / ngành một nhóm)
+    grouped: Dict[str, List[Dict]] = {}
+    for r in work_rows:
+        title = r.get("tieu_de_bang") or "Bảng quy đổi"
+        grouped.setdefault(title, []).append(r)
+
+    # Giữ thứ tự ổn định: A00 trước, rồi D01…
+    def _group_sort_key(title: str) -> Tuple[int, str]:
+        block, applied = _parse_group_meta(title)
+        order_blocks = ["A00", "A01", "B00", "D01", "D04", "D07", "DD2", "K01"]
+        bi = order_blocks.index(block) if block in order_blocks else 50
+        ai = 0 if "A00" in applied else (1 if "D01" in applied else 9)
+        return (bi, ai, title)
+
+    groups: List[ConversionGroupResult] = []
+    for title in sorted(grouped.keys(), key=_group_sort_key):
+        subset = grouped[title]
+        best = _best_candidate_in_rows(subset, match_ids, score)
+        block, applied = _parse_group_meta(title)
+        if not best:
+            groups.append(
+                ConversionGroupResult(
+                    tieu_de=title,
+                    block=block,
+                    applied=applied,
+                    ok=False,
+                    message=f"Điểm {score} không nằm trong khoảng {source_method} của nhóm này.",
+                )
+            )
+            continue
+
+        best_row, best_col, best_rng = best
+        # diff lưu trong stt dạng "4|diff=0.5"
+        thpt_diff = 0.0
+        stt = str(best_row.get("stt") or "")
+        m_diff = re.search(r"diff\s*=\s*([-+]?\d+(?:[.,]\d+)?)", stt, flags=re.I)
+        if m_diff:
+            thpt_diff = parse_number(m_diff.group(1)) or 0.0
+
+        eqs = _equivalents_from_row(
+            best_row, source_method, score, best_rng, thpt_diff=thpt_diff
+        )
+        groups.append(
+            ConversionGroupResult(
+                tieu_de=title,
+                block=block,
+                applied=applied,
+                khoang_khop=str(best_row.get("cot_gia_tri", {}).get(best_col, "")),
+                diff=thpt_diff,
+                equivalents=eqs,
+                ok=True,
+            )
+        )
+
+    ok_groups = [g for g in groups if g.ok]
+    if not ok_groups:
         hints = []
-        for r in school_rows:
+        for r in work_rows:
             for col, val in (r.get("cot_gia_tri") or {}).items():
                 if classify_method_column(col) in match_ids and parse_range(val):
                     hints.append(str(val))
@@ -310,55 +486,29 @@ def calculate_equivalence(
             diem_nhap=score,
             message=f"Điểm {score} không nằm trong các khoảng {source_method} của bảng "
                     f"({hint_txt}).",
-            all_methods=[m["id"] for m in list_methods_from_rows(school_rows)],
+            groups=groups,
+            all_methods=all_methods,
         )
 
-    # Chọn band có midpoint gần điểm nhập nhất
-    def mid(rng: Tuple[float, float]) -> float:
-        return (rng[0] + rng[1]) / 2
-
-    candidates.sort(key=lambda x: abs(mid(x[2]) - score))
-    best_row, best_col, best_rng = candidates[0]
-
-    equivalents: List[ConvertedMethodResult] = []
-    for col, val in (best_row.get("cot_gia_tri") or {}).items():
-        method = classify_method_column(col)
-        dst_rng = parse_range(val)
-        est = None
-        if dst_rng:
-            est = _interpolate(score, best_rng, dst_rng)
-        equivalents.append(
-            ConvertedMethodResult(
-                phuong_thuc=method,
-                ten_hien_thi=METHOD_LABELS.get(method, method),
-                cot_goc=col,
-                khoang=str(val),
-                diem_uoc_tinh=est,
-                min_val=dst_rng[0] if dst_rng else None,
-                max_val=dst_rng[1] if dst_rng else None,
-            )
-        )
-
-    # Sắp xếp: nguồn trước, rồi theo order
-    order = ["THPT", "HSA", "TSA", "V-ACT", "SAT", "ACT", "DGNL", "HOC_BA", "KET_HOP"]
-    equivalents.sort(
-        key=lambda e: (
-            0 if e.phuong_thuc == source_method else 1,
-            order.index(e.phuong_thuc) if e.phuong_thuc in order else 99,
-        )
+    primary = ok_groups[0]
+    n_ok = len(ok_groups)
+    msg = (
+        f"Khớp {n_ok} nhóm tổ hợp/bảng — nội suy tuyến tính trong từng khoảng BPV."
+        if n_ok > 1
+        else "Khớp khoảng quy đổi BPV/bảng và ước tính điểm tương đương (nội suy tuyến tính trong khoảng)."
     )
-
     return ConversionCalcResult(
         ok=True,
         ma_truong=school_code,
-        ten_truong=best_row.get("ten_truong", ""),
-        tieu_de_bang=best_row.get("tieu_de_bang", ""),
+        ten_truong=school_rows[0].get("ten_truong", ""),
+        tieu_de_bang=primary.tieu_de,
         phuong_thuc_nguon=source_method,
         diem_nhap=score,
-        khoang_khop=str(best_row.get("cot_gia_tri", {}).get(best_col, "")),
-        message="Khớp khoảng quy đổi và ước tính điểm tương đương (nội suy tuyến tính trong khoảng).",
-        equivalents=equivalents,
-        all_methods=[m["id"] for m in list_methods_from_rows(school_rows)],
+        khoang_khop=primary.khoang_khop,
+        message=msg,
+        equivalents=primary.equivalents,
+        groups=groups,
+        all_methods=all_methods,
     )
 
 

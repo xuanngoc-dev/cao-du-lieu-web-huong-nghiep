@@ -57,7 +57,8 @@ class ScoreConversionCrawler:
         self.cache_dir = cache_dir
         os.makedirs(self.cache_dir, exist_ok=True)
         self.directory = SchoolDirectory(cache_dir=cache_dir)
-        self.directory.load()
+        # Chỉ cần mã/slug — không enrich hồ sơ/liên hệ ở bước quy đổi
+        self.directory.load(include_profile=False, include_contact=False)
 
     def resolve_school(self, code_or_name: str) -> Optional[Dict[str, Any]]:
         code = (code_or_name or "").strip().upper()
@@ -123,13 +124,30 @@ class ScoreConversionCrawler:
             # Fallback: nếu không có bảng HTML, thử bóc từ RSC payload
             if not rows:
                 rows = self._extract_tables_from_rsc(res.text, code, name, year, url)
+
+            # Công cụ BPV (bảng phân vị) — nguồn chính để máy tính quy đổi (VD: BKA TSA↔THPT)
+            bpv_meta = self._extract_bpv_tool(res.text, code)
+            bpv_rows: List[MethodEquivalenceRow] = []
+            if bpv_meta:
+                bpv_rows = self._bpv_to_equivalence_rows(
+                    bpv_meta, code, name, year, url
+                )
+                if bpv_rows:
+                    # Ưu tiên BPV cho máy tính: đặt trước bảng HTML (nếu có)
+                    rows = bpv_rows + rows
+                # Bổ sung khoảng điểm công cụ từ BPV nếu chưa có
+                if not ranges:
+                    ranges = self._bpv_to_range_hints(bpv_meta, code, name, year, url)
+                meta["bpv"] = True
+                meta["bpv_bands"] = len(bpv_meta.get("bpv_data") or [])
+
             # Fallback ảnh: chỉ khi DOM không có ảnh trong nội dung (tránh nhiễu RSC)
             if not images:
                 images = self._extract_images_from_rsc(
                     res.text, code, name, year, url, existing=images
                 )
 
-            # Trường chỉ có ảnh (VD: DTF): ghi chú ngắn để UI không trống hoàn toàn
+            # Trường chỉ có ảnh (VD: DTF): ghi chú ngắn — bỏ qua nếu đã có BPV/bảng
             if images and not rows and not any(
                 "ảnh bảng" in (n.tieu_de or "").lower() or "chỉ đăng ảnh" in (n.noi_dung or "").lower()
                 for n in notes
@@ -142,7 +160,7 @@ class ScoreConversionCrawler:
                         noi_dung=(
                             f"{name} đăng bảng quy đổi dưới dạng ảnh "
                             f"({len(images)} ảnh) trên trang quy đổi điểm — "
-                            "xem tab Ảnh bảng. Không có bảng HTML để tính quy đổi tự động."
+                            "xem tab Ảnh bảng. Không có bảng số để tính quy đổi tự động."
                         ),
                         nam=year,
                         url_nguon=url,
@@ -279,6 +297,234 @@ class ScoreConversionCrawler:
             soup = BeautifulSoup(decoded, "html.parser")
             results.extend(self._extract_tables(soup, code, name, year, url))
         return results
+
+    @staticmethod
+    def _extract_json_object(text: str, start: int) -> Optional[str]:
+        if start < 0 or start >= len(text) or text[start] != "{":
+            return None
+        depth = 0
+        in_str = False
+        esc = False
+        for i in range(start, len(text)):
+            ch = text[i]
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start : i + 1]
+        return None
+
+    def _extract_bpv_tool(self, html: str, school_code: str) -> Optional[Dict[str, Any]]:
+        """
+        Bóc cấu hình công cụ Bảng phân vị (bpv_data) nhúng trong RSC/HTML.
+        Cùng nguồn dữ liệu với máy tính trên trang quy-doi-diem (VD: BKA TSA↔THPT).
+        """
+        if not html or not school_code:
+            return None
+        code = school_code.upper()
+        # RSC escape \"…\" → chuẩn hóa để json.loads
+        norm = html.replace('\\"', '"')
+        needle = f'"school_code":"{code}"'
+        idx = 0
+        while True:
+            pos = norm.find(needle, idx)
+            if pos < 0:
+                break
+            # Đi ngược tới đầu object chứa bpv_data
+            window_start = max(0, pos - 1200)
+            bpv_pos = norm.find('"bpv_data"', window_start)
+            if bpv_pos < 0 or bpv_pos > pos + 5000:
+                idx = pos + 1
+                continue
+            # Tìm {"id": gần nhất trước school_code
+            search_region = norm[window_start:pos]
+            rel = search_region.rfind('{"id":')
+            if rel < 0:
+                rel = search_region.rfind("{")
+            if rel < 0:
+                idx = pos + 1
+                continue
+            abs_start = window_start + rel
+            raw = self._extract_json_object(norm, abs_start)
+            if not raw:
+                idx = pos + 1
+                continue
+            try:
+                obj = json.loads(raw)
+            except Exception:
+                idx = pos + 1
+                continue
+            if (obj.get("school_code") or "").upper() != code:
+                idx = pos + 1
+                continue
+            if not isinstance(obj.get("bpv_data"), list) or not obj["bpv_data"]:
+                idx = pos + 1
+                continue
+            return obj
+        return None
+
+    def _bpv_to_equivalence_rows(
+        self,
+        bpv_meta: Dict[str, Any],
+        code: str,
+        name: str,
+        year: Optional[int],
+        url: str,
+    ) -> List[MethodEquivalenceRow]:
+        """
+        Chuyển bpv_data → dòng bảng để máy tính nội suy.
+        Nếu có block_different (VD: BKA), tạo nhóm theo từng tổ hợp xét
+        (A00/D01/D04/DD2) × bảng gốc (A00/D01) giống công cụ trên web.
+        """
+        results: List[MethodEquivalenceRow] = []
+        skip = {"range", "applied"}
+        school_name = name or bpv_meta.get("name") or code
+        year_val = year or bpv_meta.get("year")
+
+        # Gom band theo nhãn applied (tổ hợp gốc)
+        by_applied: Dict[str, List[Dict[str, Any]]] = {}
+        for band in bpv_meta.get("bpv_data") or []:
+            if not isinstance(band, dict):
+                continue
+            applied = clean_text(str(band.get("applied") or "")) or ""
+            by_applied.setdefault(applied, []).append(band)
+
+        if not by_applied:
+            return results
+
+        block_diff = bpv_meta.get("block_different") or {}
+        base_block = clean_text(str(bpv_meta.get("base_block") or "A00")) or "A00"
+
+        def _applied_code(label: str) -> str:
+            m = re.search(
+                r"\b(A00|A01|B00|D01|D04|D07|DD2|K01)\b",
+                label or "",
+                flags=re.I,
+            )
+            return m.group(1).upper() if m else (base_block if not label else label)
+
+        # Danh sách tổ hợp trên công cụ = base_block + các tổ hợp lệch so với base
+        # (VD BKA: A00, D01, D04, DD2 — không gồm A01/B00/… chỉ nằm trong map phụ)
+        blocks: List[str] = []
+        if block_diff:
+            if base_block:
+                blocks.append(base_block)
+            extra = block_diff.get(base_block) if isinstance(block_diff.get(base_block), dict) else {}
+            for b in extra.keys():
+                bs = str(b)
+                if bs and bs not in blocks:
+                    blocks.append(bs)
+            if not blocks:
+                blocks = [base_block] if base_block else [""]
+        else:
+            blocks = [""]
+
+        preferred = ["A00", "A01", "B00", "D01", "D04", "D07", "DD2", "K01"]
+        blocks.sort(key=lambda b: preferred.index(b) if b in preferred else 99)
+
+        def _band_cols(band: Dict[str, Any]) -> Dict[str, str]:
+            col_map: Dict[str, str] = {}
+            for k, v in band.items():
+                if k in skip:
+                    continue
+                val = clean_text(str(v or ""))
+                if not val:
+                    continue
+                val = re.sub(r"\s*-\s*", "-", val.replace("–", "-").replace("—", "-"))
+                col_map[str(k)] = val
+            return col_map
+
+        for applied, bands in by_applied.items():
+            ac = _applied_code(applied)
+            for block in blocks:
+                # diff: block_different[applied_code][block] (VD: A00→D01 = 0.5)
+                diff = 0.0
+                if block and isinstance(block_diff.get(ac), dict):
+                    try:
+                        diff = float(block_diff[ac].get(block, 0) or 0)
+                    except (TypeError, ValueError):
+                        diff = 0.0
+                if applied and block:
+                    title = f"Công cụ quy đổi BPV — {block} · {applied}"
+                elif applied:
+                    title = f"Công cụ quy đổi BPV — {applied}"
+                elif block:
+                    title = f"Công cụ quy đổi BPV — {block}"
+                else:
+                    title = "Công cụ quy đổi BPV"
+
+                for band in bands:
+                    col_map = _band_cols(band)
+                    if len(col_map) < 2:
+                        continue
+                    stt = str(band.get("range") or "")
+                    if abs(diff) > 1e-9:
+                        stt = f"{stt}|diff={diff:g}" if stt else f"diff={diff:g}"
+                    results.append(
+                        MethodEquivalenceRow(
+                            ma_truong=code,
+                            ten_truong=school_name,
+                            tieu_de_bang=title,
+                            stt=stt,
+                            cot_gia_tri=col_map,
+                            nam=year_val,
+                            url_nguon=url,
+                        )
+                    )
+        return results
+
+    def _bpv_to_range_hints(
+        self,
+        bpv_meta: Dict[str, Any],
+        code: str,
+        name: str,
+        year: Optional[int],
+        url: str,
+    ) -> List[MethodRangeHint]:
+        """Suy ra khoảng điểm đầu vào từng phương thức từ các band BPV."""
+        from core.conversion_calculator import parse_range, classify_method_column
+
+        mins: Dict[str, float] = {}
+        maxs: Dict[str, float] = {}
+        labels: Dict[str, str] = {}
+        for band in bpv_meta.get("bpv_data") or []:
+            if not isinstance(band, dict):
+                continue
+            for k, v in band.items():
+                if k in ("range", "applied") or not v:
+                    continue
+                method = classify_method_column(str(k))
+                rng = parse_range(v)
+                if not rng:
+                    continue
+                labels[method] = str(k)
+                mins[method] = min(mins.get(method, rng[0]), rng[0])
+                maxs[method] = max(maxs.get(method, rng[1]), rng[1])
+        out: List[MethodRangeHint] = []
+        for method, lo in mins.items():
+            hi = maxs[method]
+            out.append(
+                MethodRangeHint(
+                    ma_truong=code,
+                    ten_truong=name or bpv_meta.get("name") or code,
+                    phuong_thuc=method,
+                    khoang_diem=f"{lo:g}-{hi:g}",
+                    nam=year or bpv_meta.get("year"),
+                    url_nguon=url,
+                )
+            )
+        return out
 
     def _extract_notes(
         self,

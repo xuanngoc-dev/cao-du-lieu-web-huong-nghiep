@@ -82,42 +82,30 @@ def create_app() -> Flask:
     def api_schools_fetch():
         data = request.get_json(silent=True) or {}
         refresh = bool(data.get("refresh", False))
-        include_profile = bool(data.get("include_profile", True))
+        include_profile = bool(data.get("include_profile", False))
+        # Mặc định vẫn lấy website + địa chỉ; tắt khi chỉ lọc/xuất lại Excel
+        include_contact = bool(data.get("include_contact", True))
         school_filter = data.get("filter", "all")  # all | dai_hoc | cao_dang | hoc_vien | dai_hoc_hoc_vien
         keyword = (data.get("keyword") or "").strip()
 
         directory = SchoolDirectory()
-        # Luôn nạp danh bạ nhanh từ cache trước (đổi bộ lọc không bị kẹt).
-        # Hồ sơ giới thiệu chỉ lấy khi: làm mới từ web, hoặc cache chưa có hồ sơ.
+        # Hồ sơ đầy đủ chỉ khi include_profile; website + địa chỉ khi include_contact.
         directory.load(
             force_refresh=refresh,
             include_dai_hoc=True,
             include_cao_dang=True,
-            include_profile=False,
+            include_profile=include_profile,
+            include_contact=include_contact and not include_profile,
         )
 
-        def _has_profile(info: dict) -> bool:
-            return bool(
-                info.get("thong_tin_chung")
-                or info.get("website")
-                or info.get("vi_the_thanh_tuu")
+        # Bổ sung hồ sơ đầy đủ còn thiếu (chỉ khi bật option; giới hạn để tránh timeout)
+        if include_profile:
+            missing_full = sum(
+                1 for inf in directory.schools.values()
+                if not (inf.get("thong_tin_chung") or inf.get("vi_the_thanh_tuu"))
             )
-
-        profile_count = sum(1 for inf in directory.schools.values() if _has_profile(inf))
-        need_profile = include_profile and (
-            refresh or profile_count == 0
-        )
-        if need_profile:
-            directory.enrich_profiles(
-                only_missing=not refresh,
-            )
-            directory._save_cache(directory.schools)
-        elif include_profile and profile_count < len(directory.schools):
-            # Bổ sung hồ sơ còn thiếu nhưng không chặn nếu user chỉ đổi lọc —
-            # chỉ chạy khi còn thiếu < 30 trường để tránh timeout.
-            missing = sum(1 for inf in directory.schools.values() if not _has_profile(inf))
-            if 0 < missing <= 30:
-                directory.enrich_profiles(only_missing=True)
+            if 0 < missing_full <= 30:
+                directory.enrich_profiles(only_missing=True, contact_only=False)
                 directory._save_cache(directory.schools)
 
         type_map = {
@@ -146,7 +134,11 @@ def create_app() -> Flask:
             stats[lb] = stats.get(lb, 0) + 1
         with_profile = sum(
             1 for r in rows
-            if r.get("thong_tin_chung") or r.get("website") or r.get("vi_the_thanh_tuu")
+            if r.get("thong_tin_chung") or r.get("vi_the_thanh_tuu")
+        )
+        with_contact = sum(
+            1 for r in rows
+            if r.get("website") and r.get("dia_chi")
         )
 
         return jsonify({
@@ -154,11 +146,13 @@ def create_app() -> Flask:
             "total": len(rows),
             "stats": stats,
             "with_profile": with_profile,
+            "with_contact": with_contact,
             "schools": rows,
             "codes_text": format_codes_for_copy(codes, one_per_line=True),
             "excel_url": url_for("download_file", name="danh_sach_ma_truong.xlsx"),
             "txt_url": url_for("download_codes_txt"),
-            "profile_fetched": need_profile,
+            "profile_fetched": include_profile,
+            "contact_fetched": include_contact and not include_profile,
         })
 
     @app.get("/api/schools/codes.txt")

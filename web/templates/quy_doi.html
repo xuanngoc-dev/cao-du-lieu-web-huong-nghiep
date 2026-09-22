@@ -88,7 +88,8 @@
           </div>
         </div>
         <div class="form-text mt-2">
-          Ví dụ KHA: chọn <b>HSA</b>, nhập <b>105</b> → ra khoảng THPT / SAT / V-ACT / TSA tương đương và điểm ước tính.
+          Ví dụ BKA: chọn <b>TSA</b>, nhập <b>60</b> → xem điểm THPT theo từng tổ hợp (A00/D01/…).
+          Ví dụ KHA: chọn <b>HSA</b>, nhập <b>105</b> → THPT / SAT / V-ACT / TSA tương đương.
         </div>
       </div>
 
@@ -240,15 +241,17 @@ function renderCalcResult(payload) {
     box.innerHTML = '';
     return;
   }
+  const groups = (r.groups || []).filter(g => g.ok);
+  const groupNote = groups.length > 1
+    ? ` · <b>${groups.length}</b> nhóm tổ hợp`
+    : '';
   msg.innerHTML = `<div class="alert alert-success py-2 mb-0">${r.message || 'OK'}
-    <div class="small mt-1">Trường <code>${r.ma_truong}</code> · Nguồn <b>${r.phuong_thuc_nguon}</b> = <b>${r.diem_nhap}</b>
-    (khớp khoảng <b>${r.khoang_khop}</b>)</div></div>`;
+    <div class="small mt-1">Trường <code>${r.ma_truong}</code> · Nguồn <b>${r.phuong_thuc_nguon}</b> = <b>${r.diem_nhap}</b>${groupNote}</div></div>`;
 
-  const eqs = r.equivalents || [];
-  box.innerHTML = `
-    <div class="row g-3">
-      ${eqs.map(e => {
-        const isSrc = e.phuong_thuc === r.phuong_thuc_nguon;
+  function tilesHtml(eqs, sourceMethod) {
+    return `<div class="row g-3">
+      ${(eqs || []).map(e => {
+        const isSrc = e.phuong_thuc === sourceMethod;
         return `<div class="col-6 col-md-4 col-lg-3">
           <div class="calc-result-tile ${isSrc ? 'is-source' : ''}">
             <div class="small text-muted">${e.ten_hien_thi}</div>
@@ -257,10 +260,36 @@ function renderCalcResult(payload) {
           </div>
         </div>`;
       }).join('')}
-    </div>
-    <p class="small text-muted mt-3 mb-0">
-      Điểm ước tính được nội suy tuyến tính trong khoảng đã khớp.
-      Đây là tham chiếu theo bảng công bố trên tuyensinh247 — cần đối chiếu đề án chính thức của trường.
+    </div>`;
+  }
+
+  let body = '';
+  if (groups.length > 1) {
+    body = groups.map(g => {
+      const badge = g.block
+        ? `<span class="badge text-bg-teal me-1">${g.block}</span>`
+        : '';
+      const applied = g.applied || g.tieu_de || '';
+      const diffNote = g.diff
+        ? ` <span class="small text-muted">(lệch tổ hợp ${g.diff > 0 ? '+' : ''}${g.diff})</span>`
+        : '';
+      return `<div class="border rounded-3 p-3 mb-3 bg-white">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          ${badge}<strong>${applied}</strong>${diffNote}
+          <span class="small text-muted ms-auto">khớp ${g.khoang_khop || '—'}</span>
+        </div>
+        ${tilesHtml(g.equivalents, r.phuong_thuc_nguon)}
+      </div>`;
+    }).join('');
+  } else {
+    const eqs = (groups[0] && groups[0].equivalents) || r.equivalents || [];
+    body = tilesHtml(eqs, r.phuong_thuc_nguon);
+  }
+
+  box.innerHTML = `${body}
+    <p class="small text-muted mt-2 mb-0">
+      Điểm ước tính được nội suy tuyến tính trong khoảng đã khớp (theo từng tổ hợp nếu trường có nhiều bảng BPV).
+      Tham chiếu bảng công bố trên tuyensinh247 — cần đối chiếu đề án chính thức của trường.
     </p>`;
 }
 
