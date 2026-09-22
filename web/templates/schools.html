@@ -319,7 +319,8 @@ function normalizeCodesDisplay(text) {
     .join(', ');
 }
 
-document.getElementById('codesBox').value = normalizeCodesDisplay(window.App.loadCodes());
+document.getElementById('codesBox').value = '';
+window.App.saveCodes('');
 
 /** Tự hiện danh sách trường đã lưu (không cần tải lại) */
 (async function restoreSavedSchools() {

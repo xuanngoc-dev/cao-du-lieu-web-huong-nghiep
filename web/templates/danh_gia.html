@@ -1654,7 +1654,7 @@ function fillScopeSchools(trends, preferCodes) {
     `<option value="${esc(s)}">${esc(schoolOptionLabel(s, trends))}</option>`
   ).join('');
   let prefer = preferCodes;
-  if (!prefer || !prefer.length) prefer = schools.slice();
+  if (!prefer || !prefer.length) prefer = [];
   const sel = document.getElementById('scopeSchools');
   window.App.setSelectOptions(sel, html, prefer, {
     placeholder: 'Chọn một / nhiều / hết trường đã tổng hợp được',
@@ -1787,7 +1787,7 @@ document.getElementById('btnTongHop').addEventListener('click', tongHopThongTin)
       return;
     }
     lastCrawl = data;
-    fillScopeSchools(data.trends || {}, data.codes || []);
+    fillScopeSchools(data.trends || {}, []);
   } catch (e) {
     document.getElementById('scopeAlert').innerHTML =
       `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;

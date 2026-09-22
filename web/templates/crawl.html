@@ -109,7 +109,8 @@
 {% block scripts %}
 <script>
 const codesEl = document.getElementById('crawlCodes');
-codesEl.value = window.App.loadCodes();
+codesEl.value = '';
+window.App.saveCodes('');
 
 let lastCrawlSummary = null;
 let lastCrawlPreview = [];
@@ -421,7 +422,6 @@ function renderFinalResult(data) {
         <pre class="log-box mt-3 mb-0">${esc((data.logs || []).join('\n'))}</pre>
       </div>
     </div>`;
-  if (data.codes_text) codesEl.value = data.codes_text;
   document.getElementById('btnViewCrawlTable')?.addEventListener('click', () => viewSavedCrawlTable());
 }
 

@@ -203,7 +203,8 @@ function esc(s) {
 }
 
 const qdCodes = document.getElementById('qdCodes');
-qdCodes.value = window.App.loadCodes() || 'KHA\nNTH';
+qdCodes.value = '';
+window.App.saveCodes('');
 
 let lastQuyDoi = null;
 
