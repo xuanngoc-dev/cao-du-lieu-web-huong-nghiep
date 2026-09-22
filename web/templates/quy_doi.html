@@ -3,7 +3,7 @@
 {% block content %}
 <h1 class="h3 mb-1">③ Quy đổi điểm giữa các phương thức</h1>
 <p class="text-muted mb-3">
-  Cào bảng quy đổi từ tuyensinh247, rồi <strong>nhập điểm</strong> để tính điểm tương đương
+  Cào bảng quy đổi từ tuyensinh247, rồi nhập điểm để tính điểm tương đương
   (THPT ↔ HSA / TSA / V-ACT / SAT / học bạ…) ngay trên giao diện.
   Ví dụ NEU:
   <a href="https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html" target="_blank" rel="noopener">KHA</a>.
@@ -11,7 +11,7 @@
 
 <div class="card panel-card mb-3">
   <div class="card-body">
-    <label class="form-label fw-semibold">1) Lấy bảng quy đổi theo mã trường</label>
+    <label class="form-label">1) Lấy bảng quy đổi theo mã trường</label>
     <textarea id="qdCodes" class="form-control font-monospace" rows="4"
       placeholder="KHA&#10;BKA&#10;NTH"></textarea>
     <div class="form-text">Dán từ bước 1. Alias: NEU→KHA, FTU→NTH, HUST→BKA.</div>
@@ -153,7 +153,7 @@
   </div>
   <div class="tab-pane fade" id="tabRanges">
     <div class="table-responsive">
-      <table class="table table-sm table-striped" id="qdRangesTable">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0" id="qdRangesTable">
         <thead><tr><th>Mã</th><th>Trường</th><th>Phương thức</th><th>Khoảng điểm</th></tr></thead>
         <tbody></tbody>
       </table>
@@ -164,7 +164,7 @@
   </div>
   <div class="tab-pane fade" id="tabMeta">
     <div class="table-responsive">
-      <table class="table table-sm" id="qdMetaTable">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0" id="qdMetaTable">
         <thead>
           <tr>
             <th>Mã</th><th>Trường</th><th>OK</th><th>Dòng bảng</th><th>Ghi chú</th><th>Ảnh</th><th>Khoảng</th><th>Link</th><th>Lỗi</th>

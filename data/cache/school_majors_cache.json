@@ -494,5 +494,27 @@
     "Kế toán": "7",
     "Kỹ thuật sửa chữa, lắp ráp máy tính": "8",
     "Chế biến và bảo quản thủy sản": "9"
+  },
+  "CBT": {
+    "Thiết kế đồ họa": "6210402",
+    "Hướng dẫn du lịch": "6220103",
+    "Kỹ thuật phục hình răng": "6220206",
+    "Tiếng Trung": "6220209",
+    "Tiếng Hàn": "6220211",
+    "Tiếng Nhật": "6220212",
+    "Marketing": "6340116",
+    "Thương mại điện tử": "6340122",
+    "Logistics": "6340133",
+    "Quản trị kinh doanh": "6340202",
+    "Kế toán": "6340301",
+    "Công nghệ thông tin": "6480201",
+    "Công nghệ Ô tô": "6510216",
+    "Công nghệ kỹ thuật Điện – Điện tử": "6510303",
+    "Điện công nghiệp": "6520227",
+    "Kỹ thuật Máy Lạnh và Điều hòa không khí": "6520255",
+    "Tự động hóa công nghiệp": "6520264",
+    "Dược sĩ": "6720301",
+    "Quản trị khách sạn": "6810201",
+    "Quản trị chế biến món ăn": "6810207"
   }
 }

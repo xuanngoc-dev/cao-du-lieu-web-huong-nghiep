@@ -1,23 +1,68 @@
 :root {
-  --ink: #0f2a3d;
+  --ink: #1a2b33;
+  --ink-soft: #4a5c64;
   --teal: #0d7377;
   --teal-dark: #095c5f;
   --accent: #c45c26;
   --sand: #f4f7f5;
   --line: #d7e3de;
+  --font: "Google Sans Flex", "Google Sans", "Helvetica Neue", sans-serif;
 }
 
-* { font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+*,
+*::before,
+*::after {
+  font-family: var(--font);
+}
+
+html {
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   color: var(--ink);
+  font-family: var(--font);
+  font-weight: 300;
+  letter-spacing: 0.01em;
   background:
     radial-gradient(900px 420px at 0% -10%, #d7ebe6 0%, transparent 55%),
     radial-gradient(700px 360px at 100% 0%, #f8e8da 0%, transparent 50%),
     linear-gradient(180deg, #f7faf8 0%, #eef3f1 100%);
+}
+
+/* Chữ thanh mảnh — hạn chế đậm */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: var(--font);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.fw-bold,
+.fw-semibold,
+.fw-bolder,
+strong,
+b,
+.navbar-brand,
+.btn,
+.form-label,
+.badge,
+.stat-val,
+.calc-est,
+.step-num,
+.hero-title,
+.app-nav .nav-link.active {
+  font-weight: 400 !important;
+}
+
+.text-muted {
+  font-weight: 300;
+  color: var(--ink-soft) !important;
 }
 
 .app-nav {
@@ -25,9 +70,14 @@ body {
   box-shadow: 0 6px 18px rgba(15, 42, 61, 0.18);
 }
 
+.app-nav .navbar-brand,
+.app-nav .nav-link {
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
 .app-nav .nav-link.active {
-  font-weight: 600;
-  border-bottom: 2px solid #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.85);
 }
 
 .hero-panel {
@@ -40,11 +90,14 @@ body {
 
 .hero-title {
   font-size: 1.55rem;
-  font-weight: 700;
+  font-weight: 400;
   margin-bottom: 0.4rem;
 }
 
-.hero-lead { opacity: 0.92; }
+.hero-lead {
+  opacity: 0.92;
+  font-weight: 300;
+}
 
 .step-card, .panel-card {
   border: 1px solid var(--line);
@@ -62,8 +115,13 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 400;
   margin-bottom: 0.6rem;
+}
+
+.btn {
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 .btn-teal {
@@ -110,8 +168,18 @@ body {
   padding: 0.85rem 0.9rem;
   height: 100%;
 }
-.stat-val { font-size: 1.4rem; font-weight: 700; color: var(--teal-dark); line-height: 1.1; }
-.stat-lbl { font-size: 0.8rem; color: #5b6b66; margin-top: 0.2rem; }
+.stat-val {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--teal-dark);
+  line-height: 1.1;
+}
+.stat-lbl {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: #5b6b66;
+  margin-top: 0.2rem;
+}
 
 .log-box {
   max-height: 260px;
@@ -121,11 +189,38 @@ body {
   border-radius: 0.7rem;
   padding: 0.85rem 1rem;
   font-size: 0.82rem;
+  font-weight: 300;
 }
 
-.app-footer { border-top: 1px solid var(--line); }
+.app-footer {
+  border-top: 1px solid var(--line);
+  font-weight: 300;
+}
 
-.table > :not(caption) > * > * { vertical-align: middle; }
+/* Bảng */
+.table {
+  font-weight: 300;
+  --bs-table-bg: #fff;
+}
+.table > :not(caption) > * > * {
+  vertical-align: middle;
+  font-weight: 300;
+}
+.table thead th,
+.table > thead > tr > th {
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  background: #f3f7f5;
+}
+.table-bordered {
+  border-color: var(--line);
+}
+.table-bordered > :not(caption) > * > * {
+  border-color: var(--line);
+}
+.table-hover > tbody > tr:hover > * {
+  background-color: #eef6f4;
+}
 
 #qdImages img {
   object-fit: contain;
@@ -144,6 +239,7 @@ body {
   border-radius: 0.9rem;
   padding: 0.85rem 0.9rem;
   height: 100%;
+  font-weight: 300;
 }
 .calc-result-tile.is-source {
   background: #e7f4f2;
@@ -151,12 +247,36 @@ body {
 }
 .calc-est {
   font-size: 1.55rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--teal-dark);
   line-height: 1.15;
   margin: 0.15rem 0;
 }
 
+#calcCard .nav-pills .nav-link {
+  font-weight: 300;
+}
 #calcCard .nav-pills .nav-link.active {
   background: var(--teal);
+  font-weight: 400;
+}
+
+.form-label,
+.form-control,
+.form-select,
+.form-check-label {
+  font-weight: 300;
+}
+
+.badge {
+  font-weight: 400;
+}
+
+/* Ô danh sách mã: nhiều dòng cao, mã cách nhau bằng dấu phẩy, hết hàng mới xuống dòng */
+.codes-box-wrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.45;
+  resize: vertical;
 }

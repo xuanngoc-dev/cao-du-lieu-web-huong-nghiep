@@ -87,12 +87,38 @@ def create_app() -> Flask:
         keyword = (data.get("keyword") or "").strip()
 
         directory = SchoolDirectory()
+        # Luôn nạp danh bạ nhanh từ cache trước (đổi bộ lọc không bị kẹt).
+        # Hồ sơ giới thiệu chỉ lấy khi: làm mới từ web, hoặc cache chưa có hồ sơ.
         directory.load(
             force_refresh=refresh,
             include_dai_hoc=True,
             include_cao_dang=True,
-            include_profile=include_profile,
+            include_profile=False,
         )
+
+        def _has_profile(info: dict) -> bool:
+            return bool(
+                info.get("thong_tin_chung")
+                or info.get("website")
+                or info.get("vi_the_thanh_tuu")
+            )
+
+        profile_count = sum(1 for inf in directory.schools.values() if _has_profile(inf))
+        need_profile = include_profile and (
+            refresh or profile_count == 0
+        )
+        if need_profile:
+            directory.enrich_profiles(
+                only_missing=not refresh,
+            )
+            directory._save_cache(directory.schools)
+        elif include_profile and profile_count < len(directory.schools):
+            # Bổ sung hồ sơ còn thiếu nhưng không chặn nếu user chỉ đổi lọc —
+            # chỉ chạy khi còn thiếu < 30 trường để tránh timeout.
+            missing = sum(1 for inf in directory.schools.values() if not _has_profile(inf))
+            if 0 < missing <= 30:
+                directory.enrich_profiles(only_missing=True)
+                directory._save_cache(directory.schools)
 
         type_map = {
             "all": None,
@@ -132,6 +158,7 @@ def create_app() -> Flask:
             "codes_text": format_codes_for_copy(codes, one_per_line=True),
             "excel_url": url_for("download_file", name="danh_sach_ma_truong.xlsx"),
             "txt_url": url_for("download_codes_txt"),
+            "profile_fetched": need_profile,
         })
 
     @app.get("/api/schools/codes.txt")
