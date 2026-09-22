@@ -462,10 +462,14 @@ function renderQuyDoi(data) {
     </tr>`).join('');
 
   document.getElementById('qdDownload').innerHTML =
-    `<a class="btn btn-accent" href="${data.download_url}"><i class="bi bi-file-earmark-excel"></i> Tải ${data.filename}</a>`;
+    data.download_url
+      ? `<a class="btn btn-accent" href="${data.download_url}"><i class="bi bi-file-earmark-excel"></i> Tải ${data.filename || 'Excel'}</a>`
+      : '';
 
-  // Cuộn tới máy tính
-  document.getElementById('calcCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Cuộn tới máy tính (bỏ qua khi khôi phục từ đĩa)
+  if (!data.from_disk) {
+    document.getElementById('calcCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 document.getElementById('btnQuyDoi').addEventListener('click', async () => {
@@ -491,5 +495,15 @@ document.getElementById('btnQuyDoi').addEventListener('click', async () => {
     prog.classList.add('d-none');
   }
 });
+
+(async function restoreQuyDoiSession() {
+  try {
+    const res = await fetch('/api/quy-doi/session');
+    const data = await res.json();
+    if (data.ok && data.has_data) {
+      renderQuyDoi(data);
+    }
+  } catch (_) {}
+})();
 </script>
 {% endblock %}

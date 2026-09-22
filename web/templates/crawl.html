@@ -985,19 +985,27 @@ document.getElementById('btnQuyDoi').addEventListener('click', () => {
   fetchQuyDoi(text);
 });
 
-function renderFinalResult(data) {
+function renderFinalResult(data, opts) {
+  opts = opts || {};
   lastCrawl = data;
   const box = document.getElementById('crawlResult');
+  const fromNote = data.from_disk
+    ? `<div class="alert alert-light border py-2 small mb-3">
+         Đang dùng dữ liệu đã lưu${data.saved_at ? ` (${esc(data.saved_at)})` : ''}.
+         Có thể cào lại nếu cần cập nhật.
+       </div>`
+    : '';
   box.innerHTML = `
     <div class="card panel-card mb-3">
       <div class="card-body">
+        ${fromNote}
         <div class="row g-3 mb-3">
           <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${data.schools}</div><div class="stat-lbl">Trường</div></div></div>
           <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${data.admissions}</div><div class="stat-lbl">Bản ghi ngành</div></div></div>
           <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${data.conversions}</div><div class="stat-lbl">Quy đổi chứng chỉ</div></div></div>
           <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${data.regulations}</div><div class="stat-lbl">Quy chế</div></div></div>
         </div>
-        <a class="btn btn-teal" href="${data.download_url}"><i class="bi bi-download"></i> Tải Excel ${esc(data.filename)}</a>
+        ${data.download_url ? `<a class="btn btn-teal" href="${data.download_url}"><i class="bi bi-download"></i> Tải Excel ${esc(data.filename || '')}</a>` : ''}
         <button class="btn btn-outline-teal ms-2" type="button" data-bs-toggle="modal" data-bs-target="#crawlModal">
           <i class="bi bi-table"></i> Xem lại bảng đã cào
         </button>
@@ -1007,11 +1015,21 @@ function renderFinalResult(data) {
 
   document.getElementById('chanceCard').classList.remove('d-none');
   document.getElementById('quyDoiCard').classList.remove('d-none');
-  document.getElementById('qdCodes').value = codesEl.value;
-  renderTrendChart(data.trends);
-  // Tự lấy bảng quy đổi cho các mã vừa cào
-  fetchQuyDoi(codesEl.value);
-  document.getElementById('chartCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('chartCard')?.classList.remove('d-none');
+  if (data.codes_text) {
+    codesEl.value = data.codes_text;
+    document.getElementById('qdCodes').value = data.codes_text;
+  } else if (!opts.skipCodes) {
+    document.getElementById('qdCodes').value = codesEl.value;
+  }
+  if (data.trends) renderTrendChart(data.trends);
+  // Tự lấy bảng quy đổi cho các mã vừa cào (bỏ qua khi khôi phục từ đĩa)
+  if (!opts.skipAutoQuyDoi) {
+    fetchQuyDoi(document.getElementById('qdCodes').value || codesEl.value);
+  }
+  if (!opts.silent) {
+    document.getElementById('chartCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function levelBadge(level, label) {
@@ -1238,5 +1256,26 @@ document.getElementById('btnCrawl').addEventListener('click', async () => {
     window.App.toast(e.message);
   }
 });
+
+/** Khôi phục dữ liệu đã lưu (không cần cào lại) */
+(async function restoreSavedSession() {
+  try {
+    const res = await fetch('/api/crawl/session');
+    const data = await res.json();
+    if (data.ok && data.has_data) {
+      renderFinalResult(data, { skipAutoQuyDoi: true, silent: true });
+    }
+  } catch (_) {}
+  try {
+    const res = await fetch('/api/quy-doi/session');
+    const data = await res.json();
+    if (data.ok && data.has_data) {
+      document.getElementById('quyDoiCard').classList.remove('d-none');
+      if ((data.summary && data.summary.schools) || (data.rows || []).length) {
+        renderQuyDoi(data);
+      }
+    }
+  } catch (_) {}
+})();
 </script>
 {% endblock %}

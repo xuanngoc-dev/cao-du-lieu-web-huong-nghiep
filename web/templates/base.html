@@ -32,6 +32,11 @@
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'quy_doi_page' %}active{% endif %}" href="{{ url_for('quy_doi_page') }}">③ Quy đổi điểm</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'datasets_page' %}active{% endif %}" href="{{ url_for('datasets_page') }}">
+              <i class="bi bi-database me-1"></i>Dữ liệu hệ thống
+            </a>
+          </li>
         </ul>
       </div>
     </div>
@@ -43,7 +48,7 @@
 
   <footer class="app-footer py-4 mt-auto">
     <div class="container small text-center text-muted">
-      Nguồn công khai: tuyensinh247 · Dữ liệu lưu tại <code>data/output/</code>
+      Nguồn công khai: tuyensinh247 · Lưu tại <code>data/output/</code> &amp; <code>data/datasets/</code>
     </div>
   </footer>
 

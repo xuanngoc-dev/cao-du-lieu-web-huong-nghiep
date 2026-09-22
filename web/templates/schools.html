@@ -320,5 +320,28 @@ function normalizeCodesDisplay(text) {
 }
 
 document.getElementById('codesBox').value = normalizeCodesDisplay(window.App.loadCodes());
+
+/** Tự hiện danh sách trường đã lưu (không cần tải lại) */
+(async function restoreSavedSchools() {
+  try {
+    const res = await fetch('/api/schools/saved');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.ok || !(data.schools || []).length) return;
+    allSchoolsCache = data.schools || [];
+    lastExcelUrl = data.excel_url || null;
+    const rows = renderSchools(allSchoolsCache);
+    if (lastExcelUrl) {
+      const btn = document.getElementById('btnDlExcel');
+      btn.href = lastExcelUrl;
+      btn.classList.remove('d-none');
+    }
+    document.getElementById('schoolMsg').innerHTML =
+      `<div class="alert alert-light border py-2 mb-0 small">
+         Đã nạp <b>${allSchoolsCache.length}</b> trường từ dữ liệu đã lưu · đang hiện <b>${rows.length}</b> theo bộ lọc.
+         Bấm «Tải danh sách» nếu cần làm mới từ web.
+       </div>`;
+  } catch (_) {}
+})();
 </script>
 {% endblock %}

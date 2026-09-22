@@ -50,6 +50,7 @@ from core.admission_chance import (
     list_school_majors,
 )
 from core.aggregator import METHOD_COLUMN_LABELS
+from core import dataset_store
 
 
 def _enrich_methods_for_school(code: str, quy_doi_methods: List) -> List:
@@ -70,7 +71,17 @@ def create_app() -> Flask:
     )
     app.config["SECRET_KEY"] = "huong-nghiep-tuyen-sinh"
     app.config["OUTPUT_DIR"] = os.path.join(ROOT, "data", "output")
+    app.config["DATASETS_DIR"] = os.path.join(ROOT, "data", "datasets")
     os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)
+    os.makedirs(app.config["DATASETS_DIR"], exist_ok=True)
+
+    # Nạp dữ liệu đã lưu (nếu có) để dùng lại sau khi restart
+    _saved_crawl = dataset_store.load_admissions(ROOT)
+    if _saved_crawl and (_saved_crawl.get("admissions") or []):
+        app.config["LAST_CRAWL"] = _saved_crawl
+    _saved_qd = dataset_store.load_quy_doi(ROOT)
+    if _saved_qd and (_saved_qd.get("rows") is not None or _saved_qd.get("images")):
+        app.config["LAST_QUY_DOI"] = _saved_qd
 
     @app.route("/")
     def index():
@@ -88,6 +99,9 @@ def create_app() -> Flask:
     def quy_doi_page():
         return render_template("quy_doi.html")
 
+    @app.route("/du-lieu")
+    def datasets_page():
+        return render_template("datasets.html")
     # ---------- API: Danh bạ trường ----------
     @app.post("/api/schools/fetch")
     def api_schools_fetch():
@@ -136,6 +150,7 @@ def create_app() -> Flask:
         try:
             directory.export_excel(output_path=excel_path, school_type=stype)
             directory.export_json(output_path=json_path, school_type=stype, also_update_config=True)
+            dataset_store.copy_schools_exports_stamp(ROOT)
         except Exception as e:
             return jsonify({"ok": False, "error": str(e)}), 500
 
@@ -191,7 +206,7 @@ def create_app() -> Flask:
 
     def _store_last_crawl(bundle: CrawlBundle, years: List[int], codes: List[str], meta: dict):
         admissions = [r.to_dict() for r in bundle.admissions]
-        app.config["LAST_CRAWL"] = {
+        payload = {
             "admissions": admissions,
             "conversions": [c.to_dict() for c in bundle.conversions],
             "regulations": [r.to_dict() for r in bundle.regulations],
@@ -199,8 +214,20 @@ def create_app() -> Flask:
             "codes": codes,
             **meta,
         }
+        app.config["LAST_CRAWL"] = payload
+        try:
+            dataset_store.save_admissions(ROOT, payload)
+        except OSError:
+            pass
         return admissions
 
+    def _store_last_quy_doi(payload: dict):
+        app.config["LAST_QUY_DOI"] = payload
+        try:
+            dataset_store.save_quy_doi(ROOT, payload)
+        except OSError:
+            pass
+        return payload
     # ---------- API: Cào điểm chuẩn ----------
     @app.post("/api/crawl")
     def api_crawl():
@@ -500,8 +527,8 @@ def create_app() -> Flask:
             methods_by_school[code] = _enrich_methods_for_school(code, from_table)
         payload["methods_by_school"] = methods_by_school
         payload["method_labels"] = METHOD_LABELS
-        # Cache nhẹ trong app để máy tính không cần gửi lại toàn bộ bảng
-        app.config["LAST_QUY_DOI"] = payload
+        # Cache + lưu đĩa để dùng lại không cần cào
+        _store_last_quy_doi(payload)
         return jsonify(payload)
 
     @app.post("/api/quy-doi/tinh")
@@ -554,7 +581,7 @@ def create_app() -> Flask:
                     code, list_methods_from_rows(part.get("rows") or [], code)
                 )
                 cached["methods_by_school"] = mbs
-            app.config["LAST_QUY_DOI"] = cached
+            _store_last_quy_doi(cached)
             rows = cached.get("rows") or []
 
         if mode == "certificate":
@@ -574,7 +601,7 @@ def create_app() -> Flask:
                         [c for c in (cached.get("certificate_conversions") or []) if c.get("ma_truong") != code]
                         + convs
                     )
-                    app.config["LAST_QUY_DOI"] = cached
+                    _store_last_quy_doi(cached)
             result = calculate_certificate_conversion(convs, code, score, cert_type)
             return jsonify({"ok": result.ok, "result": result.to_dict(), "error": result.message if not result.ok else ""})
 
@@ -595,17 +622,131 @@ def create_app() -> Flask:
             "error": result.message if not result.ok else "",
         })
 
+    # ---------- API: Dữ liệu hệ thống (lưu / nạp lại) ----------
+    @app.get("/api/datasets")
+    def api_datasets_list():
+        return jsonify({"ok": True, **dataset_store.list_system_datasets(ROOT)})
+
+    @app.get("/api/schools/saved")
+    def api_schools_saved():
+        data = dataset_store.load_schools(ROOT)
+        if not data or not (data.get("schools") or []):
+            return jsonify({"ok": False, "error": "Chưa có danh sách trường đã lưu."}), 404
+        schools = data.get("schools") or []
+        stats = {}
+        for r in schools:
+            lb = r.get("type_label") or "?"
+            stats[lb] = stats.get(lb, 0) + 1
+        codes = [r.get("code") for r in schools if r.get("code")]
+        return jsonify({
+            "ok": True,
+            "total": data.get("total") or len(schools),
+            "stats": stats,
+            "schools": schools,
+            "codes_text": format_codes_for_copy(codes, one_per_line=True),
+            "excel_url": url_for("download_file", name="danh_sach_ma_truong.xlsx")
+            if os.path.isfile(os.path.join(app.config["OUTPUT_DIR"], "danh_sach_ma_truong.xlsx"))
+            else "",
+            "txt_url": url_for("download_codes_txt"),
+            "from_disk": True,
+            "meta": dataset_store.file_meta(dataset_store.schools_json_path(ROOT)),
+        })
+
+    @app.get("/api/crawl/session")
+    def api_crawl_session():
+        cached = app.config.get("LAST_CRAWL") or {}
+        summary = dataset_store.summarize_admissions(cached)
+        if not summary.get("has_data"):
+            return jsonify({"ok": True, "has_data": False})
+        admissions = cached.get("admissions") or []
+        trends = build_trend_series(admissions)
+        codes = summary.get("codes") or []
+        return jsonify({
+            "ok": True,
+            "has_data": True,
+            "schools": summary.get("schools") or 0,
+            "admissions": summary.get("admissions") or 0,
+            "conversions": summary.get("conversions") or 0,
+            "regulations": summary.get("regulations") or 0,
+            "codes": codes,
+            "codes_text": format_codes_for_copy(codes, one_per_line=True),
+            "years": summary.get("years") or [],
+            "filename": summary.get("filename") or "",
+            "download_url": summary.get("download_url")
+            or (url_for("download_file", name=summary["filename"]) if summary.get("filename") else ""),
+            "logs": cached.get("logs") or [
+                f"Đã nạp dữ liệu đã lưu ({summary.get('saved_at') or 'đĩa'})."
+            ],
+            "trends": trends,
+            "saved_at": summary.get("saved_at") or "",
+            "from_disk": True,
+        })
+
+    @app.get("/api/quy-doi/session")
+    def api_quy_doi_session():
+        cached = app.config.get("LAST_QUY_DOI") or {}
+        summary = dataset_store.summarize_quy_doi(cached)
+        if not summary.get("has_data"):
+            return jsonify({"ok": True, "has_data": False})
+        payload = dict(cached)
+        payload["ok"] = True
+        payload["from_disk"] = True
+        if not payload.get("download_url") and payload.get("filename"):
+            payload["download_url"] = url_for("download_file", name=payload["filename"])
+        return jsonify(payload)
+
+    @app.post("/api/datasets/load")
+    def api_datasets_load():
+        """Nạp snapshot JSON vào bộ nhớ (LAST_CRAWL / LAST_QUY_DOI)."""
+        data = request.get_json(silent=True) or {}
+        kind = (data.get("kind") or "").strip().lower()
+        name = (data.get("name") or "").strip()
+        path = dataset_store.resolve_dataset_file(ROOT, name) if name else None
+
+        if kind in ("admissions", "crawl"):
+            payload = dataset_store.load_admissions(ROOT, path)
+            if not payload or not (payload.get("admissions") or []):
+                return jsonify({"ok": False, "error": "Không tìm thấy dữ liệu cào."}), 404
+            app.config["LAST_CRAWL"] = payload
+            # Cập nhật latest nếu nạp từ snapshot
+            if path and os.path.abspath(path) != os.path.abspath(dataset_store.admissions_latest_path(ROOT)):
+                try:
+                    dataset_store.save_admissions(ROOT, payload)
+                except OSError:
+                    pass
+            summary = dataset_store.summarize_admissions(payload)
+            trends = build_trend_series(payload.get("admissions") or [])
+            return jsonify({"ok": True, "kind": "admissions", "summary": summary, "trends": trends})
+
+        if kind in ("quy_doi", "quy-doi"):
+            payload = dataset_store.load_quy_doi(ROOT, path)
+            if not payload:
+                return jsonify({"ok": False, "error": "Không tìm thấy dữ liệu quy đổi."}), 404
+            app.config["LAST_QUY_DOI"] = payload
+            if path and os.path.abspath(path) != os.path.abspath(dataset_store.quy_doi_latest_path(ROOT)):
+                try:
+                    dataset_store.save_quy_doi(ROOT, payload)
+                except OSError:
+                    pass
+            return jsonify({
+                "ok": True,
+                "kind": "quy_doi",
+                "summary": dataset_store.summarize_quy_doi(payload),
+            })
+
+        return jsonify({"ok": False, "error": "kind phải là admissions hoặc quy_doi."}), 400
+
     @app.get("/download/<name>")
     def download_file(name: str):
-        # Chỉ cho phép file trong output dir
         safe = os.path.basename(name)
         path = os.path.join(app.config["OUTPUT_DIR"], safe)
         if not os.path.isfile(path):
+            path = dataset_store.resolve_dataset_file(ROOT, safe) or ""
+        if not path or not os.path.isfile(path):
             return "Không tìm thấy file.", 404
         return send_file(path, as_attachment=True, download_name=safe)
 
     return app
-
 
 app = create_app()
 

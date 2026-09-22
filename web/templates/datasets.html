@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% block title %}Dữ liệu hệ thống{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1"><i class="bi bi-database me-1"></i> Dữ liệu hệ thống</h1>
+    <p class="text-muted mb-0">
+      Dữ liệu đã lấy về được lưu trên máy để dùng lại — không cần cào lại mỗi lần mở trang.
+    </p>
+  </div>
+  <button type="button" class="btn btn-outline-teal btn-sm" id="btnRefreshDatasets">
+    <i class="bi bi-arrow-clockwise"></i> Làm mới
+  </button>
+</div>
+
+<div id="dsAlert" class="mb-3"></div>
+
+<ul class="nav nav-pills gap-1 mb-3" id="dsTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#dsSchools" type="button">
+      Danh sách trường
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#dsCrawl" type="button">
+      Dữ liệu cào
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#dsQuyDoi" type="button">
+      Quy đổi điểm
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <!-- Trường -->
+  <div class="tab-pane fade show active" id="dsSchools">
+    <div class="card panel-card mb-3">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
+          <div>
+            <h2 class="h5 mb-1">① Danh sách trường</h2>
+            <p class="small text-muted mb-0" id="dsSchoolsMeta">Đang tải…</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-sm btn-outline-teal d-none" id="dsSchoolsExcel" href="#">
+              <i class="bi bi-download"></i> Excel
+            </a>
+            <a class="btn btn-sm btn-teal" href="{{ url_for('schools_page') }}">Mở bước 1</a>
+          </div>
+        </div>
+        <div class="table-responsive table-scroll-x" style="max-height: 480px;">
+          <table class="table table-sm table-bordered table-hover align-middle mb-0 table-nowrap-head" id="dsSchoolsTable">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th>#</th><th>Mã</th><th>Tên trường</th><th>Loại</th><th>Website</th><th>Địa chỉ</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="small text-muted mt-2 mb-0 d-none" id="dsSchoolsEmpty">Chưa có danh sách trường đã lưu. Hãy tải ở bước ①.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cào -->
+  <div class="tab-pane fade" id="dsCrawl">
+    <div class="card panel-card mb-3">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
+          <div>
+            <h2 class="h5 mb-1">② Dữ liệu điểm chuẩn đã cào</h2>
+            <p class="small text-muted mb-0" id="dsCrawlMeta">Đang tải…</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-accent d-none" id="btnLoadCrawlLatest">
+              <i class="bi bi-box-arrow-in-down"></i> Nạp bản mới nhất
+            </button>
+            <a class="btn btn-sm btn-teal" href="{{ url_for('crawl_page') }}">Mở bước 2</a>
+          </div>
+        </div>
+        <div id="dsCrawlSummary" class="mb-3"></div>
+        <h3 class="h6">Snapshot JSON</h3>
+        <div class="table-responsive table-scroll-x mb-3">
+          <table class="table table-sm table-bordered align-middle mb-0 table-nowrap-head" id="dsCrawlSnaps">
+            <thead class="table-light"><tr>
+              <th>File</th><th>Kích thước</th><th>Cập nhật</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3 class="h6">File Excel đã xuất</h3>
+        <div class="table-responsive table-scroll-x">
+          <table class="table table-sm table-bordered align-middle mb-0 table-nowrap-head" id="dsCrawlExcels">
+            <thead class="table-light"><tr>
+              <th>File</th><th>Kích thước</th><th>Cập nhật</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quy đổi -->
+  <div class="tab-pane fade" id="dsQuyDoi">
+    <div class="card panel-card mb-3">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
+          <div>
+            <h2 class="h5 mb-1">③ Bảng quy đổi điểm</h2>
+            <p class="small text-muted mb-0" id="dsQuyDoiMeta">Đang tải…</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-accent d-none" id="btnLoadQuyDoiLatest">
+              <i class="bi bi-box-arrow-in-down"></i> Nạp bản mới nhất
+            </button>
+            <a class="btn btn-sm btn-teal" href="{{ url_for('quy_doi_page') }}">Mở bước 3</a>
+          </div>
+        </div>
+        <div id="dsQuyDoiSummary" class="mb-3"></div>
+        <h3 class="h6">Snapshot JSON</h3>
+        <div class="table-responsive table-scroll-x mb-3">
+          <table class="table table-sm table-bordered align-middle mb-0 table-nowrap-head" id="dsQuyDoiSnaps">
+            <thead class="table-light"><tr>
+              <th>File</th><th>Kích thước</th><th>Cập nhật</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3 class="h6">File Excel đã xuất</h3>
+        <div class="table-responsive table-scroll-x">
+          <table class="table table-sm table-bordered align-middle mb-0 table-nowrap-head" id="dsQuyDoiExcels">
+            <thead class="table-light"><tr>
+              <th>File</th><th>Kích thước</th><th>Cập nhật</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+
+function fileRows(files, {loadKind} = {}) {
+  if (!files || !files.length) {
+    return '<tr><td colspan="4" class="text-muted small">Chưa có file.</td></tr>';
+  }
+  return files.map(f => {
+    const loadBtn = loadKind
+      ? `<button type="button" class="btn btn-sm btn-outline-accent" data-load="${esc(loadKind)}" data-name="${esc(f.name)}">Nạp</button>`
+      : '';
+    return `<tr>
+      <td><code class="small">${esc(f.name)}</code></td>
+      <td>${esc(f.size_kb)} KB</td>
+      <td class="small text-nowrap">${esc(f.mtime)}</td>
+      <td class="text-nowrap">
+        <a class="btn btn-sm btn-outline-teal" href="/download/${encodeURIComponent(f.name)}">Tải</a>
+        ${loadBtn}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadKind(kind, name) {
+  const res = await fetch('/api/datasets/load', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ kind, name: name || '' }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Không nạp được');
+  return data;
+}
+
+async function refreshDatasets() {
+  const alert = document.getElementById('dsAlert');
+  alert.innerHTML = '';
+  try {
+    const res = await fetch('/api/datasets');
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Lỗi tải danh sách');
+
+    // —— Schools ——
+    const sch = data.schools || {};
+    const schMeta = document.getElementById('dsSchoolsMeta');
+    const schEmpty = document.getElementById('dsSchoolsEmpty');
+    const schExcel = document.getElementById('dsSchoolsExcel');
+    if (sch.has_data) {
+      schMeta.textContent = `${sch.total || 0} trường` +
+        (sch.json?.mtime ? ` · cập nhật ${sch.json.mtime}` : '') +
+        (sch.json ? ` · ${sch.json.size_kb} KB` : '');
+      schEmpty.classList.add('d-none');
+      if (sch.download_excel && sch.excel) {
+        schExcel.href = `/download/${encodeURIComponent(sch.download_excel)}`;
+        schExcel.classList.remove('d-none');
+      }
+      const schoolsRes = await fetch('/api/schools/saved');
+      const schoolsData = await schoolsRes.json();
+      const tbody = document.querySelector('#dsSchoolsTable tbody');
+      if (schoolsData.ok) {
+        tbody.innerHTML = (schoolsData.schools || []).map((s, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td><code>${esc(s.code)}</code></td>
+            <td>${esc(s.name || s.short_name || '')}</td>
+            <td class="small">${esc(s.type_label || s.type || '')}</td>
+            <td class="small">${s.website ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">${esc(s.website)}</a>` : '—'}</td>
+            <td class="small">${esc(s.dia_chi || '')}</td>
+          </tr>`).join('');
+      }
+    } else {
+      schMeta.textContent = 'Chưa có dữ liệu đã lưu.';
+      schEmpty.classList.remove('d-none');
+      document.querySelector('#dsSchoolsTable tbody').innerHTML = '';
+      schExcel.classList.add('d-none');
+    }
+
+    // —— Crawl ——
+    const adm = data.admissions || {};
+    const crawlMeta = document.getElementById('dsCrawlMeta');
+    const btnLoadCrawl = document.getElementById('btnLoadCrawlLatest');
+    if (adm.has_data) {
+      crawlMeta.textContent =
+        `${adm.schools || 0} trường · ${adm.admissions || 0} bản ghi ngành` +
+        (adm.saved_at ? ` · lưu ${adm.saved_at}` : '') +
+        (adm.latest?.mtime ? ` · file ${adm.latest.mtime}` : '');
+      btnLoadCrawl.classList.remove('d-none');
+      document.getElementById('dsCrawlSummary').innerHTML = `
+        <div class="row g-2">
+          <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(adm.schools)}</div><div class="stat-lbl">Trường</div></div></div>
+          <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(adm.admissions)}</div><div class="stat-lbl">Ngành</div></div></div>
+          <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(adm.conversions)}</div><div class="stat-lbl">Quy đổi CC</div></div></div>
+          <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(adm.regulations)}</div><div class="stat-lbl">Quy chế</div></div></div>
+        </div>
+        <p class="small text-muted mt-2 mb-0">Mã: <code>${esc((adm.codes || []).join(', '))}</code></p>`;
+    } else {
+      crawlMeta.textContent = 'Chưa có dữ liệu cào đã lưu. Hãy chạy bước ②.';
+      btnLoadCrawl.classList.add('d-none');
+      document.getElementById('dsCrawlSummary').innerHTML = '';
+    }
+    document.querySelector('#dsCrawlSnaps tbody').innerHTML = fileRows(adm.snapshots, { loadKind: 'admissions' });
+    document.querySelector('#dsCrawlExcels tbody').innerHTML = fileRows(adm.excels);
+
+    // —— Quy đổi ——
+    const qd = data.quy_doi || {};
+    const qdMeta = document.getElementById('dsQuyDoiMeta');
+    const btnLoadQd = document.getElementById('btnLoadQuyDoiLatest');
+    if (qd.has_data) {
+      qdMeta.textContent =
+        `${qd.schools || 0} trường · ${qd.rows || 0} dòng bảng` +
+        (qd.saved_at ? ` · lưu ${qd.saved_at}` : '');
+      btnLoadQd.classList.remove('d-none');
+      document.getElementById('dsQuyDoiSummary').innerHTML = `
+        <div class="row g-2">
+          <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(qd.schools)}</div><div class="stat-lbl">Trường</div></div></div>
+          <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(qd.rows)}</div><div class="stat-lbl">Dòng</div></div></div>
+          <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(qd.notes)}</div><div class="stat-lbl">Ghi chú</div></div></div>
+          <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(qd.images)}</div><div class="stat-lbl">Ảnh</div></div></div>
+        </div>
+        <p class="small text-muted mt-2 mb-0">Mã: <code>${esc((qd.codes || []).join(', '))}</code></p>`;
+    } else {
+      qdMeta.textContent = 'Chưa có bảng quy đổi đã lưu. Hãy chạy bước ③ (hoặc lấy quy đổi ở bước ②).';
+      btnLoadQd.classList.add('d-none');
+      document.getElementById('dsQuyDoiSummary').innerHTML = '';
+    }
+    document.querySelector('#dsQuyDoiSnaps tbody').innerHTML = fileRows(qd.snapshots, { loadKind: 'quy_doi' });
+    document.querySelector('#dsQuyDoiExcels tbody').innerHTML = fileRows(qd.excels);
+  } catch (e) {
+    alert.innerHTML = `<div class="alert alert-danger mb-0">${esc(e.message)}</div>`;
+  }
+}
+
+document.getElementById('btnRefreshDatasets').addEventListener('click', refreshDatasets);
+
+document.getElementById('btnLoadCrawlLatest').addEventListener('click', async () => {
+  try {
+    await loadKind('admissions', '');
+    window.App.toast('Đã nạp dữ liệu cào — mở bước ② để dùng.');
+    refreshDatasets();
+  } catch (e) {
+    window.App.toast(e.message);
+  }
+});
+
+document.getElementById('btnLoadQuyDoiLatest').addEventListener('click', async () => {
+  try {
+    await loadKind('quy_doi', '');
+    window.App.toast('Đã nạp bảng quy đổi — mở bước ③ để dùng.');
+    refreshDatasets();
+  } catch (e) {
+    window.App.toast(e.message);
+  }
+});
+
+document.body.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-load]');
+  if (!btn) return;
+  try {
+    await loadKind(btn.dataset.load, btn.dataset.name || '');
+    window.App.toast(`Đã nạp ${btn.dataset.name || 'bản mới nhất'}`);
+    refreshDatasets();
+  } catch (err) {
+    window.App.toast(err.message);
+  }
+});
+
+refreshDatasets();
+</script>
+{% endblock %}
