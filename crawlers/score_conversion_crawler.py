@@ -22,7 +22,7 @@ from html import unescape
 
 import requests
 from bs4 import BeautifulSoup, Tag
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
@@ -974,6 +974,193 @@ class ScoreConversionCrawler:
 
         wb.save(output_path)
         return output_path
+
+    @staticmethod
+    def _cell_str(v: Any) -> str:
+        if v is None:
+            return ""
+        return str(v).strip()
+
+    @staticmethod
+    def _cell_year(v: Any) -> Optional[int]:
+        if v is None or v == "":
+            return None
+        try:
+            return int(float(v))
+        except (TypeError, ValueError):
+            return None
+
+    def import_excel(self, path: str, progress_cb=None) -> Dict[str, Any]:
+        """
+        Đọc lại file Excel đã xuất → payload API (rows/notes/images/ranges/…).
+        progress_cb(pct: int, message: str) tuỳ chọn — báo tiến độ 0–100.
+        """
+        def _prog(pct: int, msg: str) -> None:
+            if callable(progress_cb):
+                try:
+                    progress_cb(max(0, min(100, int(pct))), msg)
+                except Exception:
+                    pass
+
+        if not path or not os.path.isfile(path):
+            raise FileNotFoundError("Không tìm thấy file Excel.")
+        _prog(5, "Đang mở file Excel…")
+        try:
+            wb = load_workbook(path, read_only=True, data_only=True)
+        except Exception as e:
+            raise ValueError(f"File Excel không đọc được: {e}") from e
+
+        rows: List[Dict[str, Any]] = []
+        notes: List[Dict[str, Any]] = []
+        images: List[Dict[str, Any]] = []
+        ranges: List[Dict[str, Any]] = []
+        school_results: List[Dict[str, Any]] = []
+
+        if "Bang_Quy_Doi" in wb.sheetnames:
+            _prog(18, "Đang đọc bảng quy đổi…")
+            ws = wb["Bang_Quy_Doi"]
+            headers = [self._cell_str(c) for c in next(ws.iter_rows(min_row=1, max_row=1, values_only=True))]
+            base = {"Mã trường", "Tên trường", "Tiêu đề bảng", "STT", "Năm", "URL nguồn"}
+            dyn = [h for h in headers if h and h not in base]
+            n = 0
+            for vals in ws.iter_rows(min_row=2, values_only=True):
+                if not vals or not any(vals):
+                    continue
+                by = {headers[i]: vals[i] if i < len(vals) else None for i in range(len(headers))}
+                ma = self._cell_str(by.get("Mã trường")).upper()
+                if not ma or ma.startswith("Không có bảng"):
+                    continue
+                cot = {
+                    h: self._cell_str(by.get(h))
+                    for h in dyn
+                    if self._cell_str(by.get(h))
+                }
+                rows.append({
+                    "ma_truong": ma,
+                    "ten_truong": self._cell_str(by.get("Tên trường")),
+                    "tieu_de_bang": self._cell_str(by.get("Tiêu đề bảng")),
+                    "stt": self._cell_str(by.get("STT")),
+                    "cot_gia_tri": cot,
+                    "nam": self._cell_year(by.get("Năm")),
+                    "url_nguon": self._cell_str(by.get("URL nguồn")),
+                    "nguon": "Excel tái sử dụng",
+                })
+                n += 1
+                if n % 200 == 0:
+                    _prog(min(40, 18 + n // 50), f"Đang đọc bảng quy đổi… ({n} dòng)")
+            _prog(40, f"Đã đọc {len(rows)} dòng bảng quy đổi")
+
+        if "Ghi_Chu_Cong_Thuc" in wb.sheetnames:
+            _prog(45, "Đang đọc ghi chú…")
+            ws = wb["Ghi_Chu_Cong_Thuc"]
+            for vals in ws.iter_rows(min_row=2, values_only=True):
+                if not vals or not vals[0]:
+                    continue
+                notes.append({
+                    "ma_truong": self._cell_str(vals[0]).upper(),
+                    "ten_truong": self._cell_str(vals[1] if len(vals) > 1 else ""),
+                    "tieu_de": self._cell_str(vals[2] if len(vals) > 2 else ""),
+                    "noi_dung": self._cell_str(vals[3] if len(vals) > 3 else ""),
+                    "nam": self._cell_year(vals[4] if len(vals) > 4 else None),
+                    "url_nguon": self._cell_str(vals[5] if len(vals) > 5 else ""),
+                    "nguon": "Excel tái sử dụng",
+                })
+            _prog(52, f"Đã đọc {len(notes)} ghi chú")
+
+        if "Anh_Quy_Doi" in wb.sheetnames:
+            _prog(56, "Đang đọc ảnh…")
+            ws = wb["Anh_Quy_Doi"]
+            for vals in ws.iter_rows(min_row=2, values_only=True):
+                if not vals or not vals[0]:
+                    continue
+                images.append({
+                    "ma_truong": self._cell_str(vals[0]).upper(),
+                    "ten_truong": self._cell_str(vals[1] if len(vals) > 1 else ""),
+                    "mo_ta": self._cell_str(vals[2] if len(vals) > 2 else ""),
+                    "url_anh": self._cell_str(vals[3] if len(vals) > 3 else ""),
+                    "nam": self._cell_year(vals[4] if len(vals) > 4 else None),
+                    "url_nguon": self._cell_str(vals[5] if len(vals) > 5 else ""),
+                })
+            _prog(62, f"Đã đọc {len(images)} ảnh")
+
+        if "Khoang_Diem_Cong_Cu" in wb.sheetnames:
+            _prog(66, "Đang đọc khoảng điểm…")
+            ws = wb["Khoang_Diem_Cong_Cu"]
+            for vals in ws.iter_rows(min_row=2, values_only=True):
+                if not vals or not vals[0]:
+                    continue
+                ranges.append({
+                    "ma_truong": self._cell_str(vals[0]).upper(),
+                    "ten_truong": self._cell_str(vals[1] if len(vals) > 1 else ""),
+                    "phuong_thuc": self._cell_str(vals[2] if len(vals) > 2 else ""),
+                    "khoang_diem": self._cell_str(vals[3] if len(vals) > 3 else ""),
+                    "nam": self._cell_year(vals[4] if len(vals) > 4 else None),
+                    "url_nguon": self._cell_str(vals[5] if len(vals) > 5 else ""),
+                })
+            _prog(72, f"Đã đọc {len(ranges)} khoảng điểm")
+
+        if "Tom_Tat_Theo_Truong" in wb.sheetnames:
+            _prog(76, "Đang đọc tóm tắt trường…")
+            ws = wb["Tom_Tat_Theo_Truong"]
+            for vals in ws.iter_rows(min_row=2, values_only=True):
+                if not vals or not vals[0]:
+                    continue
+                code = self._cell_str(vals[0]).upper()
+                school_results.append({
+                    "code": code,
+                    "name": self._cell_str(vals[1] if len(vals) > 1 else ""),
+                    "ok": self._cell_str(vals[2] if len(vals) > 2 else "") in ("✓", "OK", "1", "True", "true"),
+                    "row_count": int(vals[3] or 0) if len(vals) > 3 and str(vals[3]).isdigit() else 0,
+                    "notes": int(vals[4] or 0) if len(vals) > 4 and str(vals[4]).replace(".0", "").isdigit() else 0,
+                    "images": int(vals[5] or 0) if len(vals) > 5 and str(vals[5]).replace(".0", "").isdigit() else 0,
+                    "ranges": int(vals[6] or 0) if len(vals) > 6 and str(vals[6]).replace(".0", "").isdigit() else 0,
+                    "url": self._cell_str(vals[7] if len(vals) > 7 else ""),
+                    "error": self._cell_str(vals[8] if len(vals) > 8 else ""),
+                })
+            _prog(82, f"Đã đọc {len(school_results)} trường")
+
+        wb.close()
+        _prog(85, "Đang tổng hợp dữ liệu…")
+
+        if not school_results:
+            codes_order: List[str] = []
+            names: Dict[str, str] = {}
+            for r in rows + notes + images + ranges:
+                c = (r.get("ma_truong") or "").upper()
+                if c and c not in names:
+                    codes_order.append(c)
+                    names[c] = r.get("ten_truong") or c
+            for c in codes_order:
+                school_results.append({
+                    "code": c,
+                    "name": names.get(c, c),
+                    "ok": True,
+                    "row_count": sum(1 for r in rows if r.get("ma_truong") == c),
+                    "notes": sum(1 for n in notes if n.get("ma_truong") == c),
+                    "images": sum(1 for i in images if i.get("ma_truong") == c),
+                    "ranges": sum(1 for g in ranges if g.get("ma_truong") == c),
+                    "url": "",
+                    "error": "",
+                })
+
+        if not (rows or notes or images or ranges or school_results):
+            raise ValueError("File Excel không có dữ liệu quy đổi hợp lệ.")
+
+        _prog(90, "Đã đọc xong Excel")
+        return {
+            "rows": rows,
+            "notes": notes,
+            "images": images,
+            "ranges": ranges,
+            "school_results": school_results,
+            "summary": {
+                "schools": len(school_results),
+                "rows": len(rows),
+                "notes": len(notes),
+                "images": len(images),
+                "ranges": len(ranges),
+            },
+        }
 
     def bundle_to_api_dict(self, bundle: MethodConversionBundle) -> Dict[str, Any]:
         """Serialize cho API/UI."""

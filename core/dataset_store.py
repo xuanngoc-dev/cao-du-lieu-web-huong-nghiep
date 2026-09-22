@@ -16,6 +16,7 @@ from __future__ import annotations
 import glob
 import json
 import os
+import re
 import shutil
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -114,8 +115,18 @@ def load_admissions(root: str, path: Optional[str] = None) -> Optional[Dict[str,
     return load_json(path or admissions_latest_path(root))
 
 
-def save_quy_doi(root: str, payload: Dict[str, Any]) -> Dict[str, str]:
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+def save_quy_doi(
+    root: str,
+    payload: Dict[str, Any],
+    snapshot_ts: Optional[str] = None,
+) -> Dict[str, str]:
+    """
+    Lưu latest + snapshot JSON.
+    snapshot_ts: tuỳ chọn dạng YYYYMMDD_HHMMSS (vd. khớp tên file Excel tái sử dụng).
+    """
+    ts = (snapshot_ts or "").strip() or datetime.now().strftime("%Y%m%d_%H%M%S")
+    if not re.fullmatch(r"\d{8}_\d{6}", ts):
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     data = dict(payload)
     data["_saved_at"] = datetime.now().isoformat(timespec="seconds")
     data["_kind"] = "quy_doi"
@@ -125,7 +136,7 @@ def save_quy_doi(root: str, payload: Dict[str, Any]) -> Dict[str, str]:
     snap = os.path.join(snap_dir, f"quy_doi_{ts}.json")
     _atomic_write_json(latest, data)
     _atomic_write_json(snap, data)
-    return {"latest": latest, "snapshot": snap}
+    return {"latest": latest, "snapshot": snap, "snapshot_name": os.path.basename(snap)}
 
 
 def load_quy_doi(root: str, path: Optional[str] = None) -> Optional[Dict[str, Any]]:

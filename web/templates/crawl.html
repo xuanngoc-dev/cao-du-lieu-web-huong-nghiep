@@ -385,6 +385,22 @@ function hideModalProgress() {
   document.getElementById('crawlModalProgressWrap').classList.add('d-none');
 }
 
+function unlockCrawlModal() {
+  document.getElementById('crawlModalClose').disabled = false;
+  document.getElementById('crawlModalDoneBtn').disabled = false;
+}
+
+function setCrawlModalBusy(busy, titleHtml, status) {
+  document.getElementById('crawlModalClose').disabled = !!busy;
+  document.getElementById('crawlModalDoneBtn').disabled = !!busy;
+  if (titleHtml != null) {
+    document.getElementById('crawlModalLabel').innerHTML = titleHtml;
+  }
+  if (status != null) {
+    document.getElementById('crawlModalStatus').textContent = status;
+  }
+}
+
 function showModalSuccess(msg) {
   const el = document.getElementById('crawlModalSuccess');
   el.classList.remove('d-none');
@@ -486,10 +502,11 @@ document.getElementById('btnCrawl').addEventListener('click', async () => {
 
   const modalEl = document.getElementById('crawlModal');
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-  document.getElementById('crawlModalLabel').innerHTML =
-    '<i class="bi bi-cloud-download me-1"></i> Đang Thu thập dữ liệu…';
-  document.getElementById('crawlModalClose').disabled = true;
-  document.getElementById('crawlModalDoneBtn').disabled = true;
+  setCrawlModalBusy(
+    true,
+    '<i class="bi bi-cloud-download me-1"></i> Đang Thu thập dữ liệu…',
+    'Bắt đầu…'
+  );
   resetCrawlModalTable();
   setModalProgress(0, 1, 'Bắt đầu…', { admissions: 0, conversions: 0, regulations: 0 });
   setPageProgress(0, 'Bắt đầu thu thập dữ liệu…');
@@ -497,6 +514,7 @@ document.getElementById('btnCrawl').addEventListener('click', async () => {
   modal.show();
 
   let finalPayload = null;
+  let schoolsDone = false;
   try {
     const res = await fetch('/api/crawl/stream', {
       method: 'POST',
@@ -545,6 +563,29 @@ document.getElementById('btnCrawl').addEventListener('click', async () => {
           logEl.textContent += (logEl.textContent ? '\n' : '') + (evt.log || '');
           logEl.scrollTop = logEl.scrollHeight;
           if (evt.preview && evt.preview.length) appendPreviewRows(evt.preview);
+          if (evt.total && evt.index >= evt.total) {
+            schoolsDone = true;
+            setCrawlModalBusy(
+              false,
+              '<i class="bi bi-hourglass-split me-1"></i> Đang hoàn tất…',
+              'Đã lấy xong các trường — đang xuất Excel / lưu dữ liệu…'
+            );
+            setPageProgress(97, 'Đang xuất Excel / lưu dữ liệu…');
+          }
+        } else if (evt.type === 'finalize') {
+          schoolsDone = true;
+          setCrawlModalBusy(
+            false,
+            '<i class="bi bi-hourglass-split me-1"></i> Đang hoàn tất…',
+            evt.message || 'Đang xuất Excel / lưu dữ liệu…'
+          );
+          if (evt.totals) {
+            setModalProgress(1, 1, evt.message || 'Đang hoàn tất…', evt.totals);
+          } else {
+            document.getElementById('crawlModalStatus').textContent =
+              evt.message || 'Đang hoàn tất…';
+          }
+          setPageProgress(98, evt.message || 'Đang hoàn tất…');
         } else if (evt.type === 'done') {
           finalPayload = evt;
           setModalProgress(evt.schools || evt.total || 1, evt.schools || evt.total || 1, '100% — hoàn tất', {
@@ -567,28 +608,33 @@ document.getElementById('btnCrawl').addEventListener('click', async () => {
     }
     hideModalProgress();
     hidePageProgress();
-    document.getElementById('crawlModalLabel').innerHTML =
-      '<i class="bi bi-check2-circle me-1 text-teal"></i> Đã tổng hợp xong';
-    document.getElementById('crawlModalStatus').textContent = 'Thu thập dữ liệu hoàn tất';
+    setCrawlModalBusy(
+      false,
+      '<i class="bi bi-check2-circle me-1 text-teal"></i> Đã tổng hợp xong',
+      'Thu thập dữ liệu hoàn tất'
+    );
     showModalSuccess(
       `Đã thu thập xong dữ liệu — ${finalPayload.schools || 0} trường, `
       + `${finalPayload.admissions || 0} ngành.`
     );
-    document.getElementById('crawlModalClose').disabled = false;
-    document.getElementById('crawlModalDoneBtn').disabled = false;
     renderFinalResult(finalPayload);
     window.App.toast('Đã thu thập xong dữ liệu — đã lưu trên máy.');
   } catch (e) {
     hideModalProgress();
     hidePageProgress();
-    document.getElementById('crawlModalStatus').textContent = e.message;
+    setCrawlModalBusy(
+      false,
+      schoolsDone
+        ? '<i class="bi bi-exclamation-triangle me-1"></i> Lỗi khi hoàn tất'
+        : '<i class="bi bi-x-circle me-1"></i> Thu thập lỗi',
+      e.message
+    );
     document.getElementById('crawlResult').innerHTML =
       `<div class="alert alert-danger">${esc(e.message)}</div>`;
-    document.getElementById('crawlModalClose').disabled = false;
-    document.getElementById('crawlModalDoneBtn').disabled = false;
     window.App.toast(e.message);
   } finally {
     btn.disabled = false;
+    unlockCrawlModal();
   }
 });
 

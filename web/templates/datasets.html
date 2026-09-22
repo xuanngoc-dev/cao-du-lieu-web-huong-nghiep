@@ -21,6 +21,18 @@
 
 <div id="dsAlert" class="mb-3"></div>
 
+<div id="dsReuseProgress" class="d-none mb-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+    <div class="small text-muted" id="dsReuseProgressStatus">Đang tái sử dụng…</div>
+    <div class="small" id="dsReuseProgressPct">0%</div>
+  </div>
+  <div class="progress" style="height: 1.1rem;">
+    <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent"
+      id="dsReuseProgressBar" role="progressbar" style="width:0%"
+      aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+  </div>
+</div>
+
 <ul class="nav nav-pills gap-1 mb-3" id="dsTabs" role="tablist">
   <li class="nav-item" role="presentation">
     <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#dsSchools" type="button">
@@ -162,24 +174,24 @@
   </div>
 </div>
 
-<!-- Confirm xoá -->
+<!-- Confirm hành động -->
 <div class="modal fade" id="dsConfirmModal" tabindex="-1" aria-labelledby="dsConfirmModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h2 class="modal-title h5 text-danger" id="dsConfirmModalLabel">
-          <i class="bi bi-exclamation-triangle me-1"></i> Xác nhận xoá
+        <h2 class="modal-title h5" id="dsConfirmModalLabel">
+          <i class="bi bi-exclamation-triangle me-1"></i> <span id="dsConfirmTitleText">Xác nhận</span>
         </h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
       </div>
       <div class="modal-body pt-2">
         <p class="mb-2" id="dsConfirmMessage"></p>
-        <p class="small text-muted mb-0">Thao tác này không hoàn tác được.</p>
+        <p class="small text-muted mb-0" id="dsConfirmHint">Thao tác này không hoàn tác được.</p>
       </div>
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
         <button type="button" class="btn btn-danger" id="dsConfirmOk">
-          <i class="bi bi-trash3"></i> Xoá
+          <i class="bi bi-trash3" id="dsConfirmOkIcon"></i> <span id="dsConfirmOkText">Xoá</span>
         </button>
       </div>
     </div>
@@ -202,13 +214,18 @@ const CLEAR_LABELS = {
   all: 'TOÀN BỘ dữ liệu đã lưu',
 };
 
-function fileRows(files, {loadKind} = {}) {
+function fileRows(files, {loadKind, reuseKind} = {}) {
   if (!files || !files.length) {
     return '<tr><td colspan="4" class="text-muted small">Chưa có file.</td></tr>';
   }
   return files.map(f => {
     const loadBtn = loadKind
       ? `<button type="button" class="btn btn-sm btn-outline-accent" data-load="${esc(loadKind)}" data-name="${esc(f.name)}">Nạp</button>`
+      : '';
+    const reuseBtn = reuseKind
+      ? `<button type="button" class="btn btn-sm btn-outline-accent" data-reuse="${esc(reuseKind)}" data-name="${esc(f.name)}" title="Áp dụng lại dữ liệu từ file này">
+           <i class="bi bi-arrow-repeat"></i> Tái sử dụng
+         </button>`
       : '';
     return `<tr>
       <td><code class="small">${esc(f.name)}</code></td>
@@ -217,6 +234,7 @@ function fileRows(files, {loadKind} = {}) {
       <td class="text-nowrap">
         <a class="btn btn-sm btn-outline-teal" href="/download/${encodeURIComponent(f.name)}">Tải</a>
         ${loadBtn}
+        ${reuseBtn}
         <button type="button" class="btn btn-sm btn-outline-danger" data-delete-file="${esc(f.name)}"
           title="Xoá file này">
           <i class="bi bi-trash3"></i>
@@ -259,11 +277,99 @@ async function deleteFile(name) {
   return data;
 }
 
-function confirmDelete(messageHtml) {
+async function reuseFile(kind, name) {
+  setReuseProgress(0, `Bắt đầu tái sử dụng ${name}…`);
+  const res = await fetch('/api/datasets/reuse', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ kind, name }),
+  });
+  if (!res.ok) {
+    let err = `HTTP ${res.status}`;
+    try { err = (await res.json()).error || err; } catch (_) {}
+    hideReuseProgress();
+    throw new Error(err);
+  }
+  if (!res.body) {
+    hideReuseProgress();
+    throw new Error('Trình duyệt không hỗ trợ stream.');
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let finalPayload = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      let evt;
+      try { evt = JSON.parse(line); } catch (_) { continue; }
+      if (evt.type === 'progress') {
+        setReuseProgress(evt.pct || 0, evt.message || '');
+      } else if (evt.type === 'done') {
+        finalPayload = evt;
+        if (evt.ok) setReuseProgress(100, 'Hoàn tất');
+      }
+    }
+  }
+
+  if (!finalPayload || !finalPayload.ok) {
+    hideReuseProgress();
+    throw new Error((finalPayload && finalPayload.error) || 'Không tái sử dụng được');
+  }
+  return finalPayload;
+}
+
+function setReuseProgress(pct, status) {
+  const wrap = document.getElementById('dsReuseProgress');
+  const bar = document.getElementById('dsReuseProgressBar');
+  const statusEl = document.getElementById('dsReuseProgressStatus');
+  const pctEl = document.getElementById('dsReuseProgressPct');
+  const p = Math.max(0, Math.min(100, Math.round(pct)));
+  wrap.classList.remove('d-none');
+  bar.style.width = p + '%';
+  bar.textContent = p + '%';
+  bar.setAttribute('aria-valuenow', String(p));
+  pctEl.textContent = p + '%';
+  statusEl.textContent = status || '';
+}
+
+function hideReuseProgress() {
+  document.getElementById('dsReuseProgress').classList.add('d-none');
+}
+
+function confirmAction(messageHtml, {
+  title = 'Xác nhận',
+  okText = 'Đồng ý',
+  okIcon = 'bi-check2',
+  okClass = 'btn-teal',
+  hint = '',
+  danger = false,
+} = {}) {
   const modalEl = document.getElementById('dsConfirmModal');
   const msgEl = document.getElementById('dsConfirmMessage');
   const okBtn = document.getElementById('dsConfirmOk');
+  const titleText = document.getElementById('dsConfirmTitleText');
+  const okTextEl = document.getElementById('dsConfirmOkText');
+  const okIconEl = document.getElementById('dsConfirmOkIcon');
+  const hintEl = document.getElementById('dsConfirmHint');
+  const labelEl = document.getElementById('dsConfirmModalLabel');
+
+  titleText.textContent = title;
   msgEl.innerHTML = messageHtml;
+  okTextEl.textContent = okText;
+  okIconEl.className = `bi ${okIcon}`;
+  hintEl.textContent = hint;
+  hintEl.classList.toggle('d-none', !hint);
+  labelEl.classList.toggle('text-danger', !!danger);
+  okBtn.className = `btn ${okClass}`;
+
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
   return new Promise((resolve) => {
@@ -286,6 +392,17 @@ function confirmDelete(messageHtml) {
   });
 }
 
+function confirmDelete(messageHtml) {
+  return confirmAction(messageHtml, {
+    title: 'Xác nhận xoá',
+    okText: 'Xoá',
+    okIcon: 'bi-trash3',
+    okClass: 'btn-danger',
+    hint: 'Thao tác này không hoàn tác được.',
+    danger: true,
+  });
+}
+
 function confirmClear(kind) {
   const label = CLEAR_LABELS[kind] || kind;
   return confirmDelete(`Bạn chắc chắn muốn xoá <strong>${esc(label)}</strong>?`);
@@ -293,6 +410,21 @@ function confirmClear(kind) {
 
 function confirmDeleteFile(name) {
   return confirmDelete(`Xoá file <code>${esc(name)}</code>?`);
+}
+
+function confirmReuseQuyDoi(name) {
+  return confirmAction(
+    `Áp dụng lại dữ liệu quy đổi từ file <code>${esc(name)}</code>?<br>
+     <span class="small text-muted">Bản đang dùng sẽ được thay bằng dữ liệu từ file này.</span>`,
+    {
+      title: 'Tái sử dụng Excel',
+      okText: 'Áp dụng',
+      okIcon: 'bi-arrow-repeat',
+      okClass: 'btn-accent',
+      hint: 'Dữ liệu sẽ được nạp vào bộ nhớ và lưu làm bản mới nhất.',
+      danger: false,
+    }
+  );
 }
 
 async function refreshDatasets() {
@@ -396,7 +528,7 @@ async function refreshDatasets() {
     }
     btnClearQd.classList.toggle('d-none', !qdHasFiles);
     document.querySelector('#dsQuyDoiSnaps tbody').innerHTML = fileRows(qd.snapshots, { loadKind: 'quy_doi' });
-    document.querySelector('#dsQuyDoiExcels tbody').innerHTML = fileRows(qd.excels);
+    document.querySelector('#dsQuyDoiExcels tbody').innerHTML = fileRows(qd.excels, { reuseKind: 'quy_doi' });
   } catch (e) {
     alert.innerHTML = `<div class="alert alert-danger mb-0">${esc(e.message)}</div>`;
   }
@@ -459,6 +591,28 @@ document.body.addEventListener('click', async (e) => {
       window.App.toast(`Đã xoá ${name}`);
       refreshDatasets();
     } catch (err) {
+      window.App.toast(err.message);
+    }
+    return;
+  }
+
+  const reuseBtn = e.target.closest('[data-reuse]');
+  if (reuseBtn) {
+    const kind = reuseBtn.dataset.reuse;
+    const name = reuseBtn.dataset.name;
+    if (!(await confirmReuseQuyDoi(name))) return;
+    try {
+      const data = await reuseFile(kind, name);
+      const s = data.summary || {};
+      const snapNote = data.snapshot ? ` · snapshot ${data.snapshot}` : '';
+      setReuseProgress(100, `Đã áp dụng — ${s.schools || 0} trường, ${s.rows || 0} dòng${snapNote}`);
+      window.App.toast(
+        `Đã áp dụng ${name} — ${s.schools || 0} trường, ${s.rows || 0} dòng${snapNote}.`
+      );
+      await refreshDatasets();
+      setTimeout(hideReuseProgress, 1200);
+    } catch (err) {
+      hideReuseProgress();
       window.App.toast(err.message);
     }
     return;

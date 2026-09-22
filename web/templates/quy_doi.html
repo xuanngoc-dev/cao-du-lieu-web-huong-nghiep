@@ -74,12 +74,14 @@
       <div class="tab-pane fade show active" id="calcMethodPane">
         <div class="row g-3 align-items-end">
           <div class="col-md-3">
-            <label class="form-label">Trường</label>
-            <select id="calcSchool" class="form-select"></select>
+            <label class="form-label" for="calcSchool">Trường <span class="text-danger">*</span></label>
+            <select id="calcSchool" class="form-select js-multi-select" required
+              data-placeholder="Chọn trường"></select>
           </div>
           <div class="col-md-3">
-            <label class="form-label">Điểm theo phương thức</label>
-            <select id="calcMethod" class="form-select"></select>
+            <label class="form-label" for="calcMethod">Điểm theo phương thức</label>
+            <select id="calcMethod" class="form-select js-multi-select"
+              data-placeholder="Chọn phương thức"></select>
           </div>
           <div class="col-md-3">
             <label class="form-label">Nhập điểm</label>
@@ -100,12 +102,14 @@
       <div class="tab-pane fade" id="calcCertPane">
         <div class="row g-3 align-items-end">
           <div class="col-md-3">
-            <label class="form-label">Trường</label>
-            <select id="calcCertSchool" class="form-select"></select>
+            <label class="form-label" for="calcCertSchool">Trường <span class="text-danger">*</span></label>
+            <select id="calcCertSchool" class="form-select js-multi-select" required
+              data-placeholder="Chọn trường"></select>
           </div>
           <div class="col-md-3">
-            <label class="form-label">Loại chứng chỉ</label>
-            <select id="calcCertType" class="form-select">
+            <label class="form-label" for="calcCertType">Loại chứng chỉ</label>
+            <select id="calcCertType" class="form-select js-multi-select"
+              data-placeholder="Chọn chứng chỉ">
               <option value="IELTS">IELTS</option>
               <option value="TOEFL">TOEFL</option>
               <option value="TOEIC">TOEIC</option>
@@ -135,7 +139,7 @@
   </div>
 </div>
 
-<ul class="nav nav-pills flex-wrap gap-1 mb-3" id="qdTabs" role="tablist">
+<ul class="nav nav-pills flex-wrap gap-1 mb-3 d-none" id="qdTabs" role="tablist">
   <li class="nav-item" role="presentation">
     <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabRows" type="button" role="tab">Bảng quy đổi</button>
   </li>
@@ -153,7 +157,8 @@
   </li>
 </ul>
 
-<div class="tab-content panel-card border rounded-3 p-3 mb-4" id="qdTabContent">
+<div class="tab-content panel-card border rounded-3 p-3 mb-4 d-none" id="qdTabContent">
+  <p class="small text-muted mb-3 d-none" id="qdSchoolFilterHint"></p>
   <div class="tab-pane fade show active" id="tabRows">
     <div class="table-responsive table-scroll-x">
       <table class="table table-sm table-bordered table-hover align-middle mb-0 table-nowrap-head" id="qdRowsTable">
@@ -195,12 +200,22 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260922q"></script>
 <script>
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
 }
+
+function bootCnSelects() {
+  document.querySelectorAll('select.js-multi-select').forEach(el => {
+    window.App.initMultiSelect(el, {
+      placeholder: el.getAttribute('data-placeholder') || 'Chọn…',
+    });
+  });
+}
+bootCnSelects();
 
 const qdCodes = document.getElementById('qdCodes');
 qdCodes.value = '';
@@ -215,20 +230,37 @@ document.getElementById('btnQdSample').addEventListener('click', () => {
 
 function fillSchoolSelects(data) {
   const schools = (data.school_results || []).filter(s => s.ok || s.code);
-  const opts = schools.map(s =>
-    `<option value="${s.code}">${s.code} — ${s.name || ''}</option>`
-  ).join('');
-  document.getElementById('calcSchool').innerHTML = opts || '<option value="">—</option>';
-  document.getElementById('calcCertSchool').innerHTML = opts || '<option value="">—</option>';
+  const opts = `<option value="">— Chọn trường —</option>` + (schools.map(s =>
+    `<option value="${esc(s.code)}">${esc(s.name || s.code)} - [${esc(s.code)}]</option>`
+  ).join('') || '');
+  // Giống danh_gia: bắt buộc chọn tay, UI CodingNepal searchable
+  window.App.setSelectOptions(document.getElementById('calcSchool'), opts, '', {
+    placeholder: 'Chọn trường',
+  });
+  window.App.setSelectOptions(document.getElementById('calcCertSchool'), opts, '', {
+    placeholder: 'Chọn trường',
+  });
   refreshMethodOptions();
+  hideQdDetailTabs();
 }
 
-function refreshMethodOptions() {
+function refreshMethodOptions(keepValue) {
   const code = document.getElementById('calcSchool').value;
-  const methods = (lastQuyDoi && lastQuyDoi.methods_by_school && lastQuyDoi.methods_by_school[code]) || [];
   const sel = document.getElementById('calcMethod');
+  if (!code) {
+    window.App.setSelectOptions(
+      sel,
+      '<option value="">— Chọn trường trước —</option>',
+      '',
+      { placeholder: 'Chọn phương thức' }
+    );
+    return;
+  }
+  const methods = (lastQuyDoi && lastQuyDoi.methods_by_school && lastQuyDoi.methods_by_school[code]) || [];
+  let html;
+  let prefer = keepValue || sel.value;
   if (!methods.length) {
-    sel.innerHTML = `
+    html = `
       <option value="THPT">Điểm thi THPT</option>
       <option value="HOC_BA">Điểm học bạ</option>
       <option value="HSA">Điểm ĐGNL HSA</option>
@@ -236,22 +268,107 @@ function refreshMethodOptions() {
       <option value="TSA">Điểm ĐGTD TSA</option>
       <option value="KET_HOP">Điểm xét tuyển kết hợp</option>
       <option value="SAT">SAT</option>`;
-    return;
+  } else {
+    html = methods.map(m =>
+      `<option value="${esc(m.id)}">${esc(m.label)}</option>`
+    ).join('');
   }
-  sel.innerHTML = methods.map(m =>
-    `<option value="${m.id}">${m.label}</option>`
-  ).join('');
-  // Ưu tiên thứ tự quen thuộc trên trang điểm chuẩn
-  const prefer = ['HSA', 'TSA', 'V-ACT', 'THPT', 'HOC_BA', 'KET_HOP'];
-  for (const p of prefer) {
-    if ([...sel.options].some(o => o.value === p)) {
-      sel.value = p;
-      break;
-    }
+  if (!prefer || !html.includes(`value="${prefer}"`)) {
+    const preferOrder = ['HSA', 'TSA', 'V-ACT', 'THPT', 'HOC_BA', 'KET_HOP'];
+    prefer = preferOrder.find(p => html.includes(`value="${p}"`)) || '';
+  }
+  window.App.setSelectOptions(sel, html, prefer, { placeholder: 'Chọn phương thức' });
+}
+
+function hideQdDetailTabs() {
+  document.getElementById('qdTabs').classList.add('d-none');
+  document.getElementById('qdTabContent').classList.add('d-none');
+  const hint = document.getElementById('qdSchoolFilterHint');
+  if (hint) {
+    hint.classList.add('d-none');
+    hint.textContent = '';
   }
 }
 
-document.getElementById('calcSchool').addEventListener('change', refreshMethodOptions);
+function showQdDetailTabs() {
+  document.getElementById('qdTabs').classList.remove('d-none');
+  document.getElementById('qdTabContent').classList.remove('d-none');
+}
+
+async function onCalcSchoolChange() {
+  refreshMethodOptions();
+  const code = document.getElementById('calcSchool').value;
+  // Đồng bộ select chứng chỉ
+  const certSel = document.getElementById('calcCertSchool');
+  if (certSel && certSel.value !== code) {
+    const ms = window.App.getMultiSelect?.(certSel);
+    if (ms) ms.setValues(code ? [code] : [], false);
+    else certSel.value = code || '';
+  }
+  if (!code || !lastQuyDoi) {
+    hideQdDetailTabs();
+    return;
+  }
+  showQdDetailTabs();
+  const hint = document.getElementById('qdSchoolFilterHint');
+  if (hint) {
+    hint.classList.remove('d-none');
+    hint.innerHTML = `Đang lọc theo trường <code>${esc(code)}</code>…`;
+  }
+  try {
+    const res = await fetch('/api/quy-doi/by-school?code=' + encodeURIComponent(code));
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Không lấy được dữ liệu trường');
+    if (hint) {
+      const s = data.summary || {};
+      hint.innerHTML =
+        `Đang xem dữ liệu trường <code>${esc(code)}</code> — `
+        + `${esc(s.rows || 0)} dòng · ${esc(s.notes || 0)} ghi chú · `
+        + `${esc(s.ranges || 0)} khoảng · ${esc(s.images || 0)} ảnh.`;
+    }
+    // Cập nhật methods nếu API trả về
+    if (data.methods && data.methods.length) {
+      lastQuyDoi.methods_by_school = lastQuyDoi.methods_by_school || {};
+      lastQuyDoi.methods_by_school[code] = data.methods;
+      refreshMethodOptions();
+    }
+    renderQuyDoiTables(data, { schoolCode: code });
+  } catch (e) {
+    if (hint) hint.innerHTML = `<span class="text-danger">${esc(e.message)}</span>`;
+    // Fallback: lọc từ bản preview đang có
+    const filtered = filterQuyDoiBySchool(lastQuyDoi, code);
+    renderQuyDoiTables(filtered, { schoolCode: code });
+  }
+}
+
+function filterQuyDoiBySchool(data, code) {
+  if (!data) return { rows: [], notes: [], images: [], ranges: [], school_results: [] };
+  const c = String(code || '').toUpperCase();
+  const match = (x) => String(x || '').toUpperCase() === c;
+  return {
+    rows: (data.rows || []).filter(r => match(r.ma_truong)),
+    notes: (data.notes || []).filter(n => match(n.ma_truong)),
+    images: (data.images || []).filter(i => match(i.ma_truong)),
+    ranges: (data.ranges || []).filter(g => match(g.ma_truong)),
+    school_results: (data.school_results || []).filter(s => match(s.code)),
+    download_url: data.download_url,
+    filename: data.filename,
+  };
+}
+
+document.getElementById('calcSchool').addEventListener('change', () => onCalcSchoolChange());
+document.getElementById('calcCertSchool').addEventListener('change', () => {
+  const code = document.getElementById('calcCertSchool').value;
+  const schoolSel = document.getElementById('calcSchool');
+  if (schoolSel.value !== code) {
+    const ms = window.App.getMultiSelect?.(schoolSel);
+    if (ms) ms.setValues(code ? [code] : [], true);
+    else {
+      schoolSel.value = code || '';
+      schoolSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+});
 
 function renderCalcResult(payload) {
   const msg = document.getElementById('calcMsg');
@@ -342,12 +459,11 @@ async function tinhMethod() {
       lastQuyDoi = lastQuyDoi || { methods_by_school: {} };
       lastQuyDoi.methods_by_school = lastQuyDoi.methods_by_school || {};
       lastQuyDoi.methods_by_school[code] = data.methods;
-      refreshMethodOptions();
-      document.getElementById('calcMethod').value = method;
+      refreshMethodOptions(method);
     }
   } catch (e) {
     document.getElementById('calcMsg').innerHTML =
-      `<div class="alert alert-danger py-2 mb-0">${e.message}</div>`;
+      `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
   }
 }
 
@@ -390,96 +506,151 @@ document.getElementById('calcCertScore').addEventListener('keydown', e => {
 
 function renderQuyDoi(data) {
   lastQuyDoi = data;
+  // Ưu tiên máy tính ngay — không chờ render bảng lớn
   fillSchoolSelects(data);
 
   const s = data.summary || {};
+  const cap = data.preview_capped || {};
+  const capNote = (data.light || cap.rows)
+    ? `<div class="alert alert-light border py-2 small mb-3 mb-md-0">
+         Đang xem <b>bản xem trước</b> để tránh treo trình duyệt
+         (${esc(cap.rows_total || s.rows || (data.rows || []).length)} dòng bảng ·
+         ${esc(s.schools || (data.school_results || []).length)} trường).
+         Máy tính vẫn dùng đủ dữ liệu đã lưu trên máy.
+         ${data.download_url ? `Tải <a href="${esc(data.download_url)}">Excel đầy đủ</a> để xem hết.` : ''}
+       </div>`
+    : '';
+
   document.getElementById('qdSummary').innerHTML = `
+    ${capNote}
     <div class="row g-3">
-      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.schools || 0}</div><div class="stat-lbl">Trường</div></div></div>
-      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.rows || 0}</div><div class="stat-lbl">Dòng bảng</div></div></div>
-      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.notes || 0}</div><div class="stat-lbl">Ghi chú</div></div></div>
-      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.ranges || 0}</div><div class="stat-lbl">Khoảng điểm</div></div></div>
-      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.images || 0}</div><div class="stat-lbl">Ảnh</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${esc(s.schools || (data.school_results || []).length || 0)}</div><div class="stat-lbl">Trường</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${esc(cap.rows_total != null ? cap.rows_total : (s.rows || 0))}</div><div class="stat-lbl">Dòng bảng</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${esc(cap.notes_total != null ? cap.notes_total : (s.notes || 0))}</div><div class="stat-lbl">Ghi chú</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${esc(cap.ranges_total != null ? cap.ranges_total : (s.ranges || 0))}</div><div class="stat-lbl">Khoảng điểm</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${esc(cap.images_total != null ? cap.images_total : (s.images || 0))}</div><div class="stat-lbl">Ảnh</div></div></div>
       <div class="col-6 col-md-2 d-flex align-items-stretch">
-        <a class="btn btn-accent w-100 d-flex align-items-center justify-content-center" href="${data.download_url}">
-          <i class="bi bi-download me-1"></i> Excel
-        </a>
+        ${data.download_url
+          ? `<a class="btn btn-accent w-100 d-flex align-items-center justify-content-center" href="${esc(data.download_url)}">
+               <i class="bi bi-download me-1"></i> Excel
+             </a>`
+          : `<div class="stat-tile w-100"><div class="stat-val small text-muted">—</div><div class="stat-lbl">Excel</div></div>`}
       </div>
     </div>`;
 
+  // Không render bảng ngay — chờ chọn trường ở máy tính
+  hideQdDetailTabs();
+
+  document.getElementById('qdDownload').innerHTML =
+    data.download_url
+      ? `<a class="btn btn-accent" href="${esc(data.download_url)}"><i class="bi bi-file-earmark-excel"></i> Tải ${esc(data.filename || 'Excel')}</a>`
+      : '';
+
+  if (!data.from_disk) {
+    document.getElementById('calcCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function renderQuyDoiTables(data, { schoolCode } = {}) {
   const rows = data.rows || [];
   const colSet = [];
-  rows.forEach(r => Object.keys(r.cot_gia_tri || {}).forEach(k => { if (!colSet.includes(k)) colSet.push(k); }));
+  const maxScan = Math.min(rows.length, 400);
+  for (let i = 0; i < maxScan; i++) {
+    Object.keys(rows[i].cot_gia_tri || {}).forEach(k => {
+      if (!colSet.includes(k)) colSet.push(k);
+    });
+  }
   document.querySelector('#qdRowsTable thead tr').innerHTML =
-    ['Mã', 'Trường', 'Tiêu đề bảng', ...colSet].map(h => `<th>${h}</th>`).join('');
+    ['Mã', 'Trường', 'Tiêu đề bảng', ...colSet].map(h => `<th>${esc(h)}</th>`).join('');
   document.querySelector('#qdRowsTable tbody').innerHTML = rows.map(r => {
-    const vals = colSet.map(c => `<td>${(r.cot_gia_tri || {})[c] || ''}</td>`).join('');
+    const vals = colSet.map(c => `<td>${esc((r.cot_gia_tri || {})[c] || '')}</td>`).join('');
     return `<tr>
-      <td><code>${r.ma_truong}</code></td>
-      <td>${r.ten_truong}</td>
-      <td class="small">${r.tieu_de_bang || ''}</td>${vals}</tr>`;
+      <td><code>${esc(r.ma_truong)}</code></td>
+      <td>${esc(r.ten_truong)}</td>
+      <td class="small">${esc(r.tieu_de_bang || '')}</td>${vals}</tr>`;
   }).join('');
-  document.getElementById('qdRowsEmpty').style.display = rows.length ? 'none' : 'block';
+
+  const empty = document.getElementById('qdRowsEmpty');
   const imgCount = (data.images || []).length;
   if (!rows.length && imgCount) {
-    document.getElementById('qdRowsEmpty').innerHTML =
-      `Không có bảng HTML — trường đăng quy đổi dạng ảnh (${imgCount} ảnh). Xem tab <strong>Ảnh bảng</strong>.`;
-    // Ưu tiên mở tab ảnh để thấy dữ liệu ngay
-    const imgTabBtn = document.querySelector('[data-bs-target="#tabImages"]');
+    empty.style.display = 'block';
+    empty.innerHTML =
+      `Không có bảng HTML cho trường này — xem tab <strong>Ảnh bảng</strong> (${imgCount} ảnh).`;
+    const imgTabBtn = document.querySelector('#qdTabs [data-bs-target="#tabImages"]');
     if (imgTabBtn) bootstrap.Tab.getOrCreateInstance(imgTabBtn).show();
   } else if (!rows.length) {
-    document.getElementById('qdRowsEmpty').textContent =
-      'Chưa có dữ liệu — hãy lấy bảng quy đổi ở trên.';
+    empty.style.display = 'block';
+    empty.textContent = schoolCode
+      ? `Không có dòng bảng quy đổi cho ${schoolCode}.`
+      : 'Chọn trường ở máy tính để xem bảng quy đổi.';
+  } else {
+    empty.style.display = 'none';
+    // Ưu tiên tab bảng khi có dữ liệu
+    const rowsTabBtn = document.querySelector('#qdTabs [data-bs-target="#tabRows"]');
+    if (rowsTabBtn) bootstrap.Tab.getOrCreateInstance(rowsTabBtn).show();
   }
+
+  // Ẩn/hiện pills theo dữ liệu của trường
+  const counts = {
+    tabRows: rows.length,
+    tabNotes: (data.notes || []).length,
+    tabRanges: (data.ranges || []).length,
+    tabImages: imgCount,
+    tabMeta: (data.school_results || []).length,
+  };
+  document.querySelectorAll('#qdTabs [data-bs-target]').forEach(btn => {
+    const target = (btn.getAttribute('data-bs-target') || '').replace('#', '');
+    const n = counts[target] || 0;
+    const li = btn.closest('.nav-item');
+    if (li) li.classList.toggle('d-none', n === 0 && target !== 'tabMeta');
+    // Badge số lượng
+    let badge = btn.querySelector('.qd-pill-count');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'badge text-bg-light border ms-1 qd-pill-count';
+      btn.appendChild(badge);
+    }
+    badge.textContent = String(n);
+  });
 
   document.getElementById('qdNotesList').innerHTML = (data.notes || []).map(n => `
     <div class="border rounded-3 p-3 bg-white">
       <div class="d-flex justify-content-between gap-2 flex-wrap">
-        <strong>${n.tieu_de}</strong>
-        <span class="badge text-bg-light border">${n.ma_truong}</span>
+        <strong>${esc(n.tieu_de)}</strong>
+        <span class="badge text-bg-light border">${esc(n.ma_truong)}</span>
       </div>
-      <p class="small text-muted mb-0 mt-2" style="white-space:pre-wrap">${n.noi_dung}</p>
+      <p class="small text-muted mb-0 mt-2" style="white-space:pre-wrap">${esc(n.noi_dung)}</p>
     </div>`).join('') || '<p class="text-muted mb-0">Không có ghi chú.</p>';
 
   document.querySelector('#qdRangesTable tbody').innerHTML = (data.ranges || []).map(g => `
-    <tr><td><code>${g.ma_truong}</code></td><td>${g.ten_truong}</td>
-    <td><span class="badge text-bg-teal">${g.phuong_thuc}</span></td>
-    <td>${g.khoang_diem}</td></tr>`).join('');
+    <tr><td><code>${esc(g.ma_truong)}</code></td><td>${esc(g.ten_truong)}</td>
+    <td><span class="badge text-bg-teal">${esc(g.phuong_thuc)}</span></td>
+    <td>${esc(g.khoang_diem)}</td></tr>`).join('');
 
   document.getElementById('qdImages').innerHTML = (data.images || []).map(img => `
     <div class="col-md-6 col-lg-4">
       <div class="card h-100">
-        <a href="${img.url_anh}" target="_blank" rel="noopener">
-          <img src="${img.url_anh}" class="card-img-top" alt="${img.mo_ta || ''}" loading="lazy">
+        <a href="${esc(img.url_anh)}" target="_blank" rel="noopener">
+          <img src="${esc(img.url_anh)}" class="card-img-top" alt="${esc(img.mo_ta || '')}" loading="lazy">
         </a>
         <div class="card-body py-2">
-          <div class="small"><code>${img.ma_truong}</code> — ${img.mo_ta || 'Ảnh quy đổi'}</div>
+          <div class="small"><code>${esc(img.ma_truong)}</code> — ${esc(img.mo_ta || 'Ảnh quy đổi')}</div>
         </div>
       </div>
     </div>`).join('') || '<p class="text-muted">Không có ảnh.</p>';
 
   document.querySelector('#qdMetaTable tbody').innerHTML = (data.school_results || []).map(m => `
     <tr>
-      <td><code>${m.code || ''}</code></td>
-      <td>${m.name || ''}</td>
+      <td><code>${esc(m.code || '')}</code></td>
+      <td>${esc(m.name || '')}</td>
       <td>${m.ok ? '✓' : '✗'}</td>
-      <td>${m.row_count || 0}</td>
-      <td>${m.notes || 0}</td>
-      <td>${m.images || 0}</td>
-      <td>${m.ranges || 0}</td>
-      <td>${m.url ? `<a href="${m.url}" target="_blank" rel="noopener">mở</a>` : ''}</td>
-      <td class="small text-danger">${m.error || ''}</td>
+      <td>${esc(m.row_count || 0)}</td>
+      <td>${esc(m.notes || 0)}</td>
+      <td>${esc(m.images || 0)}</td>
+      <td>${esc(m.ranges || 0)}</td>
+      <td>${m.url ? `<a href="${esc(m.url)}" target="_blank" rel="noopener">mở</a>` : ''}</td>
+      <td class="small text-danger">${esc(m.error || '')}</td>
     </tr>`).join('');
-
-  document.getElementById('qdDownload').innerHTML =
-    data.download_url
-      ? `<a class="btn btn-accent" href="${data.download_url}"><i class="bi bi-file-earmark-excel"></i> Tải ${data.filename || 'Excel'}</a>`
-      : '';
-
-  // Cuộn tới máy tính (bỏ qua khi khôi phục từ đĩa)
-  if (!data.from_disk) {
-    document.getElementById('calcCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 }
 
 document.getElementById('btnQuyDoi').addEventListener('click', async () => {
@@ -550,6 +721,11 @@ document.getElementById('btnQuyDoi').addEventListener('click', async () => {
             total,
             `${mark} ${evt.index}/${total}: ${evt.code} — ${extra}`
           );
+          if (evt.total && evt.index >= evt.total) {
+            setProgress(total, total, 'Đã lấy xong các trường — đang lưu dữ liệu…');
+          }
+        } else if (evt.type === 'finalize') {
+          setProgress(total, total, evt.message || 'Đang lưu / xuất Excel…');
         } else if (evt.type === 'done') {
           finalPayload = evt;
           setProgress(total, total, 'Hoàn tất — đang hiển thị kết quả…');
@@ -560,13 +736,27 @@ document.getElementById('btnQuyDoi').addEventListener('click', async () => {
     if (!finalPayload || !finalPayload.ok) {
       throw new Error((finalPayload && finalPayload.error) || 'Lỗi lấy quy đổi điểm');
     }
+
+    // done stream chỉ còn summary — nạp full từ session đã lưu
+    let full = finalPayload;
+    if (finalPayload.saved) {
+      setProgress(total, total, 'Đang nạp dữ liệu đã lưu…');
+      try {
+        const sessRes = await fetch('/api/quy-doi/session');
+        const sess = await sessRes.json();
+        if (sess.ok && sess.has_data) full = sess;
+      } catch (_) {}
+    }
+
     setProgress(100, 100, '100% — lấy xong dữ liệu');
     prog.classList.add('d-none');
-    renderQuyDoi(finalPayload);
-    const nSchools = (finalPayload.school_results || []).length
+    renderQuyDoi(full);
+    const nSchools = (full.school_results || []).length
+      || (full.summary && full.summary.schools)
       || (finalPayload.summary && finalPayload.summary.schools)
       || total;
-    const nRows = (finalPayload.rows || []).length
+    const nRows = (full.rows || []).length
+      || (full.summary && full.summary.rows)
       || (finalPayload.summary && finalPayload.summary.rows)
       || 0;
     window.App.toast(`Đã lấy xong dữ liệu quy đổi điểm (${nSchools} trường, ${nRows} dòng bảng).`);

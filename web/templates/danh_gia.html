@@ -1119,9 +1119,14 @@ async function fetchQuyDoi(codesText, opts = {}) {
             total,
             `${mark} ${evt.index}/${total}: ${evt.code} — ${extra}`
           );
+          if (evt.total && evt.index >= evt.total) {
+            setProgress(total, total, 'Đã lấy xong các trường — đang lưu dữ liệu…');
+          }
+        } else if (evt.type === 'finalize') {
+          setProgress(total, total, evt.message || 'Đang lưu / xuất Excel…');
         } else if (evt.type === 'done') {
           finalPayload = evt;
-          setProgress(total, total, '100% — lấy xong dữ liệu');
+          setProgress(total, total, '100% — đang nạp kết quả…');
         }
       }
     }
@@ -1129,12 +1134,25 @@ async function fetchQuyDoi(codesText, opts = {}) {
     if (!finalPayload || !finalPayload.ok) {
       throw new Error((finalPayload && finalPayload.error) || 'Lỗi lấy quy đổi điểm');
     }
+
+    let full = finalPayload;
+    if (finalPayload.saved) {
+      setProgress(total, total, 'Đang nạp dữ liệu đã lưu…');
+      try {
+        const sessRes = await fetch('/api/quy-doi/session');
+        const sess = await sessRes.json();
+        if (sess.ok && sess.has_data) full = sess;
+      } catch (_) {}
+    }
+
     if (prog) prog.classList.add('d-none');
-    renderQuyDoi(finalPayload);
-    const nSchools = (finalPayload.school_results || []).length
+    renderQuyDoi(full);
+    const nSchools = (full.school_results || []).length
+      || (full.summary && full.summary.schools)
       || (finalPayload.summary && finalPayload.summary.schools)
       || total;
-    const nRows = (finalPayload.rows || []).length
+    const nRows = (full.rows || []).length
+      || (full.summary && full.summary.rows)
       || (finalPayload.summary && finalPayload.summary.rows)
       || 0;
     if (showLocalProgress) {
@@ -1147,7 +1165,7 @@ async function fetchQuyDoi(codesText, opts = {}) {
         </div>`
       );
     }
-    return finalPayload;
+    return full;
   } catch (e) {
     if (prog) prog.classList.add('d-none');
     if (showLocalProgress) {

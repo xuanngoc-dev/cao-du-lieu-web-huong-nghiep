@@ -9,6 +9,7 @@ Chạy:
 
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from typing import Any, Dict, List
@@ -358,34 +359,70 @@ def create_app() -> Flask:
                         },
                     }, ensure_ascii=False) + "\n"
 
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            out_name = f"tong_hop_tuyen_sinh_{ts}.xlsx"
-            out_path = os.path.join(app.config["OUTPUT_DIR"], out_name)
-            ExcelAdmissionExporter(years=sorted(years)).export(
-                bundle.admissions,
-                output_path=out_path,
-                conversions=bundle.conversions,
-                regulations=bundle.regulations,
-            )
-            download_url = url_for("download_file", name=out_name)
-            admissions = _store_last_crawl(
-                bundle, years, codes,
-                {"download_url": download_url, "filename": out_name, "logs": logs},
-            )
-            trends = build_trend_series(admissions)
+            # Báo UI biết đang xuất/lưu — tránh kẹt modal ở "Đang thu thập…"
             yield json.dumps({
-                "type": "done",
-                "ok": True,
-                "schools": len(codes),
-                "admissions": len(bundle.admissions),
-                "conversions": len(bundle.conversions),
-                "regulations": len(bundle.regulations),
-                "logs": logs,
-                "download_url": download_url,
-                "filename": out_name,
-                "preview": admissions[:120],
-                "trends": trends,
+                "type": "finalize",
+                "message": "Đang xuất Excel và lưu dữ liệu lên máy…",
+                "totals": {
+                    "admissions": len(bundle.admissions),
+                    "conversions": len(bundle.conversions),
+                    "regulations": len(bundle.regulations),
+                },
             }, ensure_ascii=False) + "\n"
+
+            try:
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                out_name = f"tong_hop_tuyen_sinh_{ts}.xlsx"
+                out_path = os.path.join(app.config["OUTPUT_DIR"], out_name)
+                ExcelAdmissionExporter(years=sorted(years)).export(
+                    bundle.admissions,
+                    output_path=out_path,
+                    conversions=bundle.conversions,
+                    regulations=bundle.regulations,
+                )
+                download_url = url_for("download_file", name=out_name)
+
+                yield json.dumps({
+                    "type": "finalize",
+                    "message": "Đang ghi snapshot JSON (có thể mất vài phút với dữ liệu lớn)…",
+                    "totals": {
+                        "admissions": len(bundle.admissions),
+                        "conversions": len(bundle.conversions),
+                        "regulations": len(bundle.regulations),
+                    },
+                }, ensure_ascii=False) + "\n"
+
+                admissions = _store_last_crawl(
+                    bundle, years, codes,
+                    {"download_url": download_url, "filename": out_name, "logs": logs},
+                )
+                # Không nhúng trends vào stream (payload rất nặng) — lấy sau qua /api/crawl/trends
+                yield json.dumps({
+                    "type": "done",
+                    "ok": True,
+                    "schools": len(codes),
+                    "admissions": len(bundle.admissions),
+                    "conversions": len(bundle.conversions),
+                    "regulations": len(bundle.regulations),
+                    "logs": logs,
+                    "download_url": download_url,
+                    "filename": out_name,
+                    "preview": admissions[:120],
+                    "codes": codes,
+                    "codes_text": "\n".join(codes),
+                    "years": years,
+                }, ensure_ascii=False) + "\n"
+            except Exception as e:
+                yield json.dumps({
+                    "type": "done",
+                    "ok": False,
+                    "error": f"Thu thập xong nhưng lưu/xuất thất bại: {e}",
+                    "schools": len(codes),
+                    "admissions": len(bundle.admissions),
+                    "conversions": len(bundle.conversions),
+                    "regulations": len(bundle.regulations),
+                    "logs": logs,
+                }, ensure_ascii=False) + "\n"
 
         return Response(
             generate(),
@@ -660,28 +697,88 @@ def create_app() -> Flask:
                         },
                     }, ensure_ascii=False) + "\n"
 
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            out_name = f"quy_doi_diem_{ts}.xlsx"
-            out_path = os.path.join(app.config["OUTPUT_DIR"], out_name)
-            crawler.export_excel(bundle, output_path=out_path)
-
-            payload = crawler.bundle_to_api_dict(bundle)
-            payload["ok"] = True
-            payload["download_url"] = url_for("download_file", name=out_name)
-            payload["filename"] = out_name
-            methods_by_school = {}
-            for meta in bundle.school_results:
-                code = meta.get("code") or ""
-                from_table = list_methods_from_rows(payload["rows"], code)
-                methods_by_school[code] = _enrich_methods_for_school(code, from_table)
-            payload["methods_by_school"] = methods_by_school
-            payload["method_labels"] = METHOD_LABELS
-            _store_last_quy_doi(payload)
-
+            # Sau trường cuối: lưu JSON trước (để F5 không mất data), Excel sau.
             yield json.dumps({
-                "type": "done",
-                **payload,
+                "type": "finalize",
+                "message": "Đã lấy xong các trường — đang lưu dữ liệu…",
+                "totals": {
+                    "rows": len(bundle.rows),
+                    "notes": len(bundle.notes),
+                    "images": len(bundle.images),
+                    "ranges": len(bundle.ranges),
+                    "schools": len(bundle.school_results),
+                },
             }, ensure_ascii=False) + "\n"
+
+            try:
+                payload = crawler.bundle_to_api_dict(bundle)
+                payload["ok"] = True
+                methods_by_school = {}
+                for meta in bundle.school_results:
+                    code = meta.get("code") or ""
+                    from_table = list_methods_from_rows(payload["rows"], code)
+                    methods_by_school[code] = _enrich_methods_for_school(code, from_table)
+                payload["methods_by_school"] = methods_by_school
+                payload["method_labels"] = METHOD_LABELS
+                payload["codes"] = codes
+
+                # 1) Lưu bộ nhớ + JSON trước — quan trọng hơn Excel
+                _store_last_quy_doi(payload)
+
+                yield json.dumps({
+                    "type": "finalize",
+                    "message": "Đã lưu JSON — đang xuất Excel…",
+                    "totals": payload.get("summary") or {},
+                }, ensure_ascii=False) + "\n"
+
+                download_url = ""
+                out_name = ""
+                try:
+                    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    out_name = f"quy_doi_diem_{ts}.xlsx"
+                    out_path = os.path.join(app.config["OUTPUT_DIR"], out_name)
+                    crawler.export_excel(bundle, output_path=out_path)
+                    download_url = url_for("download_file", name=out_name)
+                    payload["download_url"] = download_url
+                    payload["filename"] = out_name
+                    # Cập nhật meta file trên bản đã lưu
+                    cached = app.config.get("LAST_QUY_DOI") or {}
+                    cached["download_url"] = download_url
+                    cached["filename"] = out_name
+                    app.config["LAST_QUY_DOI"] = cached
+                    try:
+                        dataset_store.save_quy_doi(ROOT, cached)
+                    except OSError:
+                        pass
+                except Exception as excel_err:
+                    # Excel lỗi vẫn giữ được JSON đã lưu
+                    yield json.dumps({
+                        "type": "finalize",
+                        "message": f"Lưu JSON xong; xuất Excel lỗi: {excel_err}",
+                    }, ensure_ascii=False) + "\n"
+
+                # done gọn — không nhúng toàn bộ rows (payload rất nặng → treo UI)
+                yield json.dumps({
+                    "type": "done",
+                    "ok": True,
+                    "saved": True,
+                    "summary": payload.get("summary") or {},
+                    "school_results": payload.get("school_results") or [],
+                    "methods_by_school": methods_by_school,
+                    "method_labels": METHOD_LABELS,
+                    "download_url": download_url,
+                    "filename": out_name,
+                    "codes": codes,
+                }, ensure_ascii=False) + "\n"
+            except Exception as e:
+                yield json.dumps({
+                    "type": "done",
+                    "ok": False,
+                    "saved": False,
+                    "error": f"Lấy xong trường nhưng lưu thất bại: {e}",
+                    "schools": len(bundle.school_results),
+                    "rows": len(bundle.rows),
+                }, ensure_ascii=False) + "\n"
 
         return Response(
             generate(),
@@ -856,19 +953,134 @@ def create_app() -> Flask:
         payload["ok"] = True
         return jsonify(payload)
 
+    @app.get("/api/quy-doi/by-school")
+    def api_quy_doi_by_school():
+        """Lấy dữ liệu quy đổi đã lọc theo 1 mã trường (cho pills/bảng chi tiết)."""
+        code = (request.args.get("code") or "").strip().upper()
+        aliases = {"NEU": "KHA", "FTU": "NTH", "HUST": "BKA", "UET": "QHI"}
+        code = aliases.get(code, code)
+        if not code:
+            return jsonify({"ok": False, "error": "Thiếu mã trường."}), 400
+
+        cached = app.config.get("LAST_QUY_DOI") or {}
+        if not (cached.get("rows") or cached.get("school_results") or cached.get("images")):
+            disk = dataset_store.load_quy_doi(ROOT)
+            if disk:
+                app.config["LAST_QUY_DOI"] = disk
+                cached = disk
+        if not cached:
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu quy đổi đã lưu."}), 404
+
+        def match(c):
+            return str(c or "").upper() == code
+
+        rows = [r for r in (cached.get("rows") or []) if match(r.get("ma_truong"))]
+        notes = [n for n in (cached.get("notes") or []) if match(n.get("ma_truong"))]
+        images = [i for i in (cached.get("images") or []) if match(i.get("ma_truong"))]
+        ranges = [g for g in (cached.get("ranges") or []) if match(g.get("ma_truong"))]
+        school_results = [
+            s for s in (cached.get("school_results") or []) if match(s.get("code"))
+        ]
+        methods = (cached.get("methods_by_school") or {}).get(code) or []
+        download_url = cached.get("download_url") or ""
+        filename = cached.get("filename") or ""
+        if not download_url and filename:
+            download_url = url_for("download_file", name=filename)
+
+        return jsonify({
+            "ok": True,
+            "code": code,
+            "rows": rows,
+            "notes": notes,
+            "images": images,
+            "ranges": ranges,
+            "school_results": school_results,
+            "methods": methods,
+            "method_labels": cached.get("method_labels") or METHOD_LABELS,
+            "summary": {
+                "schools": 1 if school_results else 0,
+                "rows": len(rows),
+                "notes": len(notes),
+                "images": len(images),
+                "ranges": len(ranges),
+            },
+            "download_url": download_url,
+            "filename": filename,
+        })
+
     @app.get("/api/quy-doi/session")
     def api_quy_doi_session():
+        """
+        Trả session quy đổi cho UI.
+        Mặc định bản nhẹ (không nhúng hàng chục nghìn dòng) để tránh treo trình duyệt.
+        ?full=1 chỉ dùng khi thật sự cần toàn bộ payload.
+        """
         cached = app.config.get("LAST_QUY_DOI") or {}
         summary = dataset_store.summarize_quy_doi(cached)
         if not summary.get("has_data"):
-            return jsonify({"ok": True, "has_data": False})
-        payload = dict(cached)
-        payload["ok"] = True
-        payload["has_data"] = True
-        payload["from_disk"] = True
-        if not payload.get("download_url") and payload.get("filename"):
-            payload["download_url"] = url_for("download_file", name=payload["filename"])
-        return jsonify(payload)
+            # Thử nạp lại từ đĩa nếu bộ nhớ trống
+            disk = dataset_store.load_quy_doi(ROOT)
+            if disk:
+                app.config["LAST_QUY_DOI"] = disk
+                cached = disk
+                summary = dataset_store.summarize_quy_doi(cached)
+            if not summary.get("has_data"):
+                return jsonify({"ok": True, "has_data": False})
+
+        want_full = (request.args.get("full") or "").strip().lower() in ("1", "true", "yes")
+        download_url = cached.get("download_url") or ""
+        filename = cached.get("filename") or ""
+        if not download_url and filename:
+            download_url = url_for("download_file", name=filename)
+
+        if want_full:
+            payload = dict(cached)
+            payload["ok"] = True
+            payload["has_data"] = True
+            payload["from_disk"] = True
+            payload["download_url"] = download_url
+            payload["filename"] = filename
+            return jsonify(payload)
+
+        rows = cached.get("rows") or []
+        notes = cached.get("notes") or []
+        images = cached.get("images") or []
+        ranges = cached.get("ranges") or []
+        # Preview giới hạn — đủ xem mẫu, không đủ để treo DOM
+        ROW_CAP, NOTE_CAP, IMG_CAP, RANGE_CAP = 120, 40, 24, 80
+        return jsonify({
+            "ok": True,
+            "has_data": True,
+            "from_disk": True,
+            "light": True,
+            "summary": summary if summary.get("has_data") else {
+                "has_data": True,
+                "schools": len(cached.get("school_results") or []),
+                "rows": len(rows),
+                "notes": len(notes),
+                "images": len(images),
+                "ranges": len(ranges),
+            },
+            "school_results": cached.get("school_results") or [],
+            "methods_by_school": cached.get("methods_by_school") or {},
+            "method_labels": cached.get("method_labels") or METHOD_LABELS,
+            "download_url": download_url,
+            "filename": filename,
+            "rows": rows[:ROW_CAP],
+            "notes": notes[:NOTE_CAP],
+            "images": images[:IMG_CAP],
+            "ranges": ranges[:RANGE_CAP],
+            "preview_capped": {
+                "rows": len(rows) > ROW_CAP,
+                "notes": len(notes) > NOTE_CAP,
+                "images": len(images) > IMG_CAP,
+                "ranges": len(ranges) > RANGE_CAP,
+                "rows_total": len(rows),
+                "notes_total": len(notes),
+                "images_total": len(images),
+                "ranges_total": len(ranges),
+            },
+        })
 
     @app.post("/api/datasets/load")
     def api_datasets_load():
@@ -910,6 +1122,163 @@ def create_app() -> Flask:
             })
 
         return jsonify({"ok": False, "error": "kind phải là admissions hoặc quy_doi."}), 400
+
+    @app.post("/api/datasets/reuse")
+    def api_datasets_reuse():
+        """
+        Tái sử dụng Excel quy đổi → NDJSON progress 0–100% + ghi Snapshot JSON.
+        """
+        data = request.get_json(silent=True) or {}
+        kind = (data.get("kind") or "").strip().lower()
+        name = (data.get("name") or "").strip()
+        if not name:
+            return jsonify({"ok": False, "error": "Thiếu tên file."}), 400
+        if kind not in ("quy_doi", "quy-doi", "quydoi"):
+            return jsonify({"ok": False, "error": "Hiện chỉ hỗ trợ tái sử dụng file quy đổi điểm."}), 400
+
+        path = dataset_store.resolve_dataset_file(ROOT, name)
+        if not path:
+            return jsonify({"ok": False, "error": "Không tìm thấy file."}), 404
+
+        @stream_with_context
+        def generate():
+            def emit(pct, message, **extra):
+                return json.dumps({
+                    "type": "progress",
+                    "pct": max(0, min(100, int(pct))),
+                    "message": message,
+                    **extra,
+                }, ensure_ascii=False) + "\n"
+
+            try:
+                yield emit(2, "Đang chuẩn bị…")
+                payload = None
+                source = "excel"
+                excel_ts = None
+                base = os.path.basename(path)
+                m = re.match(r"quy_doi_diem_(\d{8}_\d{6})\.xlsx$", base, re.I)
+                if m:
+                    excel_ts = m.group(1)
+                    snap = os.path.join(
+                        dataset_store.datasets_dir(ROOT), "quy_doi", f"quy_doi_{excel_ts}.json"
+                    )
+                    if os.path.isfile(snap):
+                        yield emit(12, "Đang nạp Snapshot JSON cùng timestamp…")
+                        payload = dataset_store.load_quy_doi(ROOT, snap)
+                        source = "json"
+
+                if not payload and base.lower().endswith(".xlsx"):
+                    yield emit(8, f"Đang đọc Excel {base}…")
+                    import threading
+                    from queue import Queue, Empty
+
+                    q: Queue = Queue()
+
+                    def on_prog(pct, msg):
+                        mapped = 8 + int(pct * 0.70)
+                        q.put(("progress", mapped, msg))
+
+                    def worker():
+                        try:
+                            crawler = ScoreConversionCrawler()
+                            result = crawler.import_excel(path, progress_cb=on_prog)
+                            q.put(("result", result, None))
+                        except Exception as exc:
+                            q.put(("error", None, exc))
+
+                    threading.Thread(target=worker, daemon=True).start()
+                    while True:
+                        try:
+                            kind_ev, a, b = q.get(timeout=180)
+                        except Empty:
+                            yield json.dumps({
+                                "type": "done",
+                                "ok": False,
+                                "error": "Hết thời gian chờ khi đọc Excel.",
+                            }, ensure_ascii=False) + "\n"
+                            return
+                        if kind_ev == "progress":
+                            yield emit(a, b)
+                        elif kind_ev == "result":
+                            payload = a
+                            yield emit(80, "Đã đọc xong Excel")
+                            break
+                        elif kind_ev == "error":
+                            raise b
+                elif not payload and base.lower().endswith(".json"):
+                    yield emit(40, "Đang nạp file JSON…")
+                    payload = dataset_store.load_quy_doi(ROOT, path)
+                    source = "json"
+
+                if not payload:
+                    yield json.dumps({
+                        "type": "done",
+                        "ok": False,
+                        "error": "Không đọc được dữ liệu quy đổi từ file.",
+                    }, ensure_ascii=False) + "\n"
+                    return
+
+                yield emit(84, "Đang bổ sung phương thức theo trường…")
+                payload = dict(payload)
+                payload["ok"] = True
+                payload["filename"] = base if base.lower().endswith(".xlsx") else (payload.get("filename") or base)
+                if base.lower().endswith(".xlsx"):
+                    payload["download_url"] = url_for("download_file", name=base)
+                elif payload.get("filename"):
+                    payload["download_url"] = url_for("download_file", name=payload["filename"])
+                payload["_reused_from"] = base
+                payload["_reused_at"] = datetime.now().isoformat(timespec="seconds")
+
+                if not payload.get("methods_by_school"):
+                    methods_by_school = {}
+                    metas = payload.get("school_results") or []
+                    total_m = max(len(metas), 1)
+                    for i, meta in enumerate(metas, start=1):
+                        code = meta.get("code") or ""
+                        from_table = list_methods_from_rows(payload.get("rows") or [], code)
+                        methods_by_school[code] = _enrich_methods_for_school(code, from_table)
+                        if i % 20 == 0 or i == total_m:
+                            pct = 84 + int(8 * i / total_m)
+                            yield emit(pct, f"Đang gắn phương thức… ({i}/{total_m})")
+                    payload["methods_by_school"] = methods_by_school
+                if not payload.get("method_labels"):
+                    payload["method_labels"] = METHOD_LABELS
+
+                yield emit(94, "Đang ghi Snapshot JSON…")
+                saved = dataset_store.save_quy_doi(ROOT, payload, snapshot_ts=excel_ts)
+                app.config["LAST_QUY_DOI"] = payload
+                snap_name = saved.get("snapshot_name") or os.path.basename(saved.get("snapshot") or "")
+                yield emit(100, "Hoàn tất")
+                yield json.dumps({
+                    "type": "done",
+                    "ok": True,
+                    "kind": "quy_doi",
+                    "source": source,
+                    "filename": base,
+                    "snapshot": snap_name,
+                    "summary": dataset_store.summarize_quy_doi(payload),
+                }, ensure_ascii=False) + "\n"
+            except (OSError, ValueError, FileNotFoundError) as e:
+                yield json.dumps({
+                    "type": "done",
+                    "ok": False,
+                    "error": str(e),
+                }, ensure_ascii=False) + "\n"
+            except Exception as e:
+                yield json.dumps({
+                    "type": "done",
+                    "ok": False,
+                    "error": f"Tái sử dụng thất bại: {e}",
+                }, ensure_ascii=False) + "\n"
+
+        return Response(
+            generate(),
+            mimetype="application/x-ndjson",
+            headers={
+                "Cache-Control": "no-cache, no-store",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     @app.post("/api/datasets/clear")
     def api_datasets_clear():
