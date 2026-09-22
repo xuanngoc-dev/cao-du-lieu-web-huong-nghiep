@@ -1,7 +1,7 @@
 /**
- * Multi-select dropdown kiểu CodingNepal
+ * Dropdown select kiểu CodingNepal
  * (checkbox list + nút mũi tên tròn).
- * Đồng bộ với <select multiple> ẩn.
+ * Hỗ trợ <select> đơn và <select multiple>.
  */
 (function (global) {
   const INSTANCES = new WeakMap();
@@ -15,12 +15,14 @@
   class MultiSelect {
     constructor(selectEl, opts) {
       this.select = selectEl;
+      this.multiple = !!selectEl.multiple;
       this.opts = Object.assign({
         placeholder: selectEl.getAttribute('data-placeholder') || 'Chọn…',
         search: true,
-        selectAll: true,
+        selectAll: this.multiple,
         maxHeight: 280,
       }, opts || {});
+      if (!this.multiple) this.opts.selectAll = false;
       this._onDocClick = this._onDocClick.bind(this);
       this._build();
       this._bind();
@@ -34,7 +36,7 @@
       this.select.tabIndex = -1;
 
       const wrap = document.createElement('div');
-      wrap.className = 'cn-multi';
+      wrap.className = 'cn-multi' + (this.multiple ? '' : ' cn-multi-single');
       if (this.select.disabled) wrap.classList.add('is-disabled');
 
       wrap.innerHTML = `
@@ -53,7 +55,8 @@
               <button type="button" class="cn-multi-link" data-action="all">Chọn hết</button>
               <button type="button" class="cn-multi-link" data-action="none">Bỏ chọn</button>
             </div>` : ''}
-          <ul class="cn-multi-list" role="listbox" aria-multiselectable="true"></ul>
+          <ul class="cn-multi-list" role="listbox"
+              aria-multiselectable="${this.multiple ? 'true' : 'false'}"></ul>
           <div class="cn-multi-empty" hidden>Không có kết quả</div>
         </div>
       `;
@@ -159,17 +162,32 @@
     _toggleItem(value) {
       const opt = [...this.select.options].find(o => o.value === value);
       if (!opt) return;
-      opt.selected = !opt.selected;
-      const item = this.list.querySelector(`.cn-multi-item[data-value="${CSS.escape(value)}"]`);
-      if (item) {
-        item.classList.toggle('checked', opt.selected);
-        item.setAttribute('aria-selected', opt.selected ? 'true' : 'false');
+
+      if (this.multiple) {
+        opt.selected = !opt.selected;
+      } else {
+        [...this.select.options].forEach(o => { o.selected = false; });
+        opt.selected = true;
+        this.select.value = opt.value;
       }
+
+      this.list.querySelectorAll('.cn-multi-item').forEach(item => {
+        const on = item.dataset.value === value
+          ? opt.selected
+          : (this.multiple
+            ? [...this.select.selectedOptions].some(o => o.value === item.dataset.value)
+            : false);
+        item.classList.toggle('checked', on);
+        item.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+
       this._updateBtnText();
       this._notifyChange();
+      if (!this.multiple) this.close();
     }
 
     selectAllVisible() {
+      if (!this.multiple) return;
       this.list.querySelectorAll('.cn-multi-item:not([hidden])').forEach(item => {
         const opt = [...this.select.options].find(o => o.value === item.dataset.value);
         if (opt && !opt.selected) {
@@ -184,6 +202,7 @@
 
     clear() {
       [...this.select.options].forEach(o => { o.selected = false; });
+      if (!this.multiple) this.select.value = '';
       this.list.querySelectorAll('.cn-multi-item').forEach(item => {
         item.classList.remove('checked');
         item.setAttribute('aria-selected', 'false');
@@ -193,31 +212,41 @@
     }
 
     setValues(values, notify) {
-      const set = new Set(Array.isArray(values) ? values.map(String) : []);
-      [...this.select.options].forEach(o => { o.selected = set.has(o.value); });
+      const arr = Array.isArray(values) ? values.map(String) : (values != null && values !== '' ? [String(values)] : []);
+      if (this.multiple) {
+        const set = new Set(arr);
+        [...this.select.options].forEach(o => { o.selected = set.has(o.value); });
+      } else {
+        const v = arr[0] || '';
+        [...this.select.options].forEach(o => { o.selected = o.value === v; });
+        this.select.value = v;
+      }
       this.refreshFromSelect();
       if (notify) this._notifyChange();
     }
 
     _notifyChange() {
-      // Một lần thôi — jQuery .on('change') cũng nhận native Event
       this.select.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     getValues() {
-      return [...this.select.selectedOptions].map(o => o.value).filter(Boolean);
+      if (this.multiple) {
+        return [...this.select.selectedOptions].map(o => o.value).filter(Boolean);
+      }
+      return this.select.value ? [this.select.value] : [];
     }
 
     _updateBtnText() {
-      const n = this.getValues().length;
+      const values = this.getValues();
+      const n = values.length;
       const total = [...this.select.options].filter(o => o.value).length;
       if (!n) {
         this.textEl.textContent = this.opts.placeholder;
-      } else if (n === total && total > 1) {
+      } else if (this.multiple && n === total && total > 1) {
         this.textEl.textContent = `Đã chọn hết (${n})`;
       } else if (n === 1) {
-        const opt = this.select.selectedOptions[0];
-        this.textEl.textContent = opt ? opt.textContent : `${n} đã chọn`;
+        const opt = [...this.select.options].find(o => o.value === values[0]);
+        this.textEl.textContent = opt ? opt.textContent : values[0];
       } else {
         this.textEl.textContent = `${n} đã chọn`;
       }
@@ -252,10 +281,7 @@
   function initMultiSelect(el, opts) {
     if (!el) return null;
     const existing = getInstance(el);
-    if (existing) {
-      existing.destroy();
-    }
-    // Không dùng Select2 trên multi này
+    if (existing) existing.destroy();
     if (global.App && global.App.destroySelect2) global.App.destroySelect2(el);
     return new MultiSelect(el, opts);
   }

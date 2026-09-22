@@ -1,0 +1,1798 @@
+{% extends "base.html" %}
+{% block title %}Đánh giá năng lực{% endblock %}
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@7.4.0/dist/apexcharts.min.js"></script>
+{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1"><i class="bi bi-clipboard2-pulse me-1"></i> Đánh giá năng lực</h1>
+<p class="text-muted mb-3">
+  Chọn trường từ dữ liệu đã tổng hợp được (bước ②), rồi tổng hợp:
+  biến động điểm chuẩn, quy đổi phương thức, và đánh giá cơ hội trúng tuyển.
+  Chưa có dữ liệu? Hãy
+  <a href="{{ url_for('crawl_page') }}">Thu thập dữ liệu</a>
+  trước.
+</p>
+
+<div class="card panel-card mb-3">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-8">
+        <label class="form-label" for="scopeSchools">
+          Trường cần tổng hợp
+          <i class="bi bi-info-circle text-muted ms-1"
+             role="button" tabindex="0" aria-label="Cách bổ sung trường"
+             data-bs-toggle="tooltip" data-bs-placement="top"
+             data-bs-html="true"
+             title="Danh sách lấy từ dữ liệu đã tổng hợp được ở bước ②. Muốn thêm trường: mở <b>② Thu thập dữ liệu</b>, thêm mã trường rồi thu thập lại (dữ liệu mới được lưu và hiện ở đây)."></i>
+        </label>
+        <select id="scopeSchools" class="form-select js-multi-select" multiple
+          data-placeholder="Chọn một / nhiều / hết trường đã tổng hợp được"></select>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-accent w-100" type="button" id="btnTongHop">
+          <i class="bi bi-layers"></i> Tổng hợp thông tin
+        </button>
+      </div>
+    </div>
+    <div id="tongHopProgress" class="d-none mt-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+        <div class="small text-muted" id="tongHopProgressStatus">Chuẩn bị…</div>
+        <div class="small" id="tongHopProgressPct">0%</div>
+      </div>
+      <div class="progress" style="height: 1.1rem;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent"
+          id="tongHopProgressBar" role="progressbar" style="width:0%"
+          aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+      </div>
+    </div>
+    <div id="scopeAlert" class="mt-3 mb-0"></div>
+  </div>
+</div>
+
+<div id="analysisWrap" class="d-none">
+<!-- Biểu đồ biến động -->
+<div class="card panel-card mb-3" id="chartCard">
+  <div class="card-header dg-collapse-header">
+    <button class="dg-collapse-btn" type="button"
+      data-bs-toggle="collapse" data-bs-target="#chartCollapse"
+      aria-expanded="true" aria-controls="chartCollapse">
+      <span class="dg-collapse-title">
+        <i class="bi bi-graph-up me-1"></i> Biến động điểm chuẩn theo ngành
+      </span>
+      <span class="d-flex align-items-center gap-2">
+        <span class="badge text-bg-light border fw-normal">ApexCharts · Line + Drilldown</span>
+        <i class="bi bi-chevron-down dg-collapse-chevron" aria-hidden="true"></i>
+      </span>
+    </button>
+  </div>
+  <div id="chartCollapse" class="collapse show">
+  <div class="card-body pt-2">
+    <div class="row g-3 align-items-end mb-3">
+      <div class="col-md-4">
+        <label class="form-label" for="chartSchool">Trường</label>
+        <select id="chartSchool" class="form-select js-multi-select" data-placeholder="Chọn trường"></select>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label" for="chartMethod">Loại điểm chuẩn</label>
+        <select id="chartMethod" class="form-select js-multi-select" data-placeholder="Chọn loại điểm"></select>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-outline-teal w-100" type="button" id="btnRefreshChart">
+          <i class="bi bi-arrow-repeat"></i> Cập nhật biểu đồ
+        </button>
+      </div>
+    </div>
+    <p class="small text-muted mb-2">
+      Mỗi đường = một ngành. Bấm điểm trên năm để <b>drilldown</b> xem điểm tất cả ngành trong năm đó
+      (tham khảo
+      <a href="https://apexcharts.com/javascript-chart-demos/line-charts/line-with-drilldown/" target="_blank" rel="noopener">Line with Drilldown</a>).
+    </p>
+    <div class="chart-wrap">
+      <div id="scoreTrendChart"></div>
+    </div>
+    <p class="small text-muted mb-0 mt-2" id="chartHint"></p>
+  </div>
+  </div>
+</div>
+
+<!-- Quy đổi điểm (nhúng từ bước 3) -->
+<div class="card panel-card mb-3 border-accent-calc" id="quyDoiCard">
+  <div class="card-header dg-collapse-header">
+    <button class="dg-collapse-btn" type="button"
+      data-bs-toggle="collapse" data-bs-target="#quyDoiCollapse"
+      aria-expanded="true" aria-controls="quyDoiCollapse">
+      <span class="dg-collapse-title">
+        <i class="bi bi-calculator me-1"></i> Quy đổi điểm phương thức
+      </span>
+      <span class="d-flex align-items-center gap-2">
+        <span class="badge text-bg-light border fw-normal">THPT ↔ HSA / TSA / V-ACT / SAT…</span>
+        <i class="bi bi-chevron-down dg-collapse-chevron" aria-hidden="true"></i>
+      </span>
+    </button>
+  </div>
+  <div id="quyDoiCollapse" class="collapse show">
+  <div class="card-body pt-2">
+    <p class="small text-muted mb-3">
+      Dùng bảng quy đổi đã lưu (bước ③ / khi thu thập). Thiếu trường nào sẽ tự lấy bổ sung.
+      Chi tiết đầy đủ: <a href="{{ url_for('quy_doi_page') }}">③ Quy đổi điểm</a>.
+    </p>
+    <textarea id="qdCodes" class="d-none"></textarea>
+
+    <div id="qdProgress" class="d-none mb-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+        <div class="small text-muted" id="qdProgressStatus">Chuẩn bị…</div>
+        <div class="small" id="qdProgressPct">0%</div>
+      </div>
+      <div class="progress" style="height: 1.1rem;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent"
+          id="qdProgressBar" role="progressbar" style="width:0%"
+          aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+      </div>
+    </div>
+    <div id="qdSummary" class="mb-3"></div>
+
+    <div id="calcBlock" class="d-none">
+      <ul class="nav nav-pills mb-3" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#calcMethodPane" type="button">
+            Phương thức (HSA/TSA/SAT…)
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#calcCertPane" type="button">
+            Chứng chỉ (IELTS/TOEFL…)
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="calcMethodPane">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label" for="calcSchool">Trường <span class="text-danger">*</span></label>
+              <select id="calcSchool" class="form-select js-multi-select" required
+                data-placeholder="Chọn trường"></select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Điểm theo phương thức</label>
+              <select id="calcMethod" class="form-select js-multi-select" data-placeholder="Chọn phương thức"></select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Nhập điểm</label>
+              <input type="number" step="0.01" class="form-control" id="calcScore" placeholder="VD: 105">
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-teal w-100" type="button" id="btnTinhMethod">
+                <i class="bi bi-arrow-left-right"></i> Tính quy đổi
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="calcCertPane">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label" for="calcCertSchool">Trường <span class="text-danger">*</span></label>
+              <select id="calcCertSchool" class="form-select js-multi-select" required
+                data-placeholder="Chọn trường"></select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Loại chứng chỉ</label>
+              <select id="calcCertType" class="form-select js-multi-select" data-placeholder="Chọn chứng chỉ">
+                <option value="IELTS">IELTS</option>
+                <option value="TOEFL">TOEFL</option>
+                <option value="TOEIC">TOEIC</option>
+                <option value="SAT">SAT</option>
+                <option value="ACT">ACT</option>
+                <option value="A-LEVEL">A-Level</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Điểm chứng chỉ</label>
+              <input type="number" step="0.1" class="form-control" id="calcCertScore" placeholder="VD: 6.5">
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-teal w-100" type="button" id="btnTinhCert">
+                <i class="bi bi-translate"></i> Quy đổi chứng chỉ
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="calcMsg" class="mt-3"></div>
+      <div id="calcResult" class="mt-3"></div>
+    </div>
+
+    <ul class="nav nav-pills flex-wrap gap-1 mb-3 mt-3 d-none" id="qdTabs" role="tablist">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabRows" type="button">Bảng quy đổi</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabNotes" type="button">Ghi chú</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabRanges" type="button">Khoảng điểm</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabImages" type="button">Ảnh bảng</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabMeta" type="button">Theo trường</button></li>
+    </ul>
+    <div class="tab-content border rounded-3 p-3 bg-white d-none" id="qdTabContent">
+      <div class="tab-pane fade show active" id="tabRows">
+        <div class="table-responsive table-scroll-x">
+          <table class="table table-sm table-bordered table-hover align-middle mb-0 table-nowrap-head" id="qdRowsTable">
+            <thead class="table-light sticky-top"><tr></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="small text-muted mt-2 mb-0" id="qdRowsEmpty">Chưa có dữ liệu bảng quy đổi.</p>
+      </div>
+      <div class="tab-pane fade" id="tabNotes"><div id="qdNotesList" class="vstack gap-3"></div></div>
+      <div class="tab-pane fade" id="tabRanges">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-0" id="qdRangesTable">
+            <thead><tr><th>Mã</th><th>Trường</th><th>Phương thức</th><th>Khoảng điểm</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tabImages"><div id="qdImages" class="row g-3"></div></div>
+      <div class="tab-pane fade" id="tabMeta">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-0" id="qdMetaTable">
+            <thead>
+              <tr><th>Mã</th><th>Trường</th><th>OK</th><th>Dòng</th><th>Ghi chú</th><th>Ảnh</th><th>Khoảng</th><th>Link</th><th>Lỗi</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="qdDownload" class="mt-2"></div>
+  </div>
+  </div>
+</div>
+
+<!-- Đánh giá cơ hội -->
+<div class="card panel-card mb-4 border-accent-calc" id="chanceCard">
+  <div class="card-header dg-collapse-header">
+    <button class="dg-collapse-btn" type="button"
+      data-bs-toggle="collapse" data-bs-target="#chanceCollapse"
+      aria-expanded="true" aria-controls="chanceCollapse">
+      <span class="dg-collapse-title">
+        <i class="bi bi-robot me-1"></i> Đánh giá cơ hội trúng tuyển
+      </span>
+      <i class="bi bi-chevron-down dg-collapse-chevron" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div id="chanceCollapse" class="collapse show">
+  <div class="card-body pt-2">
+    <p class="small text-muted mb-3">
+      Thêm một hoặc nhiều điểm theo phương thức (vd: TSA 80 + SAT 1500) để xem có thể xét vào đâu.
+    </p>
+    <div id="chanceScoreRows" class="chance-score-rows mb-3"></div>
+    <div class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label" for="chanceSchool">Trường</label>
+        <select id="chanceSchool" class="form-select js-multi-select" multiple
+          data-placeholder="Chọn một / nhiều / hết trường"></select>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label" for="chanceMajor">Ngành (tuỳ chọn)</label>
+        <select id="chanceMajor" class="form-select js-multi-select" multiple disabled
+          data-placeholder="Chọn một hoặc nhiều ngành"></select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-accent w-100" type="button" id="btnChance">
+          <i class="bi bi-lightning-charge"></i> Đánh giá
+        </button>
+      </div>
+    </div>
+    <div class="form-check mt-2 d-none">
+      <input class="form-check-input" type="checkbox" id="chanceUseAi" checked>
+      <label class="form-check-label" for="chanceUseAi">
+        Dùng AI miễn phí để giải thích (nếu lỗi mạng sẽ fallback thống kê cục bộ)
+      </label>
+    </div>
+    <div id="chanceResult" class="mt-3"></div>
+  </div>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260922q"></script>
+<script>
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+  bootstrap.Tooltip.getOrCreateInstance(el);
+});
+
+let lastCrawl = null;
+let lastQuyDoi = null;
+let lastTrends = null;
+let trendChart = null;
+let scopeSchoolOptions = [];
+const METHOD_COLORS = [
+  '#0d7377', '#c45c26', '#2a6f97', '#bc4749', '#6a994e',
+  '#e09f3e', '#5e548e', '#9b2226', '#0077b6', '#606c38',
+  '#4a4e69', '#ee9b00', '#0a9396', '#9b2226', '#3a5a40',
+  '#7b2cbf', '#0077b6', '#ca6702'
+];
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function bootCnSelects() {
+  document.querySelectorAll('select.js-multi-select').forEach(el => {
+    window.App.initMultiSelect(el, {
+      placeholder: el.getAttribute('data-placeholder') || 'Chọn…',
+    });
+  });
+}
+bootCnSelects();
+
+document.getElementById('chartCollapse')?.addEventListener('shown.bs.collapse', () => {
+  if (trendChart && typeof trendChart.resize === 'function') {
+    try { trendChart.resize(); } catch (e) {}
+  }
+});
+
+function schoolOptionLabel(code, trends) {
+  const opts = (trends && trends.school_options) || [];
+  const found = opts.find(o => o.id === code);
+  if (found && found.label) return found.label;
+  if (found && found.name) return `${found.name} - [${found.id}]`;
+  return code;
+}
+
+function fillSchoolSelects(trends, keepChart, keepChance) {
+  const schoolOpts = (trends && trends.school_options) || [];
+  const schools = schoolOpts.length
+    ? schoolOpts.map(o => o.id)
+    : ((trends && trends.schools) || []);
+  const chartSel = document.getElementById('chartSchool');
+  const chanceSel = document.getElementById('chanceSchool');
+  const preferred = (keepChart != null ? keepChart : null)
+    || trends.school
+    || chartSel.value
+    || (schools[0] || '');
+  const chartHtml = schools.map(s =>
+    `<option value="${esc(s)}">${esc(schoolOptionLabel(s, trends))}</option>`
+  ).join('') || '<option value="">—</option>';
+  const chanceHtml = schools.map(s =>
+    `<option value="${esc(s)}">${esc(schoolOptionLabel(s, trends))}</option>`
+  ).join('');
+
+  let chanceVal = keepChance;
+  if (chanceVal == null) {
+    chanceVal = window.App.getSelectValues(chanceSel);
+  }
+  if (!Array.isArray(chanceVal)) {
+    chanceVal = chanceVal ? [chanceVal] : [];
+  }
+  // Mặc định chọn hết trường đã thu thập
+  if (!chanceVal.length && schools.length) {
+    chanceVal = schools.slice();
+  }
+
+  window.App.setSelectOptions(chartSel, chartHtml, preferred);
+  window.App.setSelectOptions(chanceSel, chanceHtml, chanceVal, {
+    placeholder: 'Chọn một / nhiều / hết trường',
+  });
+  const selected = window.App.getSelectValues(chanceSel);
+  loadChanceMethods(selected);
+  loadChanceMajors(selected);
+}
+
+let chanceMethodOptions = []; // [{id, label, count}]
+let chanceScoreRowSeq = 0;
+
+function preferMethodId(ids, prefer) {
+  if (prefer && ids.includes(prefer)) return prefer;
+  if (prefer) {
+    const alias = { SAT: 'CCQT', ACT: 'CCQT', IELTS: 'CCQT', HSA: 'DGNL', 'V-ACT': 'DGNL', TSA: 'DGNL' };
+    if (alias[prefer] && ids.includes(alias[prefer])) return alias[prefer];
+  }
+  if (ids.includes('THPT')) return 'THPT';
+  return ids[0] || '';
+}
+
+function methodOptionsHtml(selectedId) {
+  if (!chanceMethodOptions.length) {
+    return '<option value="">— Chưa có phương thức —</option>';
+  }
+  const ids = chanceMethodOptions.map(m => m.id);
+  const prefer = preferMethodId(ids, selectedId);
+  return chanceMethodOptions.map(m =>
+    `<option value="${esc(m.id)}" ${m.id === prefer ? 'selected' : ''}>${esc(m.label)}${m.count != null ? ` (${m.count})` : ''}</option>`
+  ).join('');
+}
+
+function syncChanceScoreRowActions() {
+  const rows = document.querySelectorAll('#chanceScoreRows .chance-score-row');
+  const onlyOne = rows.length <= 1;
+  rows.forEach((row, idx) => {
+    const isLast = idx === rows.length - 1;
+    const addBtn = row.querySelector('.chance-score-add');
+    const removeBtn = row.querySelector('.chance-score-remove');
+    if (addBtn) addBtn.classList.toggle('d-none', !isLast);
+    if (removeBtn) {
+      removeBtn.classList.toggle('d-none', onlyOne);
+      removeBtn.disabled = onlyOne;
+    }
+  });
+}
+
+function addChanceScoreRow(preset) {
+  const wrap = document.getElementById('chanceScoreRows');
+  if (!wrap) return;
+  const id = ++chanceScoreRowSeq;
+  const method = (preset && preset.method) || '';
+  const score = preset && preset.score != null ? preset.score : '';
+  const row = document.createElement('div');
+  row.className = 'chance-score-row row g-2 align-items-end';
+  row.dataset.rowId = String(id);
+  row.innerHTML = `
+    <div class="col-md-5">
+      <label class="form-label">Phương thức</label>
+      <select class="form-select chance-method-select">${methodOptionsHtml(method)}</select>
+    </div>
+    <div class="col-md-5">
+      <label class="form-label">Điểm của tôi</label>
+      <input type="number" step="0.01" class="form-control chance-score-input" placeholder="VD: 80 hoặc 1500" value="${esc(score)}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label d-none d-md-block">&nbsp;</label>
+      <div class="chance-score-actions">
+        <button type="button" class="btn btn-outline-secondary chance-score-remove" title="Xoá dòng">
+          <i class="bi bi-trash"></i>
+        </button>
+        <button type="button" class="btn btn-outline-teal chance-score-add d-none" title="Thêm phương thức / điểm">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
+    </div>`;
+  wrap.appendChild(row);
+  row.querySelector('.chance-score-remove').addEventListener('click', () => {
+    if (wrap.querySelectorAll('.chance-score-row').length <= 1) {
+      row.querySelector('.chance-score-input').value = '';
+      return;
+    }
+    row.remove();
+    syncChanceScoreRowActions();
+  });
+  row.querySelector('.chance-score-add').addEventListener('click', () => {
+    addChanceScoreRow();
+  });
+  row.querySelector('.chance-score-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btnChance').click();
+  });
+  syncChanceScoreRowActions();
+}
+
+function refreshChanceMethodSelects(preferMethod) {
+  document.querySelectorAll('#chanceScoreRows .chance-method-select').forEach((sel, idx) => {
+    const keep = preferMethod && idx === 0 ? preferMethod : sel.value;
+    sel.innerHTML = methodOptionsHtml(keep);
+  });
+}
+
+function getChanceScoreEntries() {
+  const entries = [];
+  document.querySelectorAll('#chanceScoreRows .chance-score-row').forEach(row => {
+    const method = row.querySelector('.chance-method-select')?.value || '';
+    const score = row.querySelector('.chance-score-input')?.value;
+    if (!method || score === '' || score == null) return;
+    entries.push({ method, score });
+  });
+  return entries;
+}
+
+function setChanceScoreEntry(method, score, { append = false } = {}) {
+  const wrap = document.getElementById('chanceScoreRows');
+  if (!wrap) return;
+  const rows = [...wrap.querySelectorAll('.chance-score-row')];
+  if (!append && rows.length) {
+    const row = rows[0];
+    const sel = row.querySelector('.chance-method-select');
+    const inp = row.querySelector('.chance-score-input');
+    if (sel) {
+      const ids = [...sel.options].map(o => o.value);
+      sel.value = preferMethodId(ids, method || sel.value);
+    }
+    if (inp && score != null && score !== '') inp.value = score;
+    return;
+  }
+  // Nếu method đã có sẵn dòng → cập nhật điểm
+  for (const row of rows) {
+    const sel = row.querySelector('.chance-method-select');
+    if (sel && method && sel.value === method) {
+      const inp = row.querySelector('.chance-score-input');
+      if (inp && score != null && score !== '') inp.value = score;
+      return;
+    }
+  }
+  addChanceScoreRow({ method, score });
+}
+
+async function loadChanceMethods(schoolCodes, keepValue) {
+  const codes = Array.isArray(schoolCodes)
+    ? schoolCodes.filter(Boolean)
+    : (schoolCodes ? [schoolCodes] : []);
+  const q = codes.length ? ('?schools=' + encodeURIComponent(codes.join(','))) : '';
+  try {
+    const res = await fetch('/api/crawl/methods' + q);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Không tải được phương thức');
+    chanceMethodOptions = data.methods || [];
+  } catch (e) {
+    chanceMethodOptions = [];
+  }
+  const wrap = document.getElementById('chanceScoreRows');
+  if (wrap && !wrap.querySelector('.chance-score-row')) {
+    addChanceScoreRow({ method: keepValue || '' });
+  } else {
+    refreshChanceMethodSelects(keepValue);
+  }
+}
+
+async function loadChanceMajors(schoolCodes, keepSelected) {
+  const sel = document.getElementById('chanceMajor');
+  const prev = keepSelected || window.App.getSelectValues(sel);
+  const codes = Array.isArray(schoolCodes)
+    ? schoolCodes.filter(Boolean)
+    : (schoolCodes ? [schoolCodes] : []);
+  const multiOpts = {
+    placeholder: 'Chọn một hoặc nhiều ngành',
+  };
+  const q = codes.length ? ('?schools=' + encodeURIComponent(codes.join(','))) : '';
+  sel.disabled = true;
+  window.App.setSelectOptions(sel, '', [], multiOpts);
+  try {
+    const res = await fetch('/api/crawl/majors' + q);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Không tải được ngành');
+    const majors = data.majors || [];
+    if (!majors.length) {
+      sel.disabled = true;
+      window.App.setSelectOptions(sel, '', [], multiOpts);
+      return;
+    }
+    sel.disabled = false;
+    const html = majors.map(m =>
+      `<option value="${esc(m.id)}">${esc(m.label)}</option>`
+    ).join('');
+    window.App.setSelectOptions(sel, html, prev, multiOpts);
+  } catch (e) {
+    sel.disabled = true;
+    window.App.setSelectOptions(sel, '', [], multiOpts);
+  }
+}
+
+$('#chanceSchool').on('change', () => {
+  const codes = window.App.getSelectValues(document.getElementById('chanceSchool'));
+  loadChanceMethods(codes);
+  loadChanceMajors(codes);
+});
+function fillMethodSelect(trends, keepValue) {
+  const methods = (trends && trends.methods) || [];
+  const sel = document.getElementById('chartMethod');
+  const prefer = keepValue || trends.method || sel.value || 'THPT';
+  const html = methods.map(m =>
+    `<option value="${esc(m.id)}">${esc(m.label)}${m.count ? ` (${m.count})` : ''}</option>`
+  ).join('') || '<option value="THPT">Điểm thi THPT</option>';
+  window.App.setSelectOptions(sel, html, prefer);
+}
+
+function destroyTrendChart() {
+  if (trendChart) {
+    try { trendChart.destroy(); } catch (e) {}
+    trendChart = null;
+  }
+  const el = document.getElementById('scoreTrendChart');
+  if (el) el.innerHTML = '';
+}
+
+function paintTrendChart(trends) {
+  const card = document.getElementById('chartCard');
+  const apex = trends && trends.apex;
+  const series = (apex && apex.series) || [];
+  if (!series.length) {
+    destroyTrendChart();
+    return;
+  }
+  card.classList.remove('d-none');
+  destroyTrendChart();
+
+  const schoolLabel = trends.school_name
+    ? `${trends.school} — ${trends.school_name}`
+    : (trends.school || '');
+  const drill = (apex && apex.drilldown) || { enabled: false, series: [] };
+
+  trendChart = new ApexCharts(document.querySelector('#scoreTrendChart'), {
+    series,
+    chart: {
+      height: 420,
+      type: 'line',
+      fontFamily: 'inherit',
+      toolbar: { show: true, tools: { download: true, selection: false, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } },
+      zoom: { enabled: true },
+      animations: { enabled: true, speed: 450 },
+    },
+    drilldown: {
+      enabled: !!drill.enabled,
+      marker: { size: 6 },
+      breadcrumb: Object.assign({
+        show: true,
+        rootLabel: 'Theo ngành · các năm',
+      }, drill.breadcrumb || {}),
+      series: drill.series || [],
+    },
+    colors: METHOD_COLORS,
+    stroke: { width: 2.5, curve: 'smooth' },
+    markers: { size: 3, hover: { sizeOffset: 2 } },
+    dataLabels: { enabled: false },
+    title: {
+      text: `Điểm chuẩn · ${trends.method_label || trends.method || ''}`,
+      align: 'left',
+      style: { fontSize: '15px', fontWeight: 400, color: '#1a2b33' },
+    },
+    subtitle: {
+      text: schoolLabel
+        ? `${schoolLabel} · bấm điểm năm để xem chi tiết theo ngành`
+        : 'Bấm điểm trên năm để drilldown theo ngành',
+      align: 'left',
+      style: { fontSize: '12px', color: '#4a5c64' },
+    },
+    grid: { borderColor: '#d7e3de', strokeDashArray: 3 },
+    legend: { position: 'bottom', fontSize: '11px', itemMargin: { horizontal: 8, vertical: 4 } },
+    tooltip: {
+      shared: true,
+      intersect: false,
+      y: { formatter: (v) => (v == null ? '—' : v) },
+    },
+    xaxis: {
+      type: 'category',
+      title: { text: 'Năm', style: { color: '#4a5c64' } },
+      labels: { style: { colors: '#4a5c64' } },
+    },
+    yaxis: {
+      title: { text: 'Điểm chuẩn', style: { color: '#4a5c64' } },
+      labels: {
+        formatter: (v) => (v == null ? '' : Number(v).toFixed(1)),
+        style: { colors: '#4a5c64' },
+      },
+      decimalsInFloat: 2,
+    },
+  });
+  trendChart.render();
+
+  const hidden = trends.hidden_major_count || 0;
+  document.getElementById('chartHint').textContent =
+    `${trends.total_records || 0} bản ghi · ${trends.shown_major_count || series.length}/${trends.major_count || series.length} ngành trên biểu đồ`
+    + (hidden ? ` (ẩn ${hidden} ngành ít dữ liệu hơn)` : '')
+    + ` · ${(trends.years || []).length} năm · ${trends.method_label || ''}.`;
+}
+
+function renderTrendChart(trends) {
+  if (!trends || !(trends.apex && trends.apex.series && trends.apex.series.length)) {
+    if (trends && ((trends.methods || []).length || (trends.schools || []).length)) {
+      document.getElementById('chartCard').classList.remove('d-none');
+      fillSchoolSelects(trends, trends.school || '');
+      fillMethodSelect(trends, trends.method || '');
+      destroyTrendChart();
+      document.getElementById('chartHint').textContent =
+        'Không có điểm chuẩn khớp bộ lọc trường / loại điểm. Hãy chọn lại.';
+      return;
+    }
+    document.getElementById('chartCard').classList.add('d-none');
+    return;
+  }
+  document.getElementById('chartCard').classList.remove('d-none');
+  fillSchoolSelects(trends, trends.school || '');
+  fillMethodSelect(trends, trends.method || '');
+  paintTrendChart(trends);
+}
+
+async function refreshChartFromServer() {
+  const school = document.getElementById('chartSchool').value;
+  const method = document.getElementById('chartMethod').value;
+  const scopeCodes = window.App.getSelectValues(document.getElementById('scopeSchools'));
+  const params = new URLSearchParams();
+  if (school) params.set('school', school);
+  if (method) params.set('method', method);
+  try {
+    const res = await fetch('/api/crawl/trends?' + params.toString());
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Không lấy được biểu đồ');
+    const chanceKeep = window.App.getSelectValues(document.getElementById('chanceSchool'));
+    const trends = Object.assign({}, data.trends, {
+      schools: scopeCodes.length ? scopeCodes : (data.trends.schools || []),
+      school_options: (data.trends.school_options || []).filter(
+        o => !scopeCodes.length || scopeCodes.includes(o.id)
+      ),
+    });
+    fillSchoolSelects(trends, school, chanceKeep.length ? chanceKeep : scopeCodes);
+    fillMethodSelect(trends, method);
+    paintTrendChart(trends);
+    if (lastCrawl) lastCrawl.trends = trends;
+  } catch (e) {
+    window.App.toast(e.message);
+  }
+}
+
+document.getElementById('btnRefreshChart').addEventListener('click', refreshChartFromServer);
+$('#chartSchool').on('change', refreshChartFromServer);
+$('#chartMethod').on('change', refreshChartFromServer);
+
+/* ---------- Quy đổi điểm ---------- */
+function fillCalcSchoolSelects(data) {
+  const schools = (data.school_results || []).filter(s => s.ok || s.code);
+  const opts = `<option value="">— Chọn trường —</option>` + (schools.map(s =>
+    `<option value="${esc(s.code)}">${esc(s.name || s.code)} - [${esc(s.code)}]</option>`
+  ).join('') || '');
+  // Bắt buộc chọn tay — không auto chọn trường đầu
+  window.App.setSelectOptions(document.getElementById('calcSchool'), opts, '', {
+    placeholder: 'Chọn trường',
+  });
+  window.App.setSelectOptions(document.getElementById('calcCertSchool'), opts, '', {
+    placeholder: 'Chọn trường',
+  });
+  refreshCalcMethodOptions();
+}
+
+function refreshCalcMethodOptions(keepValue) {
+  const code = document.getElementById('calcSchool').value;
+  const sel = document.getElementById('calcMethod');
+  if (!code) {
+    window.App.setSelectOptions(
+      sel,
+      '<option value="">— Chọn trường trước —</option>',
+      '',
+      { placeholder: 'Chọn phương thức' }
+    );
+    return;
+  }
+  const methods = (lastQuyDoi && lastQuyDoi.methods_by_school && lastQuyDoi.methods_by_school[code]) || [];
+  let html;
+  let prefer = keepValue || sel.value;
+  if (!methods.length) {
+    html = `
+      <option value="THPT">Điểm thi THPT</option>
+      <option value="HOC_BA">Điểm học bạ</option>
+      <option value="HSA">Điểm ĐGNL HSA</option>
+      <option value="V-ACT">Điểm ĐGNL V-ACT</option>
+      <option value="TSA">Điểm ĐGTD TSA</option>
+      <option value="KET_HOP">Điểm xét tuyển kết hợp</option>
+      <option value="SAT">SAT</option>`;
+  } else {
+    html = methods.map(m => `<option value="${esc(m.id)}">${esc(m.label)}</option>`).join('');
+    if (!prefer || !methods.some(m => m.id === prefer)) {
+      const order = ['HSA', 'TSA', 'V-ACT', 'THPT', 'HOC_BA', 'KET_HOP'];
+      prefer = order.find(p => methods.some(m => m.id === p)) || methods[0].id;
+    }
+  }
+  window.App.setSelectOptions(sel, html, prefer, { placeholder: 'Chọn phương thức' });
+}
+
+$('#calcSchool').on('change', refreshCalcMethodOptions);
+
+function renderCalcResult(payload) {
+  const msg = document.getElementById('calcMsg');
+  const box = document.getElementById('calcResult');
+  const r = payload.result || {};
+  if (!payload.ok) {
+    msg.innerHTML = `<div class="alert alert-warning py-2 mb-0">${esc(payload.error || r.message || 'Không tính được.')}</div>`;
+    box.innerHTML = '';
+    return;
+  }
+  const groups = (r.groups || []).filter(g => g.ok);
+  const groupNote = groups.length > 1 ? ` · <b>${groups.length}</b> nhóm tổ hợp` : '';
+  msg.innerHTML = `<div class="alert alert-success py-2 mb-0">${esc(r.message || 'OK')}
+    <div class="small mt-1">Trường <code>${esc(r.ma_truong)}</code> · Nguồn <b>${esc(r.phuong_thuc_nguon)}</b> = <b>${esc(r.diem_nhap)}</b>${groupNote}
+      <button type="button" class="btn btn-sm btn-outline-accent ms-2 py-0" id="btnUseForChance">Dùng để đánh giá cơ hội</button>
+    </div></div>`;
+
+  function tilesHtml(eqs, sourceMethod) {
+    return `<div class="row g-3">
+      ${(eqs || []).map(e => {
+        const isSrc = e.phuong_thuc === sourceMethod;
+        return `<div class="col-6 col-md-4 col-lg-3">
+          <div class="calc-result-tile ${isSrc ? 'is-source' : ''}" data-method="${esc(e.phuong_thuc)}" data-score="${e.diem_uoc_tinh != null ? esc(e.diem_uoc_tinh) : ''}">
+            <div class="small text-muted">${esc(e.ten_hien_thi)}</div>
+            <div class="calc-est">${e.diem_uoc_tinh != null ? esc(e.diem_uoc_tinh) : '—'}</div>
+            <div class="small">Khoảng: <b>${esc(e.khoang || '—')}</b></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  let body = '';
+  if (groups.length > 1) {
+    body = groups.map(g => {
+      const badge = g.block ? `<span class="badge text-bg-teal me-1">${esc(g.block)}</span>` : '';
+      const applied = g.applied || g.tieu_de || '';
+      const diffNote = g.diff
+        ? ` <span class="small text-muted">(lệch tổ hợp ${g.diff > 0 ? '+' : ''}${esc(g.diff)})</span>`
+        : '';
+      return `<div class="border rounded-3 p-3 mb-3 bg-white">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          ${badge}<strong>${esc(applied)}</strong>${diffNote}
+          <span class="small text-muted ms-auto">khớp ${esc(g.khoang_khop || '—')}</span>
+        </div>
+        ${tilesHtml(g.equivalents, r.phuong_thuc_nguon)}
+      </div>`;
+    }).join('');
+  } else {
+    const eqs = (groups[0] && groups[0].equivalents) || r.equivalents || [];
+    body = tilesHtml(eqs, r.phuong_thuc_nguon);
+  }
+
+  box.innerHTML = `${body}
+    <p class="small text-muted mt-2 mb-0">
+      Nội suy tuyến tính trong khoảng bảng. Bấm ô kết quả để đưa điểm sang phần đánh giá cơ hội.
+    </p>`;
+
+  const btnUse = document.getElementById('btnUseForChance');
+  if (btnUse) {
+    btnUse.addEventListener('click', () => {
+      setChanceScoreEntry(r.phuong_thuc_nguon || '', r.diem_nhap, { append: false });
+      const school = r.ma_truong;
+      const chanceSel = document.getElementById('chanceSchool');
+      if (school && [...chanceSel.options].some(o => o.value === school)) {
+        const ms = window.App.getMultiSelect(chanceSel);
+        if (ms) ms.setValues([school], true);
+        else {
+          [...chanceSel.options].forEach(o => { o.selected = o.value === school; });
+          chanceSel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+      setTimeout(() => {
+        const codes = window.App.getSelectValues(chanceSel);
+        loadChanceMethods(codes, r.phuong_thuc_nguon);
+        setChanceScoreEntry(r.phuong_thuc_nguon || '', r.diem_nhap, { append: false });
+      }, 350);
+      document.getElementById('chanceCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.App.toast('Đã đưa điểm nguồn sang đánh giá cơ hội');
+    });
+  }
+  box.querySelectorAll('.calc-result-tile[data-score]').forEach(tile => {
+    tile.style.cursor = 'pointer';
+    tile.title = 'Bấm để thêm / cập nhật điểm phương thức này vào đánh giá cơ hội';
+    tile.addEventListener('click', () => {
+      const sc = tile.getAttribute('data-score');
+      const method = tile.getAttribute('data-method');
+      if (!sc) return;
+      const codes = window.App.getSelectValues(document.getElementById('chanceSchool'));
+      loadChanceMethods(codes, method || '').then(() => {
+        setChanceScoreEntry(method || '', sc, { append: true });
+      });
+      window.App.toast(`Đã thêm điểm ${sc} (${method || 'PTXT'})`);
+    });
+  });
+}
+
+async function tinhMethod() {
+  const code = document.getElementById('calcSchool').value;
+  const method = document.getElementById('calcMethod').value;
+  const score = document.getElementById('calcScore').value;
+  if (!code) {
+    document.getElementById('calcMsg').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Vui lòng chọn trường trước khi tính quy đổi.</div>';
+    return;
+  }
+  if (!method) {
+    document.getElementById('calcMsg').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Vui lòng chọn phương thức.</div>';
+    return;
+  }
+  if (score === '' || score == null) {
+    document.getElementById('calcMsg').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Nhập điểm cần quy đổi.</div>';
+    return;
+  }
+  document.getElementById('calcMsg').innerHTML =
+    '<div class="spinner-border spinner-border-sm text-teal"></div> Đang tính…';
+  try {
+    const res = await fetch('/api/quy-doi/tinh', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ code, method, score, mode: 'method', refresh: !lastQuyDoi })
+    });
+    const data = await res.json();
+    renderCalcResult(data);
+    if (data.methods && data.methods.length) {
+      lastQuyDoi = lastQuyDoi || { methods_by_school: {} };
+      lastQuyDoi.methods_by_school = lastQuyDoi.methods_by_school || {};
+      lastQuyDoi.methods_by_school[code] = data.methods;
+      refreshCalcMethodOptions(method);
+    }
+  } catch (e) {
+    document.getElementById('calcMsg').innerHTML =
+      `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
+  }
+}
+
+async function tinhCert() {
+  const code = document.getElementById('calcCertSchool').value;
+  const certificate_type = document.getElementById('calcCertType').value;
+  const score = document.getElementById('calcCertScore').value;
+  if (!code) {
+    document.getElementById('calcMsg').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Vui lòng chọn trường trước khi quy đổi chứng chỉ.</div>';
+    return;
+  }
+  if (score === '' || score == null) {
+    document.getElementById('calcMsg').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Nhập điểm chứng chỉ.</div>';
+    return;
+  }
+  document.getElementById('calcMsg').innerHTML =
+    '<div class="spinner-border spinner-border-sm text-teal"></div> Đang quy đổi chứng chỉ…';
+  try {
+    const res = await fetch('/api/quy-doi/tinh', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        code, score, mode: 'certificate',
+        certificate_type, method: certificate_type, refresh: true
+      })
+    });
+    const data = await res.json();
+    renderCalcResult(data);
+  } catch (e) {
+    document.getElementById('calcMsg').innerHTML =
+      `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
+  }
+}
+
+document.getElementById('btnTinhMethod').addEventListener('click', tinhMethod);
+document.getElementById('btnTinhCert').addEventListener('click', tinhCert);
+document.getElementById('calcScore').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tinhMethod();
+});
+document.getElementById('calcCertScore').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tinhCert();
+});
+
+function renderQuyDoi(data) {
+  lastQuyDoi = data;
+  document.getElementById('calcBlock').classList.remove('d-none');
+  document.getElementById('qdTabs').classList.remove('d-none');
+  document.getElementById('qdTabContent').classList.remove('d-none');
+  fillCalcSchoolSelects(data);
+
+  const s = data.summary || {};
+  document.getElementById('qdSummary').innerHTML = `
+    <div class="row g-3">
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.schools || 0}</div><div class="stat-lbl">Trường</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.rows || 0}</div><div class="stat-lbl">Dòng bảng</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.notes || 0}</div><div class="stat-lbl">Ghi chú</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.ranges || 0}</div><div class="stat-lbl">Khoảng điểm</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.images || 0}</div><div class="stat-lbl">Ảnh</div></div></div>
+      <div class="col-6 col-md-2 d-flex align-items-stretch">
+        <a class="btn btn-accent w-100 d-flex align-items-center justify-content-center" href="${data.download_url}">
+          <i class="bi bi-download me-1"></i> Excel
+        </a>
+      </div>
+    </div>`;
+
+  const rows = data.rows || [];
+  const colSet = [];
+  rows.forEach(r => Object.keys(r.cot_gia_tri || {}).forEach(k => { if (!colSet.includes(k)) colSet.push(k); }));
+  document.querySelector('#qdRowsTable thead tr').innerHTML =
+    ['Mã', 'Trường', 'Tiêu đề bảng', ...colSet].map(h => `<th>${esc(h)}</th>`).join('');
+  document.querySelector('#qdRowsTable tbody').innerHTML = rows.map(r => {
+    const vals = colSet.map(c => `<td>${esc((r.cot_gia_tri || {})[c] || '')}</td>`).join('');
+    return `<tr>
+      <td><code>${esc(r.ma_truong)}</code></td>
+      <td>${esc(r.ten_truong)}</td>
+      <td class="small">${esc(r.tieu_de_bang || '')}</td>${vals}</tr>`;
+  }).join('');
+  document.getElementById('qdRowsEmpty').style.display = rows.length ? 'none' : 'block';
+  const imgCount = (data.images || []).length;
+  if (!rows.length && imgCount) {
+    document.getElementById('qdRowsEmpty').innerHTML =
+      `Không có bảng HTML — trường đăng quy đổi dạng ảnh (${imgCount} ảnh). Xem tab <strong>Ảnh bảng</strong>.`;
+    const imgTabBtn = document.querySelector('#qdTabs [data-bs-target="#tabImages"]');
+    if (imgTabBtn) bootstrap.Tab.getOrCreateInstance(imgTabBtn).show();
+  } else if (!rows.length) {
+    document.getElementById('qdRowsEmpty').textContent = 'Chưa có dữ liệu bảng quy đổi.';
+  }
+
+  document.getElementById('qdNotesList').innerHTML = (data.notes || []).map(n => `
+    <div class="border rounded-3 p-3 bg-white">
+      <div class="d-flex justify-content-between gap-2 flex-wrap">
+        <strong>${esc(n.tieu_de)}</strong>
+        <span class="badge text-bg-light border">${esc(n.ma_truong)}</span>
+      </div>
+      <p class="small text-muted mb-0 mt-2" style="white-space:pre-wrap">${esc(n.noi_dung)}</p>
+    </div>`).join('') || '<p class="text-muted mb-0">Không có ghi chú.</p>';
+
+  document.querySelector('#qdRangesTable tbody').innerHTML = (data.ranges || []).map(g => `
+    <tr><td><code>${esc(g.ma_truong)}</code></td><td>${esc(g.ten_truong)}</td>
+    <td><span class="badge text-bg-teal">${esc(g.phuong_thuc)}</span></td>
+    <td>${esc(g.khoang_diem)}</td></tr>`).join('');
+
+  document.getElementById('qdImages').innerHTML = (data.images || []).map(img => `
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100">
+        <a href="${esc(img.url_anh)}" target="_blank" rel="noopener">
+          <img src="${esc(img.url_anh)}" class="card-img-top" alt="" loading="lazy" style="max-height:220px;object-fit:contain;background:#f8faf9">
+        </a>
+        <div class="card-body py-2">
+          <div class="small"><code>${esc(img.ma_truong)}</code> — ${esc(img.mo_ta || 'Ảnh quy đổi')}</div>
+        </div>
+      </div>
+    </div>`).join('') || '<p class="text-muted mb-0">Không có ảnh.</p>';
+
+  document.querySelector('#qdMetaTable tbody').innerHTML = (data.school_results || []).map(m => `
+    <tr>
+      <td><code>${esc(m.code || '')}</code></td>
+      <td>${esc(m.name || '')}</td>
+      <td>${m.ok ? '✓' : '✗'}</td>
+      <td>${m.row_count || 0}</td>
+      <td>${m.notes || 0}</td>
+      <td>${m.images || 0}</td>
+      <td>${m.ranges || 0}</td>
+      <td>${m.url ? `<a href="${esc(m.url)}" target="_blank" rel="noopener">mở</a>` : ''}</td>
+      <td class="small text-danger">${esc(m.error || '')}</td>
+    </tr>`).join('');
+
+  document.getElementById('qdDownload').innerHTML = data.download_url
+    ? `<a class="btn btn-accent btn-sm" href="${data.download_url}"><i class="bi bi-file-earmark-excel"></i> Tải ${esc(data.filename)}</a>`
+    : '';
+}
+
+async function fetchQuyDoi(codesText, opts = {}) {
+  const {
+    onProgress = null,
+    showLocalProgress = true,
+  } = opts;
+  const prog = document.getElementById('qdProgress');
+  const bar = document.getElementById('qdProgressBar');
+  const statusEl = document.getElementById('qdProgressStatus');
+  const pctEl = document.getElementById('qdProgressPct');
+
+  function setProgress(index, total, status) {
+    const pct = total > 0 ? Math.min(100, Math.round((index / total) * 100)) : 0;
+    if (showLocalProgress && bar) {
+      bar.style.width = pct + '%';
+      bar.textContent = pct + '%';
+      bar.setAttribute('aria-valuenow', String(pct));
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (statusEl) statusEl.textContent = status || '';
+    }
+    if (typeof onProgress === 'function') {
+      onProgress(index, total, status, pct);
+    }
+  }
+
+  if (showLocalProgress && prog) prog.classList.remove('d-none');
+  setProgress(0, 1, 'Bắt đầu lấy bảng quy đổi…');
+  if (showLocalProgress) {
+    document.getElementById('qdSummary').innerHTML = '';
+  }
+
+  try {
+    const res = await fetch('/api/quy-doi/stream', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ codes: codesText, limit: 0 })
+    });
+    if (!res.ok) {
+      let err = `HTTP ${res.status}`;
+      try { err = (await res.json()).error || err; } catch (_) {}
+      throw new Error(err);
+    }
+    if (!res.body) throw new Error('Trình duyệt không hỗ trợ stream.');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    let finalPayload = null;
+    let total = 1;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let evt;
+        try { evt = JSON.parse(line); } catch (_) { continue; }
+        if (evt.type === 'start') {
+          total = evt.total || 1;
+          setProgress(0, total, `0/${total} trường…`);
+        } else if (evt.type === 'school') {
+          total = evt.total || total;
+          const mark = evt.ok ? '✓' : '✗';
+          const extra = evt.ok
+            ? `${evt.rows || 0} dòng`
+            : (evt.error || 'lỗi');
+          setProgress(
+            evt.index,
+            total,
+            `${mark} ${evt.index}/${total}: ${evt.code} — ${extra}`
+          );
+        } else if (evt.type === 'done') {
+          finalPayload = evt;
+          setProgress(total, total, '100% — lấy xong dữ liệu');
+        }
+      }
+    }
+
+    if (!finalPayload || !finalPayload.ok) {
+      throw new Error((finalPayload && finalPayload.error) || 'Lỗi lấy quy đổi điểm');
+    }
+    if (prog) prog.classList.add('d-none');
+    renderQuyDoi(finalPayload);
+    const nSchools = (finalPayload.school_results || []).length
+      || (finalPayload.summary && finalPayload.summary.schools)
+      || total;
+    const nRows = (finalPayload.rows || []).length
+      || (finalPayload.summary && finalPayload.summary.rows)
+      || 0;
+    if (showLocalProgress) {
+      window.App.toast(`Đã lấy xong dữ liệu quy đổi điểm (${nSchools} trường, ${nRows} dòng bảng).`);
+      document.getElementById('qdSummary').insertAdjacentHTML(
+        'afterbegin',
+        `<div class="alert alert-success py-2 mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>Đã lấy xong dữ liệu quy đổi điểm — ${esc(nSchools)} trường, ${esc(nRows)} dòng bảng.</span>
+        </div>`
+      );
+    }
+    return finalPayload;
+  } catch (e) {
+    if (prog) prog.classList.add('d-none');
+    if (showLocalProgress) {
+      document.getElementById('qdSummary').innerHTML =
+        `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
+    }
+    throw e;
+  }
+}
+
+
+function levelBadge(level, label) {
+  const map = {
+    high: 'text-bg-success',
+    medium: 'text-bg-warning',
+    low: 'text-bg-secondary',
+    very_low: 'text-bg-danger',
+    unknown: 'text-bg-light border'
+  };
+  return `<span class="badge ${map[level] || 'text-bg-light border'}">${esc(label || level)}</span>`;
+}
+
+function levelBadgeClass(level) {
+  const map = {
+    high: 'text-bg-success',
+    medium: 'text-bg-warning',
+    low: 'text-bg-secondary',
+    very_low: 'text-bg-danger',
+    unknown: 'text-bg-light border'
+  };
+  return map[level] || 'text-bg-light border';
+}
+
+function shortLevelLabel(level, label) {
+  if (label) return label;
+  const map = {
+    high: 'Cao',
+    medium: 'Trung bình',
+    low: 'Thấp',
+    very_low: 'Rất thấp',
+    unknown: '—'
+  };
+  return map[level] || level || '—';
+}
+
+function formatAdviceHtml(text) {
+  const raw = text || '';
+  const links = [];
+  const withPlaceholders = raw.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+    (_, label, url) => {
+      const i = links.length;
+      links.push({ label, url });
+      return `\u0000LINK${i}\u0000`;
+    }
+  );
+  let html = esc(withPlaceholders);
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/(^|[^*])_([^_\n]+)_([^*]|$)/g, '$1<em>$2</em>$3');
+  links.forEach((lk, i) => {
+    const a = `<a href="${esc(lk.url)}" target="_blank" rel="noopener noreferrer">${esc(lk.label)}</a>`;
+    html = html.split(`\u0000LINK${i}\u0000`).join(a);
+  });
+  return html.replace(/\n/g, '<br>');
+}
+
+function schoolNameCell(s) {
+  const name = esc(s.ten_truong || '');
+  const url = s.website || s.gioi_thieu_url || '';
+  if (!url) return `<span class="small">${name}</span>`;
+  return `<a class="small" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${name}</a>`;
+}
+
+function renderChanceSummaryTable(summary) {
+  if (!summary || !summary.length) return '';
+  return `
+    <div class="table-responsive mt-3">
+      <table class="table table-sm table-bordered align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:3rem" class="text-center">PTXT</th>
+            <th>Trường</th>
+            <th>Tên</th>
+            <th>Số ngành</th>
+            <th>Đạt ngưỡng</th>
+            <th>TB điểm chuẩn</th>
+            <th>Lệch tốt nhất</th>
+            <th>Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${summary.map(s => {
+            const mark = s.ok
+              ? '<span class="text-success fw-bold" title="Có phương thức">✓</span>'
+              : '<span class="text-danger fw-bold" title="Không có phương thức phù hợp">✗</span>';
+            const rowClass = s.ok ? '' : 'table-danger';
+            return `<tr class="${rowClass}">
+              <td class="text-center fs-5">${mark}</td>
+              <td><code>${esc(s.ma_truong)}</code></td>
+              <td>${schoolNameCell(s)}</td>
+              <td>${s.ok ? esc(s.n_nganh) : '—'}</td>
+              <td>${s.ok ? `${esc(s.n_pass)}/${esc(s.n_nganh)}` : '—'}</td>
+              <td>${s.avg_cutoff != null ? esc(s.avg_cutoff) : '—'}</td>
+              <td>${s.best_gap != null ? ((s.best_gap > 0 ? '+' : '') + esc(s.best_gap)) : '—'}</td>
+              <td class="small ${s.ok ? 'text-muted' : 'text-danger'}">${esc(s.message || (s.ok ? '' : 'Không có PTXT phù hợp'))}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderChancePanel(result) {
+  const summary = result.school_summary || [];
+  const summaryHtml = renderChanceSummaryTable(summary);
+
+  if (!result.ok) {
+    return `<div class="alert alert-warning mb-0">${esc(result.message || 'Không đánh giá được.')}</div>${summaryHtml}`;
+  }
+
+  const st = result.stats || {};
+  const samples = result.samples || [];
+  const advice = formatAdviceHtml(result.ai_advice || '');
+  const profiles = st.score_profiles || [];
+  const profileBadges = profiles.length
+    ? profiles.map(p =>
+        `<span class="badge text-bg-light border">${esc(p.method_label || p.method)}: <strong>${esc(p.score)}</strong></span>`
+      ).join('')
+    : `<span class="badge text-bg-light border">${esc(st.method_label || st.method || '')}</span>`;
+
+  return `
+    <div class="chance-panel">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        ${levelBadge(result.level, result.level_label)}
+        ${profileBadges}
+        <span class="small text-muted ms-auto">Năm ${esc(st.latest_year)} · ${esc(st.n_pass)}/${esc(st.n_latest)} ngành đạt ngưỡng</span>
+      </div>
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(st.pass_rate)}%</div><div class="stat-lbl">Tỷ lệ đạt ngưỡng</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(st.avg_cutoff)}</div><div class="stat-lbl">TB điểm chuẩn</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${st.avg_gap > 0 ? '+' : ''}${esc(st.avg_gap)}</div><div class="stat-lbl">Chênh lệch TB</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${esc(st.min_cutoff)}–${esc(st.max_cutoff)}</div><div class="stat-lbl">Khoảng điểm chuẩn</div></div></div>
+      </div>
+      <div class="chance-advice mb-3">${advice}</div>
+      <h3 class="h6 mb-2">Tổng kết theo trường</h3>
+      ${summaryHtml || '<p class="small text-muted">Không có dữ liệu trường.</p>'}
+      ${samples.length ? `
+        <h3 class="h6 mb-2 mt-3">Chi tiết ngành gần điểm nhất</h3>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light"><tr>
+              <th class="text-center">PTXT</th><th>Trường</th><th>Ngành</th><th>Phương thức</th><th>Điểm của bạn</th><th>Điểm chuẩn</th><th>Lệch</th><th></th>
+            </tr></thead>
+            <tbody>
+              ${samples.map(s => {
+                const schoolUrl = s.website || s.gioi_thieu_url || '';
+                const schoolLink = schoolUrl
+                  ? `<a class="small ms-1" href="${esc(schoolUrl)}" target="_blank" rel="noopener noreferrer" title="${esc(s.ten_truong || '')}">↗</a>`
+                  : '';
+                return `<tr>
+                <td class="text-center text-success">✓</td>
+                <td><code>${esc(s.ma_truong)}</code>${schoolLink}</td>
+                <td class="small">${esc(s.ten_nganh)}</td>
+                <td class="small">${esc(s.user_method_label || s.phuong_thuc || '')}</td>
+                <td>${esc(s.user_score != null ? s.user_score : '')}</td>
+                <td>${esc(s.diem_chuan)}</td>
+                <td>${s.chenh_lech > 0 ? '+' : ''}${esc(s.chenh_lech)}</td>
+                <td class="small">${esc(s.co_hoi)}</td>
+              </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}
+    </div>`;
+}
+
+function buildMultiChanceSummary(methodResults) {
+  const methodBriefs = [];
+  const schoolMap = {};
+  const passMajors = [];
+
+  methodResults.forEach((r, idx) => {
+    const st = r.stats || {};
+    const methodId = st.method || `M${idx}`;
+    const methodLabel = st.method_label || methodId;
+    const score = st.score;
+    methodBriefs.push({
+      method: methodId,
+      method_label: methodLabel,
+      score,
+      ok: !!r.ok,
+      level: r.level || 'unknown',
+      level_label: r.level_label || shortLevelLabel(r.level, r.level_label),
+      pass_rate: st.pass_rate,
+      n_pass: st.n_pass,
+      n_latest: st.n_latest,
+    });
+
+    (r.school_summary || []).forEach(s => {
+      const code = (s.ma_truong || '').toUpperCase();
+      if (!code) return;
+      if (!schoolMap[code]) {
+        schoolMap[code] = {
+          ma_truong: code,
+          ten_truong: s.ten_truong || code,
+          website: s.website || '',
+          gioi_thieu_url: s.gioi_thieu_url || '',
+          methods: [],
+          total_pass: 0,
+          total_nganh: 0,
+          any_ok: false,
+        };
+      }
+      const entry = schoolMap[code];
+      const nPass = s.ok ? (s.n_pass || 0) : 0;
+      const nNganh = s.ok ? (s.n_nganh || 0) : 0;
+      entry.methods.push({
+        method: methodId,
+        method_label: methodLabel,
+        score,
+        ok: !!s.ok,
+        n_pass: nPass,
+        n_nganh: nNganh,
+        best_gap: s.best_gap,
+        level: r.ok ? r.level : 'unknown',
+        level_label: r.ok ? r.level_label : 'Không có DL',
+        message: s.message || '',
+      });
+      if (s.ok) {
+        entry.any_ok = true;
+        entry.total_pass += nPass;
+        entry.total_nganh += nNganh;
+      }
+    });
+
+    (r.samples || []).forEach(s => {
+      if ((s.co_hoi || '') !== 'đạt ngưỡng') return;
+      passMajors.push({
+        ma_truong: s.ma_truong,
+        ten_truong: s.ten_truong,
+        ten_nganh: s.ten_nganh,
+        method_label: s.user_method_label || methodLabel,
+        user_score: s.user_score,
+        diem_chuan: s.diem_chuan,
+        chenh_lech: s.chenh_lech,
+        website: s.website || '',
+        gioi_thieu_url: s.gioi_thieu_url || '',
+      });
+    });
+  });
+
+  const schools = Object.values(schoolMap).sort((a, b) => {
+    if (a.any_ok !== b.any_ok) return a.any_ok ? -1 : 1;
+    if (b.total_pass !== a.total_pass) return b.total_pass - a.total_pass;
+    return String(a.ma_truong).localeCompare(String(b.ma_truong));
+  });
+
+  // Ưu tiên trường có ngành đạt ngưỡng; trong mỗi trường lấy method tốt nhất theo n_pass
+  const recommended = schools
+    .filter(s => s.any_ok && s.total_pass > 0)
+    .map(s => {
+      const best = [...s.methods]
+        .filter(m => m.ok && m.n_pass > 0)
+        .sort((a, b) => (b.n_pass - a.n_pass) || ((b.best_gap || -999) - (a.best_gap || -999)))[0];
+      return { ...s, best_method: best || null };
+    });
+
+  // Unique majors by school+name+method, keep best gap
+  const majorKey = (m) => `${m.ma_truong}|${m.ten_nganh}|${m.method_label}`;
+  const majorMap = {};
+  passMajors.forEach(m => {
+    const k = majorKey(m);
+    if (!majorMap[k] || (m.chenh_lech || 0) > (majorMap[k].chenh_lech || 0)) {
+      majorMap[k] = m;
+    }
+  });
+  const topMajors = Object.values(majorMap)
+    .sort((a, b) => (b.chenh_lech || 0) - (a.chenh_lech || 0))
+    .slice(0, 12);
+
+  return { methodBriefs, schools, recommended, topMajors };
+}
+
+function renderMultiChanceSummary(methodResults) {
+  const { methodBriefs, recommended, topMajors } = buildMultiChanceSummary(methodResults);
+  const methodList = methodBriefs
+    .map(m => `<strong>${esc(m.method_label)}</strong> (${esc(m.score)})`)
+    .join(', ');
+
+  let advice = '';
+  if (recommended.length) {
+    const names = recommended.slice(0, 5).map(s => {
+      const via = s.best_method
+        ? ` qua ${esc(s.best_method.method_label)}`
+        : '';
+      return `${esc(s.ten_truong || s.ma_truong)}${via}`;
+    });
+    advice = `Với các phương thức đã chọn (${methodList}), bạn nên ưu tiên dự thi / xét tuyển vào: <strong>${names.join('; ')}</strong>.`;
+    if (recommended.length > 5) {
+      advice += ` Còn ${recommended.length - 5} trường khác cũng có ngành đạt ngưỡng — xem bảng bên dưới.`;
+    }
+  } else {
+    advice = `Với các phương thức đã chọn (${methodList}), chưa thấy ngành đạt ngưỡng trong phạm vi trường đã lọc. Hãy xem từng tab phương thức để chọn ngành sát điểm nhất hoặc cải thiện điểm.`;
+  }
+
+  const methodCards = `
+    <div class="row g-2 mb-3">
+      ${methodBriefs.map(m => `
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="stat-tile text-start">
+            <div class="d-flex justify-content-between align-items-center gap-1 mb-1">
+              <span class="small fw-normal">${esc(m.method_label)}</span>
+              ${levelBadge(m.level, m.level_label)}
+            </div>
+            <div class="stat-val" style="font-size:1.25rem">${esc(m.score)}</div>
+            <div class="stat-lbl">${m.ok ? `${esc(m.n_pass)}/${esc(m.n_latest)} ngành · ${esc(m.pass_rate)}%` : 'Không có dữ liệu'}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
+  const schoolRows = recommended.length ? recommended.map(s => {
+    const methodsHtml = (s.methods || [])
+      .filter(m => m.ok)
+      .map(m => {
+        const gap = m.best_gap != null ? ((m.best_gap > 0 ? '+' : '') + m.best_gap) : '—';
+        return `<span class="badge text-bg-light border me-1 mb-1">${esc(m.method_label)}: ${esc(m.n_pass)}/${esc(m.n_nganh)} (lệch ${esc(gap)})</span>`;
+      }).join('');
+    const tip = s.best_method
+      ? `Ưu tiên xét bằng <strong>${esc(s.best_method.method_label)}</strong> (${esc(s.best_method.n_pass)}/${esc(s.best_method.n_nganh)} ngành đạt)`
+      : '';
+    return `<tr>
+      <td><code>${esc(s.ma_truong)}</code></td>
+      <td>${schoolNameCell(s)}</td>
+      <td>${esc(s.total_pass)}/${esc(s.total_nganh)}</td>
+      <td class="small">${methodsHtml || '—'}</td>
+      <td class="small">${tip}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5" class="text-muted small">Chưa có trường nào đạt ngưỡng với các phương thức đã chọn.</td></tr>`;
+
+  const majorRows = topMajors.length ? topMajors.map(m => {
+    const schoolUrl = m.website || m.gioi_thieu_url || '';
+    const schoolLink = schoolUrl
+      ? `<a class="small ms-1" href="${esc(schoolUrl)}" target="_blank" rel="noopener noreferrer">↗</a>`
+      : '';
+    return `<tr>
+      <td><code>${esc(m.ma_truong)}</code>${schoolLink}</td>
+      <td class="small">${esc(m.ten_nganh)}</td>
+      <td class="small">${esc(m.method_label)}</td>
+      <td>${esc(m.user_score)}</td>
+      <td>${esc(m.diem_chuan)}</td>
+      <td>${m.chenh_lech > 0 ? '+' : ''}${esc(m.chenh_lech)}</td>
+    </tr>`;
+  }).join('') : '';
+
+  return `
+    <div class="chance-panel chance-summary-panel">
+      <h3 class="h6 mb-2">Tổng kết theo các phương thức đã chọn</h3>
+      <p class="mb-3">${advice}</p>
+      ${methodCards}
+      <h3 class="h6 mb-2">Trường nên ưu tiên dự thi / xét tuyển</h3>
+      <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered align-middle mb-0">
+          <thead class="table-light"><tr>
+            <th>Mã</th><th>Trường</th><th>Đạt ngưỡng</th><th>Theo phương thức</th><th>Gợi ý</th>
+          </tr></thead>
+          <tbody>${schoolRows}</tbody>
+        </table>
+      </div>
+      ${topMajors.length ? `
+        <h3 class="h6 mb-2">Một số ngành đạt ngưỡng (gần điểm nhất)</h3>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light"><tr>
+              <th>Trường</th><th>Ngành</th><th>Phương thức</th><th>Điểm của bạn</th><th>Điểm chuẩn</th><th>Lệch</th>
+            </tr></thead>
+            <tbody>${majorRows}</tbody>
+          </table>
+        </div>` : ''}
+    </div>`;
+}
+
+function renderChance(result) {
+  const box = document.getElementById('chanceResult');
+  if (!result) {
+    box.innerHTML = '';
+    return;
+  }
+
+  const methodResults = result.method_results || [];
+  if (result.multi && methodResults.length > 1) {
+    const tabId = 'chanceMethodTabs';
+    const summaryPill = `<li class="nav-item chance-pill-item" role="presentation">
+      <button class="nav-link chance-pill-link active" id="${tabId}-summary-tab"
+        data-bs-toggle="pill" data-bs-target="#${tabId}-summary" type="button" role="tab"
+        aria-controls="${tabId}-summary" aria-selected="true">
+        <span class="chance-pill-text">Tổng kết</span>
+      </button>
+    </li>`;
+    const pills = methodResults.map((r, i) => {
+      const st = r.stats || {};
+      const label = st.method_label || st.method || `PTXT ${i + 1}`;
+      const score = st.score != null ? st.score : (st.score_profiles && st.score_profiles[0] && st.score_profiles[0].score);
+      const text = score != null ? `${label} · ${score}` : label;
+      const lvl = r.ok ? (r.level || 'unknown') : 'unknown';
+      const lvlText = r.ok ? shortLevelLabel(lvl, r.level_label) : 'Không có DL';
+      return `<li class="nav-item chance-pill-item" role="presentation">
+        <button class="nav-link chance-pill-link" id="${tabId}-${i}-tab"
+          data-bs-toggle="pill" data-bs-target="#${tabId}-${i}" type="button" role="tab"
+          aria-controls="${tabId}-${i}" aria-selected="false">
+          <span class="chance-pill-text">${esc(text)}</span>
+          <span class="badge chance-pill-level ${levelBadgeClass(lvl)}" title="Mức phù hợp: ${esc(lvlText)}">${esc(lvlText)}</span>
+        </button>
+      </li>`;
+    }).join('');
+    const panes = `
+      <div class="tab-pane fade show active" id="${tabId}-summary"
+        role="tabpanel" aria-labelledby="${tabId}-summary-tab" tabindex="0">
+        ${renderMultiChanceSummary(methodResults)}
+      </div>
+      ${methodResults.map((r, i) => `
+        <div class="tab-pane fade" id="${tabId}-${i}"
+          role="tabpanel" aria-labelledby="${tabId}-${i}-tab" tabindex="0">
+          ${renderChancePanel(r)}
+        </div>`).join('')}`;
+    box.innerHTML = `
+      <div class="border rounded-3 p-3 bg-white chance-multi-result">
+        <ul class="nav nav-pills flex-wrap gap-3 mb-3 chance-multi-pills" id="${tabId}" role="tablist">
+          ${summaryPill}
+          ${pills}
+        </ul>
+        <div class="tab-content chance-multi-tab-content" id="${tabId}Content">
+          ${panes}
+        </div>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = `<div class="border rounded-3 p-3 bg-white chance-single-result">${renderChancePanel(result)}</div>`;
+}
+
+document.getElementById('btnChance').addEventListener('click', async () => {
+  const scores = getChanceScoreEntries();
+  if (!scores.length) {
+    document.getElementById('chanceResult').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Nhập ít nhất một điểm theo phương thức (vd: TSA 80, SAT 1500).</div>';
+    return;
+  }
+  const schoolCodes = window.App.getSelectValues(document.getElementById('chanceSchool'));
+  document.getElementById('chanceResult').innerHTML =
+    '<div class="spinner-border spinner-border-sm text-accent"></div> Đang đánh giá…';
+  try {
+    const res = await fetch('/api/crawl/danh-gia', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        scores,
+        school_codes: schoolCodes,
+        majors: window.App.getSelectValues(document.getElementById('chanceMajor')),
+        use_ai: true
+      })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Lỗi đánh giá');
+    renderChance(data.result);
+  } catch (e) {
+    document.getElementById('chanceResult').innerHTML =
+      `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
+  }
+});
+
+
+function filterQuyDoiBySchools(data, codes) {
+  if (!data) return null;
+  const set = new Set((codes || []).map(c => String(c).toUpperCase()));
+  if (!set.size) return data;
+  const out = Object.assign({}, data);
+  const match = (code) => set.has(String(code || '').toUpperCase());
+  out.rows = (data.rows || []).filter(r => match(r.ma_truong));
+  out.notes = (data.notes || []).filter(n => match(n.ma_truong));
+  out.ranges = (data.ranges || []).filter(g => match(g.ma_truong));
+  out.images = (data.images || []).filter(i => match(i.ma_truong));
+  out.school_results = (data.school_results || []).filter(s => match(s.code));
+  out.summary = {
+    schools: out.school_results.length || set.size,
+    rows: out.rows.length,
+    notes: out.notes.length,
+    ranges: out.ranges.length,
+    images: out.images.length,
+  };
+  out.from_disk = data.from_disk;
+  out.download_url = data.download_url;
+  out.filename = data.filename;
+  out.methods_by_school = data.methods_by_school || {};
+  out.method_labels = data.method_labels;
+  out.ok = true;
+  return out;
+}
+
+function fillScopeSchools(trends, preferCodes) {
+  const opts = (trends && trends.school_options) || [];
+  scopeSchoolOptions = opts;
+  const schools = opts.length ? opts.map(o => o.id) : ((trends && trends.schools) || []);
+  const html = schools.map(s =>
+    `<option value="${esc(s)}">${esc(schoolOptionLabel(s, trends))}</option>`
+  ).join('');
+  let prefer = preferCodes;
+  if (!prefer || !prefer.length) prefer = schools.slice();
+  const sel = document.getElementById('scopeSchools');
+  window.App.setSelectOptions(sel, html, prefer, {
+    placeholder: 'Chọn một / nhiều / hết trường đã tổng hợp được',
+  });
+  const alertBox = document.getElementById('scopeAlert');
+  if (!schools.length) {
+    alertBox.innerHTML =
+      '<div class="alert alert-light border py-2 mb-0 small">Chưa có trường trong dữ liệu đã tổng hợp được. Hãy <a href="/crawl">Thu thập dữ liệu</a> trước.</div>';
+  } else if (alertBox && !alertBox.querySelector('.alert-success')) {
+    alertBox.innerHTML = '';
+  }
+}
+
+function setTongHopProgress(pct, status) {
+  const bar = document.getElementById('tongHopProgressBar');
+  const statusEl = document.getElementById('tongHopProgressStatus');
+  const pctEl = document.getElementById('tongHopProgressPct');
+  const p = Math.max(0, Math.min(100, Math.round(pct)));
+  if (bar) {
+    bar.style.width = p + '%';
+    bar.textContent = p + '%';
+    bar.setAttribute('aria-valuenow', String(p));
+  }
+  if (pctEl) pctEl.textContent = p + '%';
+  if (statusEl) statusEl.textContent = status || '';
+}
+
+async function tongHopThongTin() {
+  const codes = window.App.getSelectValues(document.getElementById('scopeSchools'));
+  const alertBox = document.getElementById('scopeAlert');
+  const prog = document.getElementById('tongHopProgress');
+  const btn = document.getElementById('btnTongHop');
+  if (!codes.length) {
+    alertBox.innerHTML = '<div class="alert alert-warning py-2 mb-0">Chọn ít nhất một trường.</div>';
+    return;
+  }
+
+  alertBox.innerHTML = '';
+  prog.classList.remove('d-none');
+  btn.disabled = true;
+  setTongHopProgress(0, `Bắt đầu tổng hợp ${codes.length} trường…`);
+  document.getElementById('analysisWrap').classList.remove('d-none');
+  document.getElementById('qdCodes').value = codes.join('\n');
+
+  try {
+    setTongHopProgress(8, 'Đang tải biểu đồ điểm chuẩn…');
+    const params = new URLSearchParams({ school: codes[0] });
+    const trRes = await fetch('/api/crawl/trends?' + params.toString());
+    const trData = await trRes.json();
+    if (!trData.ok) throw new Error(trData.error || 'Chưa có dữ liệu điểm chuẩn đã lưu.');
+    lastTrends = trData.trends;
+    lastCrawl = { trends: trData.trends, codes };
+    const filteredTrends = Object.assign({}, trData.trends, {
+      schools: codes,
+      school_options: (trData.trends.school_options || []).filter(o => codes.includes(o.id)),
+      school: codes[0],
+    });
+    setTongHopProgress(18, `Đã tải biểu đồ · đang gắn ${codes.length} trường…`);
+    renderTrendChart(filteredTrends);
+    fillSchoolSelects(filteredTrends, codes[0], codes);
+
+    setTongHopProgress(25, 'Đang kiểm tra bảng quy đổi điểm…');
+    let qd = null;
+    const qdRes = await fetch('/api/quy-doi/session');
+    const qdSession = await qdRes.json();
+    if (qdSession.ok && qdSession.has_data) {
+      qd = filterQuyDoiBySchools(qdSession, codes);
+      const have = new Set((qd.school_results || []).map(s => (s.code || '').toUpperCase()));
+      const missing = codes.filter(c =>
+        !have.has(c.toUpperCase())
+        && !(qd.rows || []).some(r => (r.ma_truong || '').toUpperCase() === c.toUpperCase())
+      );
+      if (missing.length) {
+        setTongHopProgress(28, `Thiếu ${missing.length}/${codes.length} trường — đang lấy bổ sung…`);
+        await fetchQuyDoi(missing.join('\n'), {
+          showLocalProgress: false,
+          onProgress: (index, total, status) => {
+            const pct = 28 + Math.round((index / Math.max(total, 1)) * 70);
+            setTongHopProgress(pct, status || `Đang lấy quy đổi ${index}/${total}…`);
+          },
+        });
+      } else {
+        // Lọc theo từng trường để thanh progress vẫn chạy khi chọn nhiều
+        const n = codes.length;
+        for (let i = 0; i < n; i++) {
+          setTongHopProgress(
+            30 + Math.round(((i + 1) / n) * 65),
+            `Đang lọc quy đổi ${i + 1}/${n}: ${codes[i]}`
+          );
+          // nhường UI để thanh progress kịp vẽ khi số trường lớn
+          if (i % 8 === 7) await new Promise(r => setTimeout(r, 0));
+        }
+        renderQuyDoi(qd);
+      }
+    } else {
+      setTongHopProgress(28, `Đang lấy quy đổi cho ${codes.length} trường…`);
+      await fetchQuyDoi(codes.join('\n'), {
+        showLocalProgress: false,
+        onProgress: (index, total, status) => {
+          const pct = 28 + Math.round((index / Math.max(total, 1)) * 70);
+          setTongHopProgress(pct, status || `Đang lấy quy đổi ${index}/${total}…`);
+        },
+      });
+    }
+
+    setTongHopProgress(100, `Hoàn tất — ${codes.length} trường`);
+    prog.classList.add('d-none');
+    alertBox.innerHTML = `<div class="alert alert-success py-2 mb-0">
+      Đã tổng hợp <b>${codes.length}</b> trường từ dữ liệu đã lưu.
+    </div>`;
+    window.App.toast(`Đã tổng hợp xong ${codes.length} trường.`);
+    document.getElementById('chartCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    prog.classList.add('d-none');
+    alertBox.innerHTML = `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('btnTongHop').addEventListener('click', tongHopThongTin);
+
+(async function bootDanhGia() {
+  try {
+    const res = await fetch('/api/crawl/session');
+    const data = await res.json();
+    if (!data.ok || !data.has_data) {
+      document.getElementById('scopeAlert').innerHTML =
+        '<div class="alert alert-light border py-2 mb-0 small">Chưa có điểm chuẩn trên máy — mở bước <a href="/crawl">② Thu thập dữ liệu</a> để bổ sung trường.</div>';
+      return;
+    }
+    lastCrawl = data;
+    fillScopeSchools(data.trends || {}, data.codes || []);
+  } catch (e) {
+    document.getElementById('scopeAlert').innerHTML =
+      `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
+  }
+})();
+</script>
+{% endblock %}
+

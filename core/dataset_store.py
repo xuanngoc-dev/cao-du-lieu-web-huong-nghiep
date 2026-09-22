@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Lưu / nạp dataset dùng lại trên UI (không cần cào lại).
+Lưu / nạp dataset dùng lại trên UI (không cần thu thập lại).
 
 Cấu trúc:
   data/datasets/admissions_latest.json
@@ -52,15 +52,32 @@ def load_json(path: str) -> Optional[Any]:
         return None
 
 
+def format_size(num_bytes: int) -> str:
+    """Hiển thị kích thước: B / KB / MB / GB tùy ngưỡng."""
+    try:
+        n = float(num_bytes or 0)
+    except (TypeError, ValueError):
+        n = 0.0
+    if n < 1024:
+        return f"{int(n)} B"
+    if n < 1024 * 1024:
+        return f"{round(n / 1024, 1)} KB"
+    if n < 1024 * 1024 * 1024:
+        return f"{round(n / (1024 * 1024), 1)} MB"
+    return f"{round(n / (1024 * 1024 * 1024), 2)} GB"
+
+
 def file_meta(path: str) -> Optional[Dict[str, Any]]:
     if not path or not os.path.isfile(path):
         return None
     st = os.stat(path)
+    size = st.st_size
     return {
         "name": os.path.basename(path),
         "path": path,
-        "size": st.st_size,
-        "size_kb": round(st.st_size / 1024, 1),
+        "size": size,
+        "size_kb": round(size / 1024, 1),
+        "size_label": format_size(size),
         "mtime": datetime.fromtimestamp(st.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
         "mtime_ts": int(st.st_mtime),
     }
@@ -250,3 +267,106 @@ def resolve_dataset_file(root: str, name: str) -> Optional[str]:
 def copy_schools_exports_stamp(root: str) -> None:
     """Đảm bảo thư mục datasets tồn tại (bước 1 đã ghi vào output)."""
     datasets_dir(root)
+
+
+def _unlink(path: str) -> bool:
+    if not path or not os.path.isfile(path):
+        return False
+    try:
+        os.remove(path)
+        return True
+    except OSError:
+        return False
+
+
+def _unlink_glob(pattern: str) -> int:
+    n = 0
+    for p in glob.glob(pattern):
+        if _unlink(p):
+            n += 1
+    return n
+
+
+def clear_schools(root: str) -> Dict[str, Any]:
+    """Xoá danh sách trường đã lưu (JSON + Excel + mã txt)."""
+    out = output_dir(root)
+    removed = []
+    for name in (
+        "danh_sach_ma_truong.json",
+        "danh_sach_ma_truong.xlsx",
+        "ma_truong.txt",
+    ):
+        path = os.path.join(out, name)
+        if _unlink(path):
+            removed.append(name)
+    return {"kind": "schools", "removed": removed, "count": len(removed)}
+
+
+def clear_admissions(root: str) -> Dict[str, Any]:
+    """Xoá dữ liệu tổng hợp: latest, snapshot JSON, Excel xuất."""
+    removed: List[str] = []
+    latest = admissions_latest_path(root)
+    if _unlink(latest):
+        removed.append(os.path.basename(latest))
+    snap_n = _unlink_glob(
+        os.path.join(datasets_dir(root), "admissions", "admissions_*.json")
+    )
+    xls_n = _unlink_glob(os.path.join(output_dir(root), "tong_hop_tuyen_sinh_*.xlsx"))
+    return {
+        "kind": "admissions",
+        "removed": removed,
+        "snapshots_removed": snap_n,
+        "excels_removed": xls_n,
+        "count": len(removed) + snap_n + xls_n,
+    }
+
+
+def clear_quy_doi(root: str) -> Dict[str, Any]:
+    """Xoá bảng quy đổi: latest, snapshot JSON, Excel xuất."""
+    removed: List[str] = []
+    latest = quy_doi_latest_path(root)
+    if _unlink(latest):
+        removed.append(os.path.basename(latest))
+    snap_n = _unlink_glob(
+        os.path.join(datasets_dir(root), "quy_doi", "quy_doi_*.json")
+    )
+    xls_n = _unlink_glob(os.path.join(output_dir(root), "quy_doi_diem_*.xlsx"))
+    return {
+        "kind": "quy_doi",
+        "removed": removed,
+        "snapshots_removed": snap_n,
+        "excels_removed": xls_n,
+        "count": len(removed) + snap_n + xls_n,
+    }
+
+
+def clear_kind(root: str, kind: str) -> Dict[str, Any]:
+    """
+    Làm sạch theo nhóm: schools | admissions | quy_doi | all.
+    """
+    k = (kind or "").strip().lower()
+    if k in ("schools", "truong", "school"):
+        return clear_schools(root)
+    if k in ("admissions", "crawl", "tong_hop"):
+        return clear_admissions(root)
+    if k in ("quy_doi", "quy-doi", "quydoi"):
+        return clear_quy_doi(root)
+    if k == "all":
+        parts = [clear_schools(root), clear_admissions(root), clear_quy_doi(root)]
+        return {
+            "kind": "all",
+            "parts": parts,
+            "count": sum(p.get("count") or 0 for p in parts),
+        }
+    raise ValueError("kind phải là schools, admissions, quy_doi hoặc all.")
+
+
+def delete_dataset_file(root: str, name: str) -> Dict[str, Any]:
+    """Xoá một file cụ thể trong datasets/ hoặc output/ (basename an toàn)."""
+    path = resolve_dataset_file(root, name)
+    if not path:
+        raise FileNotFoundError("Không tìm thấy file.")
+    # Không cho xoá file ngoài phạm vi đã resolve
+    if not _unlink(path):
+        raise OSError("Không xoá được file.")
+    return {"ok": True, "removed": os.path.basename(path)}

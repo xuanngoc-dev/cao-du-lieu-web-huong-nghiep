@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Module: crawlers.score_conversion_crawler
-Mô tả: Cào trang Quy đổi điểm giữa các phương thức xét tuyển từ tuyensinh247.
+Mô tả: thu thập trang Quy đổi điểm giữa các phương thức xét tuyển từ tuyensinh247.
 
 Ví dụ:
   https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html
@@ -79,7 +79,7 @@ class ScoreConversionCrawler:
         self,
         school_code_or_name: str,
     ) -> Tuple[MethodConversionBundle, Dict[str, Any]]:
-        """Cào quy đổi điểm của 1 trường. Trả về (bundle, meta)."""
+        """thu thập quy đổi điểm của 1 trường. Trả về (bundle, meta)."""
         bundle = MethodConversionBundle()
         info = self.resolve_school(school_code_or_name)
         if not info:
@@ -189,7 +189,7 @@ class ScoreConversionCrawler:
         return bundle, meta
 
     def crawl_schools(self, school_codes: List[str]) -> MethodConversionBundle:
-        """Cào nhiều trường, gộp kết quả."""
+        """thu thập nhiều trường, gộp kết quả."""
         combined = MethodConversionBundle()
         for code in school_codes:
             part, meta = self.crawl_school(code)

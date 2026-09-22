@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Đánh giá cơ hội trúng tuyển dựa trên điểm chuẩn đã cào + AI miễn phí (tuỳ chọn).
+Đánh giá cơ hội trúng tuyển dựa trên điểm chuẩn đã thu thập + AI miễn phí (tuỳ chọn).
 
 Ưu tiên gọi AI (không cần key):
   1. Pollinations (text.pollinations.ai) — miễn phí, không API key
@@ -15,12 +15,63 @@ import json
 import os
 import re
 from collections import defaultdict
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
 from core.aggregator import METHOD_COLUMN_LABELS, method_column_key
 from core.normalizer import get_school_display_name
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_SCHOOL_CACHE = _PROJECT_ROOT / "data" / "cache" / "school_slugs_cache.json"
+
+
+@lru_cache(maxsize=1)
+def _school_link_map() -> Dict[str, Dict[str, str]]:
+    """Map mã trường → website / đề án / slug từ cache danh mục."""
+    try:
+        with open(_SCHOOL_CACHE, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except (OSError, json.JSONDecodeError, TypeError):
+        return {}
+    out: Dict[str, Dict[str, str]] = {}
+    for code, info in (raw or {}).items():
+        if not isinstance(info, dict):
+            continue
+        key = str(code or info.get("code") or "").strip().upper()
+        if not key:
+            continue
+        website = (info.get("website") or "").strip()
+        gioi = (info.get("gioi_thieu_url") or "").strip()
+        slug = (info.get("slug") or "").strip()
+        if not gioi and slug:
+            gioi = f"https://diemthi.tuyensinh247.com/de-an-tuyen-sinh/{slug}.html#gioi-thieu"
+        out[key] = {
+            "website": website,
+            "gioi_thieu_url": gioi,
+            "slug": slug,
+            "name": (info.get("name") or "").strip(),
+        }
+    return out
+
+
+def _links_for_school(ma_truong: Any) -> Dict[str, str]:
+    key = str(ma_truong or "").strip().upper()
+    return dict(_school_link_map().get(key) or {})
+
+
+def _md_school_link(ma_truong: Any, ten_truong: str = "") -> str:
+    """Markdown link ưu tiên website nhà trường, fallback đề án."""
+    code = str(ma_truong or "").strip().upper()
+    links = _links_for_school(code)
+    name = (ten_truong or links.get("name") or code).strip()
+    url = links.get("website") or links.get("gioi_thieu_url") or ""
+    label = f"{name} [{code}]" if code else name
+    if url:
+        return f"[{label}]({url})"
+    return label
 
 
 def _score_of(rec: Dict[str, Any]) -> Optional[float]:
@@ -185,7 +236,7 @@ def build_trend_series(
     if not school_name and code:
         school_name = get_school_display_name(code)
 
-    # Map mã → tên đầy đủ (ưu tiên tên chuẩn từ config, rồi dữ liệu đã cào)
+    # Map mã → tên đầy đủ (ưu tiên tên chuẩn từ config, rồi dữ liệu đã thu thập)
     names_by_code: Dict[str, str] = {}
     for rec in admissions:
         sc = (rec.get("ma_truong") or "").upper()
@@ -243,7 +294,7 @@ def list_school_majors(
     school_code: Optional[str] = None,
     school_codes: Optional[List[str]] = None,
 ) -> List[Dict[str, str]]:
-    """Danh sách ngành tuyển sinh (unique) theo 1/nhiều trường từ dữ liệu đã cào."""
+    """Danh sách ngành tuyển sinh (unique) theo 1/nhiều trường từ dữ liệu đã thu thập."""
     scope = _parse_school_scope(school_code, school_codes)
     code_set = set(scope) if scope else None
     seen: Dict[str, Dict[str, str]] = {}
@@ -327,7 +378,7 @@ def list_admission_methods(
     school_codes: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Danh sách phương thức xét tuyển có trong dữ liệu đã cào
+    Danh sách phương thức xét tuyển có trong dữ liệu đã thu thập
     (theo 1 trường, nhiều trường, hoặc toàn bộ).
     """
     codes = _parse_school_scope(school_code, school_codes)
@@ -386,25 +437,110 @@ def _parse_school_scope(
     return out or None
 
 
+def _normalize_score_profiles(
+    score: Optional[float] = None,
+    method: str = "THPT",
+    scores: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Chuẩn hoá danh sách điểm theo phương thức.
+    Mỗi phần tử: {method_id, method_label, score, match_ids}.
+    """
+    raw_items: List[Dict[str, Any]] = []
+    if scores:
+        for item in scores:
+            if not isinstance(item, dict):
+                continue
+            try:
+                sc = float(str(item.get("score")).replace(",", "."))
+            except (TypeError, ValueError):
+                continue
+            mid = _normalize_method_id(str(item.get("method") or method or "THPT"))
+            raw_items.append({"method": mid, "score": sc})
+    elif score is not None:
+        raw_items.append({
+            "method": _normalize_method_id(method),
+            "score": float(score),
+        })
+
+    # Gộp trùng method → giữ điểm sau cùng
+    by_method: Dict[str, float] = {}
+    for it in raw_items:
+        by_method[it["method"]] = it["score"]
+
+    profiles: List[Dict[str, Any]] = []
+    for mid, sc in by_method.items():
+        profiles.append({
+            "method_id": mid,
+            "method_label": METHOD_COLUMN_LABELS.get(mid, mid),
+            "score": sc,
+            "match_ids": _method_match_ids(mid),
+        })
+    return profiles
+
+
+def _pick_profile_for_record(
+    profiles: List[Dict[str, Any]],
+    rec_mid: str,
+    rec_score: float,
+) -> Optional[Dict[str, Any]]:
+    """Chọn điểm thí sinh khớp bản ghi (ưu tiên đúng mã PTXT, rồi alias)."""
+    exact: List[Dict[str, Any]] = []
+    alias: List[Dict[str, Any]] = []
+    for p in profiles:
+        if rec_mid not in p["match_ids"]:
+            continue
+        if not _score_compatible(p["method_id"], rec_mid, p["score"], rec_score):
+            continue
+        if p["method_id"] == rec_mid:
+            exact.append(p)
+        else:
+            alias.append(p)
+    if exact:
+        return exact[0]
+    if alias:
+        return alias[0]
+    return None
+
+
 def analyze_chance(
     admissions: List[Dict[str, Any]],
-    score: float,
+    score: Optional[float] = None,
     method: str = "THPT",
     school_code: Optional[str] = None,
     school_codes: Optional[List[str]] = None,
     major_keyword: Optional[str] = None,
     majors: Optional[List[str]] = None,
+    scores: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """
-    So sánh điểm thí sinh với điểm chuẩn theo đúng phương thức đã chọn.
+    So sánh điểm thí sinh với điểm chuẩn theo một hoặc nhiều phương thức.
 
-    - Chỉ lấy bản ghi khớp phương thức (có alias hợp lý: SAT↔CCQT, HSA↔DGNL…).
-    - Nếu đánh giá nhiều trường: trường không có phương thức đó → báo
-      «không tuyển sinh với phương thức …» (mark ✗ trong bảng tổng kết).
+    Ví dụ nhiều điểm: TSA 80 + SAT 1500 → mỗi ngành được so với điểm
+    đúng thang phương thức tương ứng.
     """
-    method_id = _normalize_method_id(method)
-    method_label = METHOD_COLUMN_LABELS.get(method_id, method_id)
-    match_ids = _method_match_ids(method_id)
+    profiles = _normalize_score_profiles(score=score, method=method, scores=scores)
+    if not profiles:
+        return {
+            "ok": False,
+            "level": "unknown",
+            "level_label": "Thiếu điểm",
+            "message": "Chưa nhập điểm / phương thức hợp lệ để đánh giá.",
+            "stats": {},
+            "samples": [],
+            "school_summary": [],
+            "schools_no_method": [],
+            "schools_evaluated": [],
+        }
+
+    multi = len(profiles) > 1
+    method_id = profiles[0]["method_id"]
+    method_labels = [f"{p['method_label']} {p['score']}" for p in profiles]
+    method_label = " · ".join(method_labels)
+    all_match_ids = set()
+    for p in profiles:
+        all_match_ids |= set(p["match_ids"])
+
     scope = _parse_school_scope(school_code, school_codes)
     kw = (major_keyword or "").strip().lower() or None
     major_ids = {
@@ -452,13 +588,23 @@ def analyze_chance(
         if sc_score is None:
             continue
         mid = method_column_key(rec.get("phuong_thuc") or "") or "OTHER"
-        if mid not in match_ids:
+        prof = _pick_profile_for_record(profiles, mid, sc_score)
+        if not prof:
             continue
-        if not _score_compatible(method_id, mid, score, sc_score):
-            continue
+        user_score = float(prof["score"])
         schools_with_method.add(sc)
-        matched.append({**rec, "_score": sc_score, "_method": mid})
+        matched.append({
+            **rec,
+            "_score": sc_score,
+            "_method": mid,
+            "_user_score": user_score,
+            "_user_method": prof["method_id"],
+            "_user_method_label": prof["method_label"],
+            "_gap": round(user_score - sc_score, 2),
+            "_rel_gap": (user_score - sc_score) / max(abs(sc_score), 1e-6),
+        })
 
+    methods_text = " / ".join(p["method_label"] for p in profiles)
     schools_no_method = []
     for sc in scope_schools:
         if sc in schools_with_method:
@@ -470,7 +616,7 @@ def analyze_chance(
                 "ten_truong": school_names.get(sc, sc),
                 "reason": "no_data",
                 "mark": "✗",
-                "message": f"{sc} — chưa có dữ liệu điểm chuẩn đã cào để đánh giá.",
+                "message": f"{sc} — chưa có dữ liệu điểm chuẩn đã tổng hợp được để đánh giá.",
             })
         else:
             schools_no_method.append({
@@ -480,11 +626,19 @@ def analyze_chance(
                 "mark": "✗",
                 "message": (
                     f"{sc} — không tuyển sinh / không có điểm chuẩn "
-                    f"theo phương thức «{method_label}» trong dữ liệu đã cào."
+                    f"theo phương thức «{methods_text}» trong dữ liệu đã tổng hợp được."
                 ),
             })
 
     no_method_map = {s["ma_truong"]: s for s in schools_no_method}
+    score_profiles_out = [
+        {
+            "method": p["method_id"],
+            "method_label": p["method_label"],
+            "score": p["score"],
+        }
+        for p in profiles
+    ]
 
     if not matched:
         school_summary = [
@@ -499,15 +653,17 @@ def analyze_chance(
                 "n_pass": 0,
                 "avg_cutoff": None,
                 "best_gap": None,
+                "website": _links_for_school(s["ma_truong"]).get("website") or "",
+                "gioi_thieu_url": _links_for_school(s["ma_truong"]).get("gioi_thieu_url") or "",
             }
             for s in schools_no_method
         ]
         msg = (
             f"Không trường nào trong {len(scope_schools)} trường đã chọn "
-            f"có điểm chuẩn phương thức «{method_label}»."
+            f"có điểm chuẩn phương thức «{methods_text}»."
             if len(scope_schools) > 1
             else (schools_no_method[0]["message"] if schools_no_method else
-                  f"Không tìm thấy điểm chuẩn phương thức «{method_label}».")
+                  f"Không tìm thấy điểm chuẩn phương thức «{methods_text}».")
         )
         return {
             "ok": False,
@@ -517,9 +673,11 @@ def analyze_chance(
             "stats": {
                 "method": method_id,
                 "method_label": method_label,
+                "score_profiles": score_profiles_out,
+                "multi": multi,
                 "school_codes": scope_schools,
                 "majors": sorted(major_ids),
-                "score": score,
+                "score": profiles[0]["score"],
                 "schools_evaluated": [],
                 "schools_no_method": schools_no_method,
             },
@@ -532,60 +690,118 @@ def analyze_chance(
     years = sorted({int(r["nam"]) for r in matched if r.get("nam") is not None})
     latest = years[-1]
     latest_rows = [r for r in matched if int(r["nam"]) == latest]
-    pass_rows = [r for r in latest_rows if score >= r["_score"]]
+    pass_rows = [r for r in latest_rows if r["_user_score"] >= r["_score"]]
     near_rows = [
         r for r in latest_rows
-        if 0 <= (r["_score"] - score) <= max(0.5, r["_score"] * 0.03)
+        if 0 <= (r["_score"] - r["_user_score"]) <= max(0.5, r["_score"] * 0.03)
     ]
 
-    gaps = [score - r["_score"] for r in latest_rows]
-    avg_cutoff = sum(r["_score"] for r in latest_rows) / len(latest_rows)
-    avg_gap = sum(gaps) / len(gaps)
+    gaps = [r["_gap"] for r in latest_rows]
+    rel_gaps = [r["_rel_gap"] for r in latest_rows]
+    avg_rel_gap = sum(rel_gaps) / len(rel_gaps)
     pass_rate = len(pass_rows) / len(latest_rows)
+
+    # Thống kê tuyệt đối chỉ meaningful khi 1 thang điểm
+    avg_cutoff = None
+    avg_gap = None
+    min_cutoff = None
+    max_cutoff = None
+    if not multi:
+        avg_cutoff = round(sum(r["_score"] for r in latest_rows) / len(latest_rows), 2)
+        avg_gap = round(sum(gaps) / len(gaps), 2)
+        min_cutoff = round(min(r["_score"] for r in latest_rows), 2)
+        max_cutoff = round(max(r["_score"] for r in latest_rows), 2)
+
+    by_method: Dict[str, Dict[str, Any]] = {}
+    for r in latest_rows:
+        um = r["_user_method"]
+        bucket = by_method.setdefault(um, {
+            "method": um,
+            "method_label": r["_user_method_label"],
+            "score": r["_user_score"],
+            "n": 0,
+            "n_pass": 0,
+            "gaps": [],
+            "cutoffs": [],
+        })
+        bucket["n"] += 1
+        if r["_user_score"] >= r["_score"]:
+            bucket["n_pass"] += 1
+        bucket["gaps"].append(r["_gap"])
+        bucket["cutoffs"].append(r["_score"])
+    by_method_stats = []
+    for um, b in by_method.items():
+        by_method_stats.append({
+            "method": b["method"],
+            "method_label": b["method_label"],
+            "score": b["score"],
+            "n": b["n"],
+            "n_pass": b["n_pass"],
+            "pass_rate": round(100.0 * b["n_pass"] / b["n"], 1) if b["n"] else 0,
+            "avg_cutoff": round(sum(b["cutoffs"]) / len(b["cutoffs"]), 2) if b["cutoffs"] else None,
+            "avg_gap": round(sum(b["gaps"]) / len(b["gaps"]), 2) if b["gaps"] else None,
+        })
 
     trend_by_year = []
     for y in years:
         rows_y = [r for r in matched if int(r["nam"]) == y]
         if not rows_y:
             continue
-        avg_y = sum(r["_score"] for r in rows_y) / len(rows_y)
-        trend_by_year.append({"nam": y, "avg": round(avg_y, 2), "n": len(rows_y)})
+        # Khi multi: dùng tỷ lệ đạt theo năm thay vì TB điểm chuẩn lệch thang
+        if multi:
+            n_pass_y = sum(1 for r in rows_y if r["_user_score"] >= r["_score"])
+            trend_by_year.append({
+                "nam": y,
+                "avg": round(100.0 * n_pass_y / len(rows_y), 1),
+                "n": len(rows_y),
+                "metric": "pass_rate",
+            })
+        else:
+            avg_y = sum(r["_score"] for r in rows_y) / len(rows_y)
+            trend_by_year.append({"nam": y, "avg": round(avg_y, 2), "n": len(rows_y)})
 
     trend_delta = None
-    if len(trend_by_year) >= 2:
+    if len(trend_by_year) >= 2 and not multi:
         trend_delta = round(trend_by_year[-1]["avg"] - trend_by_year[0]["avg"], 2)
 
-    if pass_rate >= 0.7 and avg_gap >= 0.5:
+    if pass_rate >= 0.7 and avg_rel_gap >= 0.02:
         level, level_label = "high", "Cao"
-    elif pass_rate >= 0.4 or avg_gap >= 0:
+    elif pass_rate >= 0.4 or avg_rel_gap >= 0:
         level, level_label = "medium", "Trung bình"
-    elif pass_rate >= 0.15 or avg_gap >= -1.0:
+    elif pass_rate >= 0.15 or avg_rel_gap >= -0.05:
         level, level_label = "low", "Thấp"
     else:
         level, level_label = "very_low", "Rất thấp"
 
-    ranked = sorted(latest_rows, key=lambda r: abs(score - r["_score"]))[:20]
-    samples = [
-        {
-            "ma_truong": r.get("ma_truong"),
+    ranked = sorted(latest_rows, key=lambda r: abs(r["_rel_gap"]))[:20]
+    samples = []
+    for r in ranked:
+        code = r.get("ma_truong")
+        links = _links_for_school(code)
+        samples.append({
+            "ma_truong": code,
             "ten_truong": r.get("ten_truong"),
             "ma_nganh": r.get("ma_nganh"),
             "ten_nganh": r.get("ten_nganh"),
             "nam": r.get("nam"),
             "phuong_thuc": r.get("phuong_thuc"),
             "method_id": r.get("_method"),
+            "user_method": r.get("_user_method"),
+            "user_method_label": r.get("_user_method_label"),
+            "user_score": r.get("_user_score"),
             "diem_chuan": r["_score"],
-            "chenh_lech": round(score - r["_score"], 2),
-            "co_hoi": "đạt ngưỡng" if score >= r["_score"] else "dưới ngưỡng",
+            "chenh_lech": r["_gap"],
+            "co_hoi": "đạt ngưỡng" if r["_user_score"] >= r["_score"] else "dưới ngưỡng",
             "mark": "✓",
-        }
-        for r in ranked
-    ]
+            "website": links.get("website") or "",
+            "gioi_thieu_url": links.get("gioi_thieu_url") or "",
+            "slug": links.get("slug") or "",
+        })
 
-    # Bảng tổng kết theo từng trường (có ✗ nếu không có PTXT)
     school_summary = []
     for sc in scope_schools:
         name = school_names.get(sc, sc)
+        links = _links_for_school(sc)
         if sc in no_method_map:
             info = no_method_map[sc]
             school_summary.append({
@@ -599,15 +815,18 @@ def analyze_chance(
                 "n_pass": 0,
                 "avg_cutoff": None,
                 "best_gap": None,
+                "website": links.get("website") or "",
+                "gioi_thieu_url": links.get("gioi_thieu_url") or "",
             })
             continue
         rows_sc = [r for r in latest_rows if (r.get("ma_truong") or "").upper() == sc]
         if not rows_sc:
-            # Có method ở năm khác nhưng không có năm mới nhất
             rows_sc = [r for r in matched if (r.get("ma_truong") or "").upper() == sc]
-        n_pass = sum(1 for r in rows_sc if score >= r["_score"])
-        avg_sc = sum(r["_score"] for r in rows_sc) / len(rows_sc) if rows_sc else None
-        best_gap = min((score - r["_score"] for r in rows_sc), key=abs) if rows_sc else None
+        n_pass = sum(1 for r in rows_sc if r["_user_score"] >= r["_score"])
+        best_rel = min(rows_sc, key=lambda r: abs(r["_rel_gap"])) if rows_sc else None
+        avg_sc = None
+        if rows_sc and not multi:
+            avg_sc = round(sum(r["_score"] for r in rows_sc) / len(rows_sc), 2)
         school_summary.append({
             "ma_truong": sc,
             "ten_truong": name,
@@ -617,29 +836,35 @@ def analyze_chance(
             "message": "",
             "n_nganh": len(rows_sc),
             "n_pass": n_pass,
-            "avg_cutoff": round(avg_sc, 2) if avg_sc is not None else None,
-            "best_gap": round(best_gap, 2) if best_gap is not None else None,
+            "avg_cutoff": avg_sc,
+            "best_gap": best_rel["_gap"] if best_rel else None,
+            "website": links.get("website") or "",
+            "gioi_thieu_url": links.get("gioi_thieu_url") or "",
         })
 
     schools_evaluated = sorted(schools_with_method)
     stats = {
         "method": method_id,
         "method_label": method_label,
+        "score_profiles": score_profiles_out,
+        "by_method": by_method_stats,
+        "multi": multi,
         "school_codes": scope_schools,
         "major_keyword": kw,
         "majors": sorted(major_ids),
         "majors_count": len(major_ids),
-        "score": score,
+        "score": profiles[0]["score"],
         "latest_year": latest,
         "years": years,
         "n_latest": len(latest_rows),
         "n_pass": len(pass_rows),
         "n_near": len(near_rows),
         "pass_rate": round(pass_rate * 100, 1),
-        "avg_cutoff": round(avg_cutoff, 2),
-        "avg_gap": round(avg_gap, 2),
-        "min_cutoff": round(min(r["_score"] for r in latest_rows), 2),
-        "max_cutoff": round(max(r["_score"] for r in latest_rows), 2),
+        "avg_cutoff": avg_cutoff,
+        "avg_gap": avg_gap,
+        "avg_rel_gap": round(avg_rel_gap * 100, 1),
+        "min_cutoff": min_cutoff,
+        "max_cutoff": max_cutoff,
         "trend_by_year": trend_by_year,
         "trend_delta": trend_delta,
         "schools_evaluated": schools_evaluated,
@@ -647,15 +872,19 @@ def analyze_chance(
     }
 
     msg = (
-        f"Với điểm {score} («{method_label}»), năm {latest}: "
+        f"Với {method_label}, năm {latest}: "
         f"đạt ngưỡng {len(pass_rows)}/{len(latest_rows)} ngành "
-        f"({stats['pass_rate']}%) trên {len(schools_evaluated)}/{len(scope_schools)} trường. "
-        f"TB điểm chuẩn {stats['avg_cutoff']}, chênh lệch TB {stats['avg_gap']:+}."
+        f"({stats['pass_rate']}%) trên {len(schools_evaluated)}/{len(scope_schools)} trường."
     )
+    if not multi and avg_cutoff is not None and avg_gap is not None:
+        msg += f" TB điểm chuẩn {avg_cutoff}, chênh lệch TB {avg_gap:+}."
     if major_ids:
         msg += f" Đã lọc {len(major_ids)} ngành đã chọn."
     if schools_no_method:
-        msg += f" {len(schools_no_method)} trường không có phương thức «{method_label}» (xem cột ✗)."
+        msg += (
+            f" {len(schools_no_method)} trường không có phương thức "
+            f"«{methods_text}» (xem cột ✗)."
+        )
 
     return {
         "ok": True,
@@ -758,6 +987,38 @@ def _call_gemini(prompt: str, system: str) -> Optional[str]:
         return None
 
 
+def _study_tips(method_id: str, method_label: str) -> str:
+    """Gợi ý học hỏi / trau dồi khi điểm chưa đạt."""
+    mid = (method_id or "").lower()
+    base = (
+        "**Gợi ý học hỏi & trau dồi:**\n"
+        "- Rà soát đề án / chỉ tiêu từng ngành trên trang trường (link bên dưới) để biết tổ hợp, điều kiện phụ.\n"
+        "- Luyện đề sát cấu trúc kỳ thi bạn đang theo; ghi nhật ký lỗi sai và ôn lại phần yếu.\n"
+        "- Cân nhắc chứng chỉ ngoại ngữ / tin học nếu ngành xét ưu tiên hoặc quy đổi điểm."
+    )
+    if "hoc_ba" in mid or "học bạ" in (method_label or "").lower():
+        extra = (
+            "- Cải thiện điểm trung bình các môn tổ hợp còn lại ở học kỳ tới; "
+            "ưu tiên môn quyết định điểm xét học bạ."
+        )
+    elif "dgnl" in mid or "đánh giá năng lực" in (method_label or "").lower():
+        extra = (
+            "- Ôn kỹ tư duy logic, ngôn ngữ, khoa học tự nhiên theo đề ĐGNL; "
+            "làm đề thi thử có chấm điểm và phân tích thời gian từng phần."
+        )
+    elif "dgtd" in mid or "tư duy" in (method_label or "").lower():
+        extra = (
+            "- Luyện đề ĐGTD theo từng phần (toán, đọc hiểu, khoa học/giải quyết vấn đề); "
+            "đặt mục tiêu tăng dần từng tuần."
+        )
+    else:
+        extra = (
+            "- Ôn sâu tổ hợp môn thi tốt nghiệp / xét tuyển; "
+            "ưu tiên môn đang lệch xa điểm chuẩn ngành mục tiêu."
+        )
+    return f"{base}\n{extra}"
+
+
 def _fallback_advice(analysis: Dict[str, Any]) -> str:
     """Lời khuyên tiếng Việt khi không gọi được AI ngoài."""
     if not analysis.get("ok"):
@@ -765,6 +1026,9 @@ def _fallback_advice(analysis: Dict[str, Any]) -> str:
 
     st = analysis["stats"]
     level = analysis["level"]
+    method_id = st.get("method") or ""
+    method_label = st.get("method_label") or method_id
+
     tips = {
         "high": (
             "Điểm của bạn đang ở vùng an toàn với nhiều ngành trong bộ lọc. "
@@ -778,42 +1042,72 @@ def _fallback_advice(analysis: Dict[str, Any]) -> str:
         ),
         "low": (
             "Điểm đang sát hoặc hơi dưới trung bình điểm chuẩn. "
-            "Ưu tiên ngành có điểm chuẩn thấp hơn điểm của bạn, "
-            "cân nhắc phương thức khác (học bạ / ĐGNL / ĐGTD) nếu đủ điều kiện."
+            "Ưu tiên vài ngành sát điểm nhất (xem mục tiêu bên dưới), "
+            "đồng thời trau dồi kiến thức để kéo điểm lên trước kỳ xét."
         ),
         "very_low": (
             "Điểm hiện tại thấp hơn đáng kể so với phần lớn ngành đã lọc. "
-            "Nên mở rộng danh sách trường/ngành, cải thiện điểm (thi lại / chứng chỉ), "
-            "hoặc chuyển sang phương thức xét tuyển khác."
+            "Nên tập trung học hỏi / luyện đề để cải thiện điểm, "
+            "và mở rộng danh sách trường–ngành dễ đạt hơn trong lúc chờ."
         ),
     }
     trend = ""
     if st.get("trend_delta") is not None:
         d = st["trend_delta"]
         if d > 0.3:
-            trend = f" Điểm chuẩn có xu hướng tăng khoảng +{d} qua các năm đã cào."
+            trend = f" Điểm chuẩn có xu hướng tăng khoảng +{d} qua các năm đã tổng hợp được."
         elif d < -0.3:
-            trend = f" Điểm chuẩn có xu hướng giảm khoảng {d} qua các năm đã cào."
+            trend = f" Điểm chuẩn có xu hướng giảm khoảng {d} qua các năm đã tổng hợp được."
         else:
-            trend = " Điểm chuẩn khá ổn định qua các năm đã cào."
+            trend = " Điểm chuẩn khá ổn định qua các năm đã tổng hợp được."
 
     samples = analysis.get("samples") or []
-    sample_lines = ""
-    if samples:
-        bits = []
-        for s in samples[:5]:
-            bits.append(
-                f"- {s.get('ten_nganh')} ({s.get('ma_truong')}): "
-                f"chuẩn {s.get('diem_chuan')} · lệch {s.get('chenh_lech'):+}"
+    pass_samples = [s for s in samples if (s.get("chenh_lech") or 0) >= 0]
+    under_samples = [s for s in samples if (s.get("chenh_lech") or 0) < 0]
+
+    focus_lines: List[str] = []
+    # Ưu tiên ngành đã đạt ngưỡng; nếu không có thì lấy ngành sát nhất cần cố
+    focus = (pass_samples[:4] if pass_samples else under_samples[:4])
+    for s in focus:
+        school = _md_school_link(s.get("ma_truong"), s.get("ten_truong") or "")
+        major = s.get("ten_nganh") or s.get("ma_nganh") or "Ngành"
+        gap = s.get("chenh_lech")
+        gap_s = f"{gap:+}" if gap is not None else "?"
+        status = "đạt ngưỡng" if (gap or 0) >= 0 else "còn thiếu điểm"
+        focus_lines.append(
+            f"- **{major}** tại {school}"
+            + (f" ({s.get('user_method_label') or s.get('phuong_thuc') or ''})"
+               if s.get("user_method_label") or s.get("phuong_thuc") else "")
+            + f": chuẩn {s.get('diem_chuan')} · lệch {gap_s} ({status})"
+        )
+
+    focus_block = ""
+    if focus_lines:
+        title = (
+            "Gợi ý tập trung (ngành/trường cụ thể)"
+            if pass_samples
+            else "Ngành/trường gần nhất cần cải thiện điểm"
+        )
+        focus_block = f"\n\n**{title}:**\n" + "\n".join(focus_lines)
+
+    study_block = ""
+    if level in ("low", "very_low") or (not pass_samples and under_samples):
+        profiles = st.get("score_profiles") or []
+        if len(profiles) > 1:
+            study_block = "\n\n**Gợi ý học hỏi theo từng phương thức:**\n" + "\n".join(
+                f"- **{p.get('method_label')} ({p.get('score')})**: ôn sát thang điểm / đề thi của phương thức này."
+                for p in profiles
             )
-        sample_lines = "\nMột số ngành gần điểm của bạn:\n" + "\n".join(bits)
+        else:
+            study_block = "\n\n" + _study_tips(method_id, method_label)
 
     return (
         f"**Mức đánh giá: {analysis['level_label']}**\n\n"
         f"{analysis['message']}{trend}\n\n"
         f"{tips.get(level, '')}"
-        f"{sample_lines}\n\n"
-        "_Lưu ý: đây là ước lượng dựa trên điểm chuẩn công bố đã cào, "
+        f"{focus_block}"
+        f"{study_block}\n\n"
+        "_Lưu ý: đây là ước lượng dựa trên điểm chuẩn công bố đã tổng hợp được, "
         "không phải cam kết trúng tuyển. Cần đối chiếu đề án chính thức của trường._"
     )
 
@@ -829,19 +1123,57 @@ def enrich_with_ai(analysis: Dict[str, Any], use_ai: bool = True) -> Dict[str, A
 
     system = (
         "Bạn là cố vấn hướng nghiệp tuyển sinh đại học Việt Nam. "
-        "Trả lời tiếng Việt, ngắn gọn (180–280 từ), rõ ràng, không hứa hẹn chắc chắn. "
-        "Dựa trên số liệu thống kê được cung cấp: nêu mức cơ hội, gợi ý chiến lược "
-        "nguyện vọng, và lưu ý cần đối chiếu đề án chính thức."
+        "Trả lời tiếng Việt, ngắn gọn (200–320 từ), rõ ràng, không hứa hẹn chắc chắn.\n"
+        "YÊU CẦU BẮT BUỘC:\n"
+        "1) Focus vào 3–5 ngành/trường cụ thể từ danh sách samples (ghi rõ tên ngành + tên trường).\n"
+        "2) Nếu sample có website hoặc gioi_thieu_url, chèn markdown link dạng [Tên trường](url).\n"
+        "3) Nếu level là low/very_low hoặc hầu hết samples dưới ngưỡng: thêm mục "
+        "«Học hỏi & trau dồi» với 3–4 gợi ý học tập cụ thể (ôn môn yếu, luyện đề, chứng chỉ…).\n"
+        "4) Kết thúc bằng lưu ý đối chiếu đề án chính thức."
     )
+    samples_for_ai = []
+    for s in (analysis.get("samples") or [])[:8]:
+        samples_for_ai.append({
+            "ma_truong": s.get("ma_truong"),
+            "ten_truong": s.get("ten_truong"),
+            "ten_nganh": s.get("ten_nganh"),
+            "phuong_thuc": s.get("phuong_thuc"),
+            "user_method_label": s.get("user_method_label"),
+            "user_score": s.get("user_score"),
+            "diem_chuan": s.get("diem_chuan"),
+            "chenh_lech": s.get("chenh_lech"),
+            "co_hoi": s.get("co_hoi"),
+            "website": s.get("website") or "",
+            "gioi_thieu_url": s.get("gioi_thieu_url") or "",
+        })
     prompt = (
-        "Hãy đánh giá cơ hội trúng tuyển từ số liệu sau (JSON):\n"
+        "Hãy đánh giá cơ hội trúng tuyển từ số liệu sau (JSON). "
+        "Thí sinh có thể có nhiều điểm theo nhiều phương thức — so khớp từng ngành với đúng thang điểm. "
+        "Ưu tiên gợi ý ngành đạt ngưỡng; nếu không có thì gợi ý ngành sát nhất kèm hướng học cải thiện điểm.\n"
         + json.dumps(
             {
                 "level": analysis.get("level"),
                 "level_label": analysis.get("level_label"),
                 "message": analysis.get("message"),
-                "stats": analysis.get("stats"),
-                "samples": (analysis.get("samples") or [])[:8],
+                "stats": {
+                    k: analysis.get("stats", {}).get(k)
+                    for k in (
+                        "method",
+                        "method_label",
+                        "score",
+                        "score_profiles",
+                        "by_method",
+                        "multi",
+                        "latest_year",
+                        "pass_rate",
+                        "avg_cutoff",
+                        "avg_gap",
+                        "n_pass",
+                        "n_latest",
+                        "trend_delta",
+                    )
+                },
+                "samples": samples_for_ai,
             },
             ensure_ascii=False,
         )

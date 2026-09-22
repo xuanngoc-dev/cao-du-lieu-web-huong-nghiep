@@ -175,7 +175,7 @@ def render_step1():
     st.subheader("Bước 1 — Lấy danh sách mã trường")
     st.caption(
         "Tải danh bạ Đại học / Học viện / Cao đẳng từ tuyensinh247, "
-        "lọc theo loại hình, rồi **copy mã** sang Bước 2 để cào dữ liệu."
+        "lọc theo loại hình, rồi **copy mã** sang Bước 2 để Thu thập dữ liệu."
     )
 
     c1, c2, c3 = st.columns([1.2, 1.2, 1])
@@ -261,7 +261,7 @@ def render_step1():
                 st.session_state.crawl_codes_input = codes_text
                 st.session_state["crawl_textarea"] = codes_text
                 st.session_state["nav_to_crawl"] = True
-                st.success(f"Đã chuyển {len(filtered)} mã sang Bước 2. Mở tab «② Cào dữ liệu».")
+                st.success(f"Đã chuyển {len(filtered)} mã sang Bước 2. Mở tab «② Thu thập dữ liệu».")
                 st.rerun()
         with a2:
             excel_path = "data/output/danh_sach_ma_truong.xlsx"
@@ -287,10 +287,10 @@ def render_step1():
 
 
 # ---------------------------------------------------------------------------
-# Bước 2 — Cào dữ liệu
+# Bước 2 — Thu thập dữ liệu
 # ---------------------------------------------------------------------------
 def render_step2():
-    st.subheader("Bước 2 — Cào dữ liệu tuyển sinh")
+    st.subheader("Bước 2 — Thu thập dữ liệu tuyển sinh")
     st.caption(
         "Dán danh sách mã trường đã copy từ Bước 1 (hoặc nhập tay). "
         "Hỗ trợ: mỗi dòng 1 mã, hoặc cách nhau bởi dấu phẩy."
@@ -330,18 +330,18 @@ def render_step2():
             min_value=0,
             max_value=1000,
             value=0,
-            help="Dùng khi thử nghiệm, VD: 3–5 trường trước khi cào hàng trăm trường.",
+            help="Dùng khi thử nghiệm, VD: 3–5 trường trước khi thu thập hàng trăm trường.",
         )
 
     codes_to_run = parsed[: int(limit)] if limit and limit > 0 else parsed
 
     if len(codes_to_run) > 30:
         st.warning(
-            f"Bạn sắp cào **{len(codes_to_run)} trường** × **{len(years)} năm**. "
+            f"Bạn sắp thu thập **{len(codes_to_run)} trường** × **{len(years)} năm**. "
             "Quá trình có thể mất nhiều giờ. Nên dùng giới hạn số trường để thử trước."
         )
 
-    run = st.button("🚀 Bắt đầu cào dữ liệu", type="primary", use_container_width=False, disabled=not codes_to_run)
+    run = st.button("🚀 Bắt đầu Thu thập dữ liệu", type="primary", use_container_width=False, disabled=not codes_to_run)
 
     if run:
         if not years:
@@ -361,7 +361,7 @@ def render_step2():
         total = len(codes_to_run)
 
         for i, code in enumerate(codes_to_run, start=1):
-            status.markdown(f"**[{i}/{total}]** Đang cào: `{code}` …")
+            status.markdown(f"**[{i}/{total}]** Đang thu thập: `{code}` …")
             try:
                 school_bundle = crawler.crawl_school_bundle(code, years=years, delay=0.35)
                 n_adm = len(school_bundle.admissions)
@@ -405,13 +405,13 @@ def render_step2():
             f"{len(bundle.conversions)} dòng quy đổi, {len(bundle.regulations)} mục quy chế."
         )
 
-    # Kết quả lần cào gần nhất
+    # Kết quả lần thu thập gần nhất
     stats = st.session_state.get("last_stats") or {}
     if stats.get("path") and os.path.exists(stats["path"]):
         st.markdown("---")
         st.markdown("### Kết quả gần nhất")
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Trường đã cào", stats.get("schools", 0))
+        m1.metric("Trường đã thu thập", stats.get("schools", 0))
         m2.metric("Bản ghi ngành", stats.get("admissions", 0))
         m3.metric("Quy đổi", stats.get("conversions", 0))
         m4.metric("Quy chế", stats.get("regulations", 0))
@@ -461,7 +461,7 @@ def main():
         """
         <div class="hero">
           <h1>Tổng hợp dữ liệu tuyển sinh ĐH / CĐ</h1>
-          <p>Bước 1 lấy danh sách mã trường → Copy → Bước 2 dán danh sách và cào điểm chuẩn, mã ngành, phương thức, quy chế, điểm quy đổi.</p>
+          <p>Bước 1 lấy danh sách mã trường → Copy → Bước 2 dán danh sách và thu thập điểm chuẩn, mã ngành, phương thức, quy chế, điểm quy đổi.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -474,7 +474,7 @@ def main():
 
     tabs = st.tabs([
         "① Danh sách mã trường",
-        "② Cào dữ liệu",
+        "② Thu thập dữ liệu",
         "③ File cục bộ",
         "ℹ Hướng dẫn",
     ])
@@ -491,11 +491,11 @@ def main():
 ### Quy trình khuyến nghị
 1. Vào tab **Danh sách mã trường** → bấm **Tải danh sách trường**.
 2. Lọc loại hình (ĐH / CĐ) nếu cần → **Copy** danh sách mã, hoặc bấm **Dùng danh sách này ở Bước 2**.
-3. Vào tab **Cào dữ liệu** → dán mã (nếu chưa chuyển sẵn) → chọn năm → **Bắt đầu cào**.
+3. Vào tab **Thu thập dữ liệu** → dán mã (nếu chưa chuyển sẵn) → chọn năm → **Bắt đầu thu thập**.
 4. Tải file Excel kết quả (có sheet điểm chuẩn, quy đổi, quy chế).
 
 ### Gợi ý
-- Thử `--limit` / giới hạn 3–5 trường trước khi cào hàng trăm trường.
+- Thử `--limit` / giới hạn 3–5 trường trước khi thu thập hàng trăm trường.
 - Có thể dán mã theo nhiều định dạng: `BKA,NEU,FTU` hoặc mỗi dòng một mã.
 - CLI vẫn dùng được: `python3 main.py --mode schools` / `--mode online --schools all`.
             """

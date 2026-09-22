@@ -7,14 +7,14 @@ Hệ thống Python tự động thu thập, chuẩn hóa, ghép nối và tổn
 ## 🌟 Tính Năng Nổi Bật
 
 1. **Xử lý đa dạng nguồn dữ liệu đầu vào**:
-   - **Cào tự động trực tuyến**: Chỉ cần nhập Mã trường (ví dụ: `BKA`, `NEU`, `FTU`, `QHI`,...) hoặc tên trường, hệ thống tự động tìm kiếm đường dẫn và cào điểm chuẩn qua các năm từ cổng thông tin tuyển sinh công khai.
+   - **thu thập tự động trực tuyến**: Chỉ cần nhập Mã trường (ví dụ: `BKA`, `NEU`, `FTU`, `QHI`,...) hoặc tên trường, hệ thống tự động tìm kiếm đường dẫn và thu thập điểm chuẩn qua các năm từ cổng thông tin tuyển sinh công khai.
    - **Bóc tách tài liệu cục bộ**: Tự động nhận diện cấu trúc bảng và trích xuất dữ liệu từ các file **Excel (`.xlsx`, `.xls`)**, **Word (`.docx`)** và **PDF (`.pdf`)** (như Đề án tuyển sinh, Thông báo điểm chuẩn) đặt trong thư mục `data/input_files/`.
 2. **Thuật toán bóc tách & Chuẩn hóa thông minh**:
    - Tự động nhận diện cột bảng dựa trên từ khóa tiếng Việt đa dạng (`Mã ngành`, `Mã xét tuyển`, `Tên ngành`, `Tổ hợp`, `Chỉ tiêu`, `Số lượng ĐK / Nguyện vọng`, `Điểm trúng tuyển / Điểm chuẩn`, `Phương thức`, `Điểm quy đổi`).
    - Chuẩn hóa dấu phẩy/chấm thập phân (VD: `26,75` -> `26.75`), xử lý mã trường viết tắt (VD: `NEU` tự liên kết với mã tuyển sinh `KHA`).
-   - Thuật toán **hợp nhất dữ liệu (Data Merging)**: Ghép thông tin Điểm chuẩn (từ cào online) với Chỉ tiêu và Số hồ sơ/nguyện vọng (từ Đề án tuyển sinh dạng PDF/Word) theo từng ngành học.
-   - **Cào Đề án tuyển sinh online**: Lấy thêm **mã ngành**, **phương thức xét tuyển** (THPT / học bạ / ĐGNL / ĐGTD / kết hợp / chứng chỉ quốc tế), **quy chế**, và **bảng điểm quy đổi** (IELTS, TOEFL, SAT, ACT, A-Level, hệ chữ A*/A/B/C,...).
-   - **Giao diện web Bootstrap**: Bước 1 danh sách trường → Bước 2 cào dữ liệu → Bước 3 quy đổi điểm phương thức (HSA/TSA/V-ACT/SAT…).
+   - Thuật toán **hợp nhất dữ liệu (Data Merging)**: Ghép thông tin Điểm chuẩn (từ thu thập online) với Chỉ tiêu và Số hồ sơ/nguyện vọng (từ Đề án tuyển sinh dạng PDF/Word) theo từng ngành học.
+   - **thu thập Đề án tuyển sinh online**: Lấy thêm **mã ngành**, **phương thức xét tuyển** (THPT / học bạ / ĐGNL / ĐGTD / kết hợp / chứng chỉ quốc tế), **quy chế**, và **bảng điểm quy đổi** (IELTS, TOEFL, SAT, ACT, A-Level, hệ chữ A*/A/B/C,...).
+   - **Giao diện web Bootstrap**: Bước 1 danh sách trường → Bước 2 Thu thập dữ liệu → Bước 3 quy đổi điểm phương thức (HSA/TSA/V-ACT/SAT…).
 3. **Xuất báo cáo Excel (`tong_hop_tuyen_sinh.xlsx`) chuyên nghiệp**:
    - **Sheet `Tong_Hop_2021_2026`**: Mỗi dòng một ngành; điểm chuẩn tách theo phương thức (THPT, TSA, học bạ, HSA, …) × năm. Multi-level header, Freeze Panes, AutoFilter.
    - **Sheet `Du_Lieu_Chi_Tiet`**: Bảng dữ liệu phẳng (Flat Table) chuẩn cơ sở dữ liệu — gồm Mã ngành, Phương thức, Quy chế, Điểm quy đổi (tóm tắt).
@@ -33,17 +33,17 @@ Python-huong-nghiep/
 ├── data/
 │   ├── input_files/             # Thư mục để người dùng đặt file PDF, Excel, Word vào
 │   ├── output/                  # Nơi lưu file kết quả: tong_hop_tuyen_sinh.xlsx
-│   └── cache/                   # Cache danh bạ trường để cào dữ liệu nhanh hơn
+│   └── cache/                   # Cache danh bạ trường để Thu thập dữ liệu nhanh hơn
 ├── parsers/
 │   ├── base_parser.py           # Lớp cơ sở nhận diện tiêu đề cột tiếng Việt
 │   ├── excel_parser.py          # Bóc tách file Excel (.xlsx, .xls)
 │   ├── pdf_parser.py            # Bóc tách bảng từ file PDF (pdfplumber)
 │   └── docx_parser.py           # Bóc tách bảng từ file Word (.docx)
 ├── crawlers/
-│   ├── online_crawler.py        # Cào điểm chuẩn + đề án (mã ngành, PTXT, quy chế, quy đổi)
+│   ├── online_crawler.py        # thu thập điểm chuẩn + đề án (mã ngành, PTXT, quy chế, quy đổi)
 │   ├── dean_extractor.py        # Bóc tách bảng quy đổi chứng chỉ & quy chế từ HTML đề án
 │   ├── school_directory.py      # Lấy / xuất danh sách mã trường ĐH, CĐ, Học viện
-│   └── score_conversion_crawler.py  # Cào /quy-doi-diem/ (THPT↔HSA/TSA/V-ACT/SAT…)
+│   └── score_conversion_crawler.py  # thu thập /quy-doi-diem/ (THPT↔HSA/TSA/V-ACT/SAT…)
 ├── core/
 │   ├── models.py                # Schema dữ liệu AdmissionRecord
 │   ├── normalizer.py            # Làm sạch chuỗi, điểm, mã ngành, chuẩn hóa viết tắt trường
@@ -51,7 +51,7 @@ Python-huong-nghiep/
 ├── exporter/
 │   └── excel_exporter.py        # Định dạng và xuất file Excel cao cấp (openpyxl)
 ├── web/
-│   ├── app.py                   # Flask + Bootstrap UI (danh bạ, cào, quy đổi điểm)
+│   ├── app.py                   # Flask + Bootstrap UI (danh bạ, thu thập, quy đổi điểm)
 │   ├── templates/               # HTML Bootstrap 5
 │   └── static/                  # CSS / JS
 ├── ui/
@@ -94,8 +94,8 @@ pip install -r requirements.txt
 Mở trình duyệt tại `http://127.0.0.1:8080` (không dùng cổng 5000 — trên macOS cổng này thường bị AirPlay chiếm):
 
 1. **① Danh sách mã trường** — Tải danh bạ ĐH/CĐ (kèm hồ sơ giới thiệu: địa chỉ, website, lĩnh vực đào tạo, thành tựu), lọc, **Copy mã** (hoặc chuyển sang bước 2/3).
-2. **② Cào dữ liệu** — Dán danh sách mã, chọn năm; **modal hiển thị dữ liệu realtime** khi đang cào; sau đó xem **biểu đồ biến động điểm chuẩn theo phương thức**, nhập điểm để **đánh giá cơ hội trúng tuyển** (thống kê + AI miễn phí Pollinations / tuỳ chọn Groq·Gemini), tải Excel.
-3. **③ Quy đổi điểm** — Cào bảng quy đổi phương thức từ trang
+2. **② Thu thập dữ liệu** — Dán danh sách mã, chọn năm; **modal hiển thị dữ liệu realtime** khi đang thu thập; sau đó xem **biểu đồ biến động điểm chuẩn theo phương thức**, nhập điểm để **đánh giá cơ hội trúng tuyển** (thống kê + AI miễn phí Pollinations / tuỳ chọn Groq·Gemini), tải Excel.
+3. **③ Quy đổi điểm** — thu thập bảng quy đổi phương thức từ trang
    [`/quy-doi-diem/`](https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html)
    (THPT ↔ HSA / TSA / V-ACT / SAT / học bạ / xét kết hợp; ảnh bảng nếu trường chỉ đăng ảnh).
 
@@ -107,20 +107,20 @@ Mở trình duyệt tại `http://127.0.0.1:8080` (không dùng cổng 5000 — 
 
 Hệ thống hỗ trợ 2 dạng đầu vào (có thể dùng riêng lẻ hoặc kết hợp cả hai):
 
-### Dạng 0: Lấy danh sách mã trường ĐH / CĐ (khuyến nghị trước khi cào toàn bộ)
+### Dạng 0: Lấy danh sách mã trường ĐH / CĐ (khuyến nghị trước khi thu thập toàn bộ)
 ```bash
 python3 main.py --mode schools --refresh-schools
 # Nhanh hơn (chỉ mã/tên, không hồ sơ):
 python3 main.py --mode schools --refresh-schools --no-profile
 ```
 - Xuất `data/output/danh_sach_ma_truong.xlsx` và `.json`
-- Đồng thời ghi `config/schools_all.json` để dùng làm đầu vào cào
+- Đồng thời ghi `config/schools_all.json` để dùng làm đầu vào thu thập
 - Lọc loại hình: `--school-filter all|dai_hoc|cao_dang|hoc_vien|dai_hoc_hoc_vien`
 
 ### Dạng 1: Cung cấp danh sách Mã trường / Tên trường
 - Bạn có thể chỉnh sửa file `config/schools.json` để thêm bớt các trường muốn theo dõi
 - Hoặc truyền trực tiếp: `--schools BKA,NEU,FTU`
-- **Cào tất cả trường** (dùng danh bạ đã lấy):
+- **thu thập tất cả trường** (dùng danh bạ đã lấy):
   ```bash
   python3 main.py --mode online --schools all
   python3 main.py --mode online --schools all-dh          # chỉ ĐH + Học viện
@@ -150,24 +150,24 @@ Hệ thống sẽ hiển thị menu:
 ======================================================================
  CHƯƠNG TRÌNH TỰ ĐỘNG TỔNG HỢP DỮ LIỆU TUYỂN SINH (2021 - 2026)
 ======================================================================
- [1] Cào dữ liệu trực tuyến theo danh sách mã trường (Online Crawling)
+ [1] Thu thập dữ liệu trực tuyến theo danh sách mã trường (Online Crawling)
  [2] Bóc tách tài liệu từ thư mục cục bộ (data/input_files: PDF, Excel, Word)
  [3] Tổng hợp kết hợp cả hai nguồn (Online + File cục bộ)
  [4] Tạo file mẫu (Excel, Word, PDF) & Chạy thử nghiệm toàn diện
- [5] Lấy danh sách mã trường ĐH / CĐ / Học viện (phục vụ cào toàn bộ)
- [6] Cào TẤT CẢ trường (lấy danh bạ → cào online)
+ [5] Lấy danh sách mã trường ĐH / CĐ / Học viện (phục vụ thu thập toàn bộ)
+ [6] thu thập TẤT CẢ trường (lấy danh bạ → thu thập online)
  [0] Thoát
 ======================================================================
 ```
 
 ### Cách 2: Chạy Dòng Lệnh với Tham Số (Command Line Arguments)
 
-1. **Chế độ Demo (Tạo file mẫu kiểm thử & cào online ngay lập tức)**:
+1. **Chế độ Demo (Tạo file mẫu kiểm thử & thu thập online ngay lập tức)**:
    ```bash
    python main.py --mode demo --schools BKA,NEU,QHI
    ```
 
-2. **Chế độ chỉ cào dữ liệu trực tuyến**:
+2. **Chế độ chỉ Thu thập dữ liệu trực tuyến**:
    ```bash
    python main.py --mode online --schools BKA,NEU,FTU --years 2021,2022,2023,2024,2025
    ```

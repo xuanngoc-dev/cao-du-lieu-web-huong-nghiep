@@ -5,12 +5,18 @@
   <div>
     <h1 class="h3 mb-1"><i class="bi bi-database me-1"></i> Dữ liệu hệ thống</h1>
     <p class="text-muted mb-0">
-      Dữ liệu đã lấy về được lưu trên máy để dùng lại — không cần cào lại mỗi lần mở trang.
+      Dữ liệu đã lấy về được lưu trên máy để dùng lại — không cần thu thập lại mỗi lần mở trang.
     </p>
   </div>
-  <button type="button" class="btn btn-outline-teal btn-sm" id="btnRefreshDatasets">
-    <i class="bi bi-arrow-clockwise"></i> Làm mới
-  </button>
+  <div class="d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-outline-danger btn-sm" id="btnClearAllDatasets"
+      title="Xoá toàn bộ dữ liệu đã lưu">
+      <i class="bi bi-trash3"></i> Xoá toàn bộ
+    </button>
+    <button type="button" class="btn btn-outline-teal btn-sm" id="btnRefreshDatasets">
+      <i class="bi bi-arrow-clockwise"></i> Làm mới
+    </button>
+  </div>
 </div>
 
 <div id="dsAlert" class="mb-3"></div>
@@ -23,7 +29,7 @@
   </li>
   <li class="nav-item" role="presentation">
     <button class="nav-link" data-bs-toggle="pill" data-bs-target="#dsCrawl" type="button">
-      Dữ liệu cào
+      Dữ liệu tổng hợp
     </button>
   </li>
   <li class="nav-item" role="presentation">
@@ -44,6 +50,10 @@
             <p class="small text-muted mb-0" id="dsSchoolsMeta">Đang tải…</p>
           </div>
           <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-outline-danger d-none" id="btnClearSchools"
+              data-clear="schools">
+              <i class="bi bi-trash3"></i> Xoá dữ liệu này
+            </button>
             <a class="btn btn-sm btn-outline-teal d-none" id="dsSchoolsExcel" href="#">
               <i class="bi bi-download"></i> Excel
             </a>
@@ -65,16 +75,20 @@
     </div>
   </div>
 
-  <!-- Cào -->
+  <!-- thu thập -->
   <div class="tab-pane fade" id="dsCrawl">
     <div class="card panel-card mb-3">
       <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
           <div>
-            <h2 class="h5 mb-1">② Dữ liệu điểm chuẩn đã cào</h2>
+            <h2 class="h5 mb-1">② Dữ liệu điểm chuẩn đã tổng hợp</h2>
             <p class="small text-muted mb-0" id="dsCrawlMeta">Đang tải…</p>
           </div>
           <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-outline-danger d-none" id="btnClearCrawl"
+              data-clear="admissions">
+              <i class="bi bi-trash3"></i> Xoá dữ liệu này
+            </button>
             <button type="button" class="btn btn-sm btn-accent d-none" id="btnLoadCrawlLatest">
               <i class="bi bi-box-arrow-in-down"></i> Nạp bản mới nhất
             </button>
@@ -114,6 +128,10 @@
             <p class="small text-muted mb-0" id="dsQuyDoiMeta">Đang tải…</p>
           </div>
           <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-outline-danger d-none" id="btnClearQuyDoi"
+              data-clear="quy_doi">
+              <i class="bi bi-trash3"></i> Xoá dữ liệu này
+            </button>
             <button type="button" class="btn btn-sm btn-accent d-none" id="btnLoadQuyDoiLatest">
               <i class="bi bi-box-arrow-in-down"></i> Nạp bản mới nhất
             </button>
@@ -143,6 +161,30 @@
     </div>
   </div>
 </div>
+
+<!-- Confirm xoá -->
+<div class="modal fade" id="dsConfirmModal" tabindex="-1" aria-labelledby="dsConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title h5 text-danger" id="dsConfirmModalLabel">
+          <i class="bi bi-exclamation-triangle me-1"></i> Xác nhận xoá
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="mb-2" id="dsConfirmMessage"></p>
+        <p class="small text-muted mb-0">Thao tác này không hoàn tác được.</p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+        <button type="button" class="btn btn-danger" id="dsConfirmOk">
+          <i class="bi bi-trash3"></i> Xoá
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -152,6 +194,13 @@ function esc(s) {
     {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
   ));
 }
+
+const CLEAR_LABELS = {
+  schools: 'danh sách trường',
+  admissions: 'dữ liệu tổng hợp (điểm chuẩn)',
+  quy_doi: 'bảng quy đổi điểm',
+  all: 'TOÀN BỘ dữ liệu đã lưu',
+};
 
 function fileRows(files, {loadKind} = {}) {
   if (!files || !files.length) {
@@ -163,11 +212,15 @@ function fileRows(files, {loadKind} = {}) {
       : '';
     return `<tr>
       <td><code class="small">${esc(f.name)}</code></td>
-      <td>${esc(f.size_kb)} KB</td>
+      <td>${esc(f.size_label || ((f.size_kb || 0) + ' KB'))}</td>
       <td class="small text-nowrap">${esc(f.mtime)}</td>
       <td class="text-nowrap">
         <a class="btn btn-sm btn-outline-teal" href="/download/${encodeURIComponent(f.name)}">Tải</a>
         ${loadBtn}
+        <button type="button" class="btn btn-sm btn-outline-danger" data-delete-file="${esc(f.name)}"
+          title="Xoá file này">
+          <i class="bi bi-trash3"></i>
+        </button>
       </td>
     </tr>`;
   }).join('');
@@ -184,6 +237,64 @@ async function loadKind(kind, name) {
   return data;
 }
 
+async function clearKind(kind) {
+  const res = await fetch('/api/datasets/clear', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ kind }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Không xoá được');
+  return data;
+}
+
+async function deleteFile(name) {
+  const res = await fetch('/api/datasets/delete', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ name }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Không xoá được file');
+  return data;
+}
+
+function confirmDelete(messageHtml) {
+  const modalEl = document.getElementById('dsConfirmModal');
+  const msgEl = document.getElementById('dsConfirmMessage');
+  const okBtn = document.getElementById('dsConfirmOk');
+  msgEl.innerHTML = messageHtml;
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      okBtn.removeEventListener('click', onOk);
+      modalEl.removeEventListener('hidden.bs.modal', onHidden);
+      resolve(ok);
+    };
+    const onOk = () => {
+      finish(true);
+      modal.hide();
+    };
+    const onHidden = () => finish(false);
+    okBtn.addEventListener('click', onOk);
+    modalEl.addEventListener('hidden.bs.modal', onHidden, { once: true });
+    modal.show();
+  });
+}
+
+function confirmClear(kind) {
+  const label = CLEAR_LABELS[kind] || kind;
+  return confirmDelete(`Bạn chắc chắn muốn xoá <strong>${esc(label)}</strong>?`);
+}
+
+function confirmDeleteFile(name) {
+  return confirmDelete(`Xoá file <code>${esc(name)}</code>?`);
+}
+
 async function refreshDatasets() {
   const alert = document.getElementById('dsAlert');
   alert.innerHTML = '';
@@ -197,11 +308,13 @@ async function refreshDatasets() {
     const schMeta = document.getElementById('dsSchoolsMeta');
     const schEmpty = document.getElementById('dsSchoolsEmpty');
     const schExcel = document.getElementById('dsSchoolsExcel');
+    const btnClearSchools = document.getElementById('btnClearSchools');
     if (sch.has_data) {
       schMeta.textContent = `${sch.total || 0} trường` +
         (sch.json?.mtime ? ` · cập nhật ${sch.json.mtime}` : '') +
-        (sch.json ? ` · ${sch.json.size_kb} KB` : '');
+        (sch.json ? ` · ${sch.json.size_label || (sch.json.size_kb + ' KB')}` : '');
       schEmpty.classList.add('d-none');
+      btnClearSchools.classList.remove('d-none');
       if (sch.download_excel && sch.excel) {
         schExcel.href = `/download/${encodeURIComponent(sch.download_excel)}`;
         schExcel.classList.remove('d-none');
@@ -225,12 +338,15 @@ async function refreshDatasets() {
       schEmpty.classList.remove('d-none');
       document.querySelector('#dsSchoolsTable tbody').innerHTML = '';
       schExcel.classList.add('d-none');
+      btnClearSchools.classList.add('d-none');
     }
 
     // —— Crawl ——
     const adm = data.admissions || {};
     const crawlMeta = document.getElementById('dsCrawlMeta');
     const btnLoadCrawl = document.getElementById('btnLoadCrawlLatest');
+    const btnClearCrawl = document.getElementById('btnClearCrawl');
+    const crawlHasFiles = !!(adm.has_data || (adm.snapshots || []).length || (adm.excels || []).length);
     if (adm.has_data) {
       crawlMeta.textContent =
         `${adm.schools || 0} trường · ${adm.admissions || 0} bản ghi ngành` +
@@ -246,10 +362,11 @@ async function refreshDatasets() {
         </div>
         <p class="small text-muted mt-2 mb-0">Mã: <code>${esc((adm.codes || []).join(', '))}</code></p>`;
     } else {
-      crawlMeta.textContent = 'Chưa có dữ liệu cào đã lưu. Hãy chạy bước ②.';
+      crawlMeta.textContent = 'Chưa có dữ liệu đã tổng hợp được lưu. Hãy chạy bước ②.';
       btnLoadCrawl.classList.add('d-none');
       document.getElementById('dsCrawlSummary').innerHTML = '';
     }
+    btnClearCrawl.classList.toggle('d-none', !crawlHasFiles);
     document.querySelector('#dsCrawlSnaps tbody').innerHTML = fileRows(adm.snapshots, { loadKind: 'admissions' });
     document.querySelector('#dsCrawlExcels tbody').innerHTML = fileRows(adm.excels);
 
@@ -257,6 +374,8 @@ async function refreshDatasets() {
     const qd = data.quy_doi || {};
     const qdMeta = document.getElementById('dsQuyDoiMeta');
     const btnLoadQd = document.getElementById('btnLoadQuyDoiLatest');
+    const btnClearQd = document.getElementById('btnClearQuyDoi');
+    const qdHasFiles = !!(qd.has_data || (qd.snapshots || []).length || (qd.excels || []).length);
     if (qd.has_data) {
       qdMeta.textContent =
         `${qd.schools || 0} trường · ${qd.rows || 0} dòng bảng` +
@@ -275,6 +394,7 @@ async function refreshDatasets() {
       btnLoadQd.classList.add('d-none');
       document.getElementById('dsQuyDoiSummary').innerHTML = '';
     }
+    btnClearQd.classList.toggle('d-none', !qdHasFiles);
     document.querySelector('#dsQuyDoiSnaps tbody').innerHTML = fileRows(qd.snapshots, { loadKind: 'quy_doi' });
     document.querySelector('#dsQuyDoiExcels tbody').innerHTML = fileRows(qd.excels);
   } catch (e) {
@@ -287,7 +407,7 @@ document.getElementById('btnRefreshDatasets').addEventListener('click', refreshD
 document.getElementById('btnLoadCrawlLatest').addEventListener('click', async () => {
   try {
     await loadKind('admissions', '');
-    window.App.toast('Đã nạp dữ liệu cào — mở bước ② để dùng.');
+    window.App.toast('Đã nạp dữ liệu đã tổng hợp — mở bước ② để dùng.');
     refreshDatasets();
   } catch (e) {
     window.App.toast(e.message);
@@ -304,12 +424,51 @@ document.getElementById('btnLoadQuyDoiLatest').addEventListener('click', async (
   }
 });
 
-document.body.addEventListener('click', async (e) => {
-  const btn = e.target.closest('[data-load]');
-  if (!btn) return;
+document.getElementById('btnClearAllDatasets').addEventListener('click', async () => {
+  if (!(await confirmClear('all'))) return;
   try {
-    await loadKind(btn.dataset.load, btn.dataset.name || '');
-    window.App.toast(`Đã nạp ${btn.dataset.name || 'bản mới nhất'}`);
+    const data = await clearKind('all');
+    window.App.toast(`Đã xoá toàn bộ (${data.count || 0} mục).`);
+    refreshDatasets();
+  } catch (e) {
+    window.App.toast(e.message);
+  }
+});
+
+document.body.addEventListener('click', async (e) => {
+  const clearBtn = e.target.closest('[data-clear]');
+  if (clearBtn) {
+    const kind = clearBtn.dataset.clear;
+    if (!(await confirmClear(kind))) return;
+    try {
+      const data = await clearKind(kind);
+      window.App.toast(`Đã xoá ${CLEAR_LABELS[kind] || kind} (${data.count || 0} mục).`);
+      refreshDatasets();
+    } catch (err) {
+      window.App.toast(err.message);
+    }
+    return;
+  }
+
+  const delBtn = e.target.closest('[data-delete-file]');
+  if (delBtn) {
+    const name = delBtn.dataset.deleteFile;
+    if (!(await confirmDeleteFile(name))) return;
+    try {
+      await deleteFile(name);
+      window.App.toast(`Đã xoá ${name}`);
+      refreshDatasets();
+    } catch (err) {
+      window.App.toast(err.message);
+    }
+    return;
+  }
+
+  const loadBtn = e.target.closest('[data-load]');
+  if (!loadBtn) return;
+  try {
+    await loadKind(loadBtn.dataset.load, loadBtn.dataset.name || '');
+    window.App.toast(`Đã nạp ${loadBtn.dataset.name || 'bản mới nhất'}`);
     refreshDatasets();
   } catch (err) {
     window.App.toast(err.message);

@@ -134,7 +134,7 @@ def process_list_schools(
 
     codes = directory.get_codes(school_type=stype)
     print(
-        f"[DANH_BA] Dùng danh sách này để cào toàn bộ:\n"
+        f"[DANH_BA] Dùng danh sách này để thu thập toàn bộ:\n"
         f"  python3 main.py --mode online --schools all\n"
         f"  python3 main.py --mode online --schools @config/schools_all.json\n"
         f"  python3 main.py --mode online --schools all-dh   # chỉ ĐH+HV\n"
@@ -186,7 +186,7 @@ def process_local_files(input_dir: str = "data/input_files") -> List[AdmissionRe
 
 def process_online_crawling(school_codes: List[str], years: List[int]) -> CrawlBundle:
     """
-    Cào dữ liệu tuyển sinh từ các cổng trực tuyến theo danh sách mã trường.
+    Thu thập dữ liệu tuyển sinh từ các cổng trực tuyến theo danh sách mã trường.
     Bao gồm điểm chuẩn, mã ngành, phương thức, quy chế và bảng quy đổi chứng chỉ.
     """
     crawler = OnlineAdmissionCrawler()
@@ -196,7 +196,7 @@ def process_online_crawling(school_codes: List[str], years: List[int]) -> CrawlB
     preview = ", ".join(school_codes[:8])
     if total > 8:
         preview += f", ... (+{total - 8})"
-    print(f"\n[ONLINE] Bắt đầu cào dữ liệu cho {total} trường: {preview}")
+    print(f"\n[ONLINE] Bắt đầu Thu thập dữ liệu cho {total} trường: {preview}")
 
     for idx, code in enumerate(school_codes, start=1):
         print(f"\n----- [{idx}/{total}] Mã trường: {code} -----")
@@ -403,7 +403,7 @@ def main():
         "--limit",
         type=int,
         default=0,
-        help="Giới hạn số trường khi cào (hữu ích khi test với --schools all)",
+        help="Giới hạn số trường khi thu thập (hữu ích khi test với --schools all)",
     )
     parser.add_argument("--input-dir", type=str, default="data/input_files",
                         help="Đường dẫn thư mục chứa file PDF, Excel, Word cục bộ")
@@ -423,12 +423,12 @@ def main():
         print("\n" + "=" * 70)
         print(" CHƯƠNG TRÌNH TỰ ĐỘNG TỔNG HỢP DỮ LIỆU TUYỂN SINH (2021 - 2026)")
         print("=" * 70)
-        print(" [1] Cào dữ liệu trực tuyến theo danh sách mã trường (Online Crawling)")
+        print(" [1] Thu thập dữ liệu trực tuyến theo danh sách mã trường (Online Crawling)")
         print(" [2] Bóc tách tài liệu từ thư mục cục bộ (data/input_files: PDF, Excel, Word)")
         print(" [3] Tổng hợp kết hợp cả hai nguồn (Online + File cục bộ)")
         print(" [4] Tạo file mẫu (Excel, Word, PDF) & Chạy thử nghiệm toàn diện")
-        print(" [5] Lấy danh sách mã trường ĐH / CĐ / Học viện (phục vụ cào toàn bộ)")
-        print(" [6] Cào TẤT CẢ trường (lấy danh bạ → cào online)")
+        print(" [5] Lấy danh sách mã trường ĐH / CĐ / Học viện (phục vụ thu thập toàn bộ)")
+        print(" [6] thu thập TẤT CẢ trường (lấy danh bạ → thu thập online)")
         print(" [7] Mở giao diện web Bootstrap (http://127.0.0.1:5000)")
         print(" [0] Thoát")
         print("=" * 70)
@@ -514,12 +514,12 @@ def main():
             limit=limit,
         )
         if not school_codes:
-            print("[THÔNG BÁO] Không có mã trường nào để cào.")
+            print("[THÔNG BÁO] Không có mã trường nào để thu thập.")
         else:
-            # Cảnh báo khi cào số lượng lớn
+            # Cảnh báo khi thu thập số lượng lớn
             if len(school_codes) > 50:
                 print(
-                    f"[LƯU Ý] Bạn sắp cào {len(school_codes)} trường × {len(years)} năm. "
+                    f"[LƯU Ý] Bạn sắp thu thập {len(school_codes)} trường × {len(years)} năm. "
                     f"Quá trình có thể mất nhiều giờ. Dùng --limit N để thử trước."
                 )
             online_bundle = process_online_crawling(school_codes, years=years)

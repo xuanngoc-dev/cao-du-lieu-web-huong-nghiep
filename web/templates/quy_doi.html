@@ -3,7 +3,7 @@
 {% block content %}
 <h1 class="h3 mb-1">③ Quy đổi điểm giữa các phương thức</h1>
 <p class="text-muted mb-3">
-  Cào bảng quy đổi từ tuyensinh247, rồi nhập điểm để tính điểm tương đương
+  thu thập bảng quy đổi từ tuyensinh247, rồi nhập điểm để tính điểm tương đương
   (THPT ↔ HSA / TSA / V-ACT / SAT / học bạ…) ngay trên giao diện.
   Ví dụ NEU:
   <a href="https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html" target="_blank" rel="noopener">KHA</a>.
@@ -36,10 +36,14 @@
 </div>
 
 <div id="qdProgress" class="d-none mb-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+    <div class="small text-muted" id="qdProgressStatus">Chuẩn bị…</div>
+    <div class="small" id="qdProgressPct">0%</div>
+  </div>
   <div class="progress" style="height: 1.2rem;">
-    <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent" style="width:100%">
-      Đang lấy quy đổi điểm…
-    </div>
+    <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent"
+      id="qdProgressBar" role="progressbar" style="width:0%"
+      aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
   </div>
 </div>
 
@@ -151,8 +155,8 @@
 
 <div class="tab-content panel-card border rounded-3 p-3 mb-4" id="qdTabContent">
   <div class="tab-pane fade show active" id="tabRows">
-    <div class="table-responsive" style="max-height: 480px;">
-      <table class="table table-sm table-bordered table-hover align-middle mb-0" id="qdRowsTable">
+    <div class="table-responsive table-scroll-x">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0 table-nowrap-head" id="qdRowsTable">
         <thead class="table-light sticky-top"><tr></tr></thead>
         <tbody></tbody>
       </table>
@@ -163,8 +167,8 @@
     <div id="qdNotesList" class="vstack gap-3"></div>
   </div>
   <div class="tab-pane fade" id="tabRanges">
-    <div class="table-responsive">
-      <table class="table table-sm table-bordered table-hover align-middle mb-0" id="qdRangesTable">
+    <div class="table-responsive table-scroll-x">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0 table-nowrap-head" id="qdRangesTable">
         <thead><tr><th>Mã</th><th>Trường</th><th>Phương thức</th><th>Khoảng điểm</th></tr></thead>
         <tbody></tbody>
       </table>
@@ -174,8 +178,8 @@
     <div id="qdImages" class="row g-3"></div>
   </div>
   <div class="tab-pane fade" id="tabMeta">
-    <div class="table-responsive">
-      <table class="table table-sm table-bordered table-hover align-middle mb-0" id="qdMetaTable">
+    <div class="table-responsive table-scroll-x">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0 table-nowrap-head" id="qdMetaTable">
         <thead>
           <tr>
             <th>Mã</th><th>Trường</th><th>OK</th><th>Dòng bảng</th><th>Ghi chú</th><th>Ảnh</th><th>Khoảng</th><th>Link</th><th>Lỗi</th>
@@ -192,6 +196,12 @@
 
 {% block scripts %}
 <script>
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
 const qdCodes = document.getElementById('qdCodes');
 qdCodes.value = window.App.loadCodes() || 'KHA\nNTH';
 
@@ -400,14 +410,13 @@ function renderQuyDoi(data) {
   const colSet = [];
   rows.forEach(r => Object.keys(r.cot_gia_tri || {}).forEach(k => { if (!colSet.includes(k)) colSet.push(k); }));
   document.querySelector('#qdRowsTable thead tr').innerHTML =
-    ['Mã', 'Trường', 'Tiêu đề bảng', 'STT', ...colSet].map(h => `<th>${h}</th>`).join('');
+    ['Mã', 'Trường', 'Tiêu đề bảng', ...colSet].map(h => `<th>${h}</th>`).join('');
   document.querySelector('#qdRowsTable tbody').innerHTML = rows.map(r => {
     const vals = colSet.map(c => `<td>${(r.cot_gia_tri || {})[c] || ''}</td>`).join('');
     return `<tr>
       <td><code>${r.ma_truong}</code></td>
       <td>${r.ten_truong}</td>
-      <td class="small">${r.tieu_de_bang || ''}</td>
-      <td>${r.stt || ''}</td>${vals}</tr>`;
+      <td class="small">${r.tieu_de_bang || ''}</td>${vals}</tr>`;
   }).join('');
   document.getElementById('qdRowsEmpty').style.display = rows.length ? 'none' : 'block';
   const imgCount = (data.images || []).length;
@@ -474,10 +483,28 @@ function renderQuyDoi(data) {
 
 document.getElementById('btnQuyDoi').addEventListener('click', async () => {
   const prog = document.getElementById('qdProgress');
+  const bar = document.getElementById('qdProgressBar');
+  const statusEl = document.getElementById('qdProgressStatus');
+  const pctEl = document.getElementById('qdProgressPct');
+  const btn = document.getElementById('btnQuyDoi');
+
+  function setProgress(index, total, status) {
+    const pct = total > 0 ? Math.min(100, Math.round((index / total) * 100)) : 0;
+    bar.style.width = pct + '%';
+    bar.textContent = pct + '%';
+    bar.setAttribute('aria-valuenow', String(pct));
+    pctEl.textContent = pct + '%';
+    statusEl.textContent = status || '';
+  }
+
   prog.classList.remove('d-none');
+  btn.disabled = true;
+  setProgress(0, 1, 'Bắt đầu lấy bảng quy đổi…');
   window.App.saveCodes(qdCodes.value);
+  document.getElementById('qdSummary').innerHTML = '';
+
   try {
-    const res = await fetch('/api/quy-doi', {
+    const res = await fetch('/api/quy-doi/stream', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -485,14 +512,77 @@ document.getElementById('btnQuyDoi').addEventListener('click', async () => {
         limit: Number(document.getElementById('qdLimit').value || 0)
       })
     });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Lỗi lấy quy đổi điểm');
-    renderQuyDoi(data);
-    window.App.toast('Đã lấy bảng — có thể nhập điểm để tính quy đổi.');
-  } catch (e) {
-    document.getElementById('qdSummary').innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
-  } finally {
+    if (!res.ok) {
+      let err = `HTTP ${res.status}`;
+      try { err = (await res.json()).error || err; } catch (_) {}
+      throw new Error(err);
+    }
+    if (!res.body) throw new Error('Trình duyệt không hỗ trợ stream.');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    let finalPayload = null;
+    let total = 1;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let evt;
+        try { evt = JSON.parse(line); } catch (_) { continue; }
+        if (evt.type === 'start') {
+          total = evt.total || 1;
+          setProgress(0, total, `0/${total} trường…`);
+        } else if (evt.type === 'school') {
+          total = evt.total || total;
+          const mark = evt.ok ? '✓' : '✗';
+          const extra = evt.ok
+            ? `${evt.rows || 0} dòng`
+            : (evt.error || 'lỗi');
+          setProgress(
+            evt.index,
+            total,
+            `${mark} ${evt.index}/${total}: ${evt.code} — ${extra}`
+          );
+        } else if (evt.type === 'done') {
+          finalPayload = evt;
+          setProgress(total, total, 'Hoàn tất — đang hiển thị kết quả…');
+        }
+      }
+    }
+
+    if (!finalPayload || !finalPayload.ok) {
+      throw new Error((finalPayload && finalPayload.error) || 'Lỗi lấy quy đổi điểm');
+    }
+    setProgress(100, 100, '100% — lấy xong dữ liệu');
     prog.classList.add('d-none');
+    renderQuyDoi(finalPayload);
+    const nSchools = (finalPayload.school_results || []).length
+      || (finalPayload.summary && finalPayload.summary.schools)
+      || total;
+    const nRows = (finalPayload.rows || []).length
+      || (finalPayload.summary && finalPayload.summary.rows)
+      || 0;
+    window.App.toast(`Đã lấy xong dữ liệu quy đổi điểm (${nSchools} trường, ${nRows} dòng bảng).`);
+    const sum = document.getElementById('qdSummary');
+    sum.insertAdjacentHTML(
+      'afterbegin',
+      `<div class="alert alert-success py-2 mb-3 d-flex align-items-center gap-2" id="qdDoneAlert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>Đã lấy xong dữ liệu quy đổi điểm — ${esc(nSchools)} trường, ${esc(nRows)} dòng bảng.</span>
+      </div>`
+    );
+  } catch (e) {
+    prog.classList.add('d-none');
+    document.getElementById('qdSummary').innerHTML =
+      `<div class="alert alert-danger">${esc(e.message)}</div>`;
+  } finally {
+    btn.disabled = false;
   }
 });
 

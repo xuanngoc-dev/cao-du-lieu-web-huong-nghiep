@@ -240,7 +240,7 @@ class MajorCodeResolver:
 
     def fetch_school_online_majors(self, slug: str, school_code: str) -> Dict[str, str]:
         """
-        Cào bảng mã ngành chính thức từ trang đề án tuyển sinh của trường (tuyensinh247).
+        thu thập bảng mã ngành chính thức từ trang đề án tuyển sinh của trường (tuyensinh247).
         """
         norm_code = normalize_school_code(school_code)
         if norm_code in self.cached_mappings and len(self.cached_mappings[norm_code]) > 5:
@@ -326,7 +326,7 @@ class MajorCodeResolver:
         if match_brk:
             return match_brk.group(1).upper()
 
-        # 3. Tra trong cache online cào từ đề án tuyển sinh của trường
+        # 3. Tra trong cache online thu thập từ đề án tuyển sinh của trường
         if school_slug and norm_school not in self.cached_mappings:
             self.fetch_school_online_majors(school_slug, norm_school)
 

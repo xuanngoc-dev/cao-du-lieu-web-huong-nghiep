@@ -278,3 +278,130 @@ class AdmissionAggregator:
                 by=["ma_truong", "nam", "ten_nganh", "phuong_thuc"]
             ).reset_index(drop=True)
         return df
+
+
+def build_grouped_score_view(
+    admissions: List[Dict[str, Any]],
+    years: Optional[List[int]] = None,
+) -> Dict[str, Any]:
+    """
+    Bảng xem lại: nhóm theo trường → ngành, điểm theo từng phương thức × năm.
+    """
+    year_list = list(years) if years else list(AdmissionAggregator.DEFAULT_YEARS)
+    present_years = sorted({
+        int(r["nam"]) for r in admissions
+        if r.get("nam") is not None
+    })
+    if present_years:
+        year_list = [y for y in year_list if y in present_years] or present_years
+
+    methods_present: set = set()
+    grouped: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    school_names: Dict[str, str] = {}
+
+    for rec in admissions:
+        code = normalize_school_code(rec.get("ma_truong") or "")
+        if not code:
+            continue
+        ten_truong = (rec.get("ten_truong") or "").strip() or get_school_display_name(code)
+        school_names[code] = ten_truong or school_names.get(code) or code
+
+        ten_nganh = (rec.get("ten_nganh") or "").strip() or "—"
+        key = (code, ten_nganh.lower())
+        mid = method_column_key(rec.get("phuong_thuc") or "") or "OTHER"
+        methods_present.add(mid)
+
+        if key not in grouped:
+            grouped[key] = {
+                "ma_truong": code,
+                "ten_truong": ten_truong,
+                "ma_nganh": (rec.get("ma_nganh") or "").strip(),
+                "ten_nganh": ten_nganh,
+                "to_hop": (rec.get("to_hop") or "").strip(),
+                "scores": {},
+            }
+        row = grouped[key]
+        if not row["ma_nganh"] and rec.get("ma_nganh"):
+            row["ma_nganh"] = str(rec.get("ma_nganh")).strip()
+        to_hop = (rec.get("to_hop") or "").strip()
+        if to_hop:
+            if mid == "THPT" or not row["to_hop"]:
+                if to_hop not in (row["to_hop"] or ""):
+                    row["to_hop"] = (
+                        f"{row['to_hop']}; {to_hop}".strip("; ")
+                        if row["to_hop"]
+                        else to_hop
+                    )
+
+        try:
+            yr = int(rec.get("nam"))
+        except (TypeError, ValueError):
+            continue
+        if yr not in year_list:
+            continue
+
+        score = None
+        for sk in ("diem_chuan_ptxt", "diem_chuan"):
+            v = rec.get(sk)
+            if v is None or v == "":
+                continue
+            try:
+                score = float(v)
+                break
+            except (TypeError, ValueError):
+                continue
+        if score is None:
+            continue
+
+        by_year = row["scores"].setdefault(mid, {})
+        prev = by_year.get(yr)
+        if prev is None or score > prev:
+            by_year[yr] = round(score, 2)
+
+    methods = sorted(
+        methods_present,
+        key=lambda m: (METHOD_COLUMN_ORDER.index(m) if m in METHOD_COLUMN_ORDER else 99, m),
+    )
+    methods = [m for m in methods if any(
+        (row["scores"].get(m) or {}) for row in grouped.values()
+    )]
+
+    schools_map: Dict[str, Dict[str, Any]] = {}
+    for row in grouped.values():
+        code = row["ma_truong"]
+        if code not in schools_map:
+            schools_map[code] = {
+                "ma_truong": code,
+                "ten_truong": school_names.get(code) or row["ten_truong"] or code,
+                "majors": [],
+            }
+        scores_out: Dict[str, Dict[str, Any]] = {}
+        for mid in methods:
+            ymap = row["scores"].get(mid) or {}
+            scores_out[mid] = {str(y): ymap.get(y) for y in year_list if y in ymap}
+        schools_map[code]["majors"].append({
+            "ma_nganh": row["ma_nganh"],
+            "ten_nganh": row["ten_nganh"],
+            "to_hop": row["to_hop"],
+            "scores": scores_out,
+        })
+
+    schools = []
+    for code in sorted(schools_map.keys()):
+        block = schools_map[code]
+        block["majors"].sort(key=lambda m: (m.get("ten_nganh") or "").lower())
+        for i, maj in enumerate(block["majors"], start=1):
+            maj["stt"] = i
+        block["major_count"] = len(block["majors"])
+        schools.append(block)
+
+    return {
+        "ok": True,
+        "years": year_list,
+        "methods": [
+            {"id": m, "label": METHOD_COLUMN_LABELS.get(m, m)} for m in methods
+        ],
+        "schools": schools,
+        "school_count": len(schools),
+        "major_count": sum(s["major_count"] for s in schools),
+    }

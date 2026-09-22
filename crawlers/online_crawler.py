@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Module: crawlers.online_crawler
-Mô tả: Tự động tìm kiếm và cào dữ liệu điểm chuẩn tuyển sinh đại học từ các cổng trực tuyến
+Mô tả: Tự động tìm kiếm và Thu thập dữ liệu điểm chuẩn tuyển sinh đại học từ các cổng trực tuyến
 qua các năm 2021 đến 2025 theo Mã trường hoặc Tên trường.
 """
 
@@ -158,7 +158,7 @@ class OnlineAdmissionCrawler:
         slug: str,
     ) -> Tuple[List[AdmissionRecord], List[ScoreConversionRecord], List[AdmissionRegulation]]:
         """
-        Cào trang Đề án tuyển sinh: mã ngành, phương thức, quy chế, bảng quy đổi chứng chỉ.
+        thu thập trang Đề án tuyển sinh: mã ngành, phương thức, quy chế, bảng quy đổi chứng chỉ.
         """
         if school_code in self._dean_cache:
             return self._dean_cache[school_code]
@@ -348,7 +348,7 @@ class OnlineAdmissionCrawler:
         delay: float = 0.5,
     ) -> CrawlBundle:
         """
-        Cào đầy đủ: điểm chuẩn theo năm + đề án (mã ngành, PTXT, quy chế, điểm quy đổi).
+        thu thập đầy đủ: điểm chuẩn theo năm + đề án (mã ngành, PTXT, quy chế, điểm quy đổi).
         Điểm chuẩn các năm lấy qua API /api/common/cutoff-score (HTML ?y= không đổi nội dung).
         """
         years = years or [2021, 2022, 2023, 2024, 2025, 2026]
@@ -362,7 +362,7 @@ class OnlineAdmissionCrawler:
         school_code = school_info["code"]
         school_name = school_info["name"]
         slug = school_info["slug"]
-        print(f"\n[CRAWLER] Bắt đầu cào dữ liệu: {school_name} (Mã: {school_code})")
+        print(f"\n[CRAWLER] Bắt đầu Thu thập dữ liệu: {school_name} (Mã: {school_code})")
 
         # 1) Đề án: mã ngành, phương thức, quy chế, bảng quy đổi
         dean_admissions, conversions, regulations = self.crawl_dean_data(
@@ -371,7 +371,7 @@ class OnlineAdmissionCrawler:
         bundle.conversions.extend(conversions)
         bundle.regulations.extend(regulations)
 
-        # Nạp mapping mã ngành phục vụ resolve khi cào điểm chuẩn
+        # Nạp mapping mã ngành phục vụ resolve khi thu thập điểm chuẩn
         self.major_resolver.fetch_school_online_majors(slug, school_code)
 
         conversion_summary = ""
@@ -581,7 +581,7 @@ class OnlineAdmissionCrawler:
 
                     time.sleep(delay)
                 except Exception as e:
-                    print(f"[CẢNH BÁO] Lỗi khi cào năm {yr} của {school_code}: {e}")
+                    print(f"[CẢNH BÁO] Lỗi khi thu thập năm {yr} của {school_code}: {e}")
 
         print(
             f"[CRAWLER] Hoàn thành {school_code}: "
@@ -662,7 +662,7 @@ class OnlineAdmissionCrawler:
         delay: float = 0.5,
     ) -> List[AdmissionRecord]:
         """
-        Cào dữ liệu điểm chuẩn (+ gắn mã ngành / PTXT / quy chế / quy đổi từ đề án).
+        Thu thập dữ liệu điểm chuẩn (+ gắn mã ngành / PTXT / quy chế / quy đổi từ đề án).
         Giữ API cũ: trả về List[AdmissionRecord].
         """
         return self.crawl_school_bundle(school_code_or_name, years=years, delay=delay).admissions

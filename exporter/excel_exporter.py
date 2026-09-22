@@ -374,7 +374,7 @@ class ExcelAdmissionExporter:
                 cell.alignment = Alignment(vertical="center", wrap_text=(c_idx in [6, 10]))
 
         if not conversions:
-            ws.cell(row=2, column=1, value="Chưa thu thập được bảng quy đổi (cào online đề án hoặc bổ sung file cục bộ).")
+            ws.cell(row=2, column=1, value="Chưa thu thập được bảng quy đổi (thu thập online đề án hoặc bổ sung file cục bộ).")
 
         ws.freeze_panes = "A2"
         last_row = max(len(conversions) + 1, 2)
@@ -422,7 +422,7 @@ class ExcelAdmissionExporter:
                 cell.alignment = Alignment(vertical="top", wrap_text=(c_idx in [3, 4]))
 
         if not regulations:
-            ws.cell(row=2, column=1, value="Chưa thu thập được quy chế (cào online đề án tuyển sinh).")
+            ws.cell(row=2, column=1, value="Chưa thu thập được quy chế (thu thập online đề án tuyển sinh).")
 
         ws.freeze_panes = "A2"
         last_row = max(len(regulations) + 1, 2)

@@ -183,7 +183,7 @@ class SchoolDirectory:
         profile_limit: int = 0,
     ) -> Dict[str, Dict[str, Any]]:
         """
-        Nạp danh bạ từ cache hoặc cào mới từ web.
+        Nạp danh bạ từ cache hoặc thu thập mới từ web.
         include_profile: bổ sung hồ sơ giới thiệu đầy đủ (chậm hơn).
         include_contact: bổ sung website + địa chỉ (mặc định bật, kể cả khi tắt hồ sơ).
         """
@@ -248,7 +248,7 @@ class SchoolDirectory:
         include_dai_hoc: bool = True,
         include_cao_dang: bool = True,
     ) -> Dict[str, Dict[str, Any]]:
-        """Cào danh sách trường từ các trang điểm chuẩn."""
+        """thu thập danh sách trường từ các trang điểm chuẩn."""
         directory: Dict[str, Dict[str, Any]] = {}
 
         for src in self.LISTING_SOURCES:
@@ -633,7 +633,7 @@ class SchoolDirectory:
         output_path: str = "data/output/danh_sach_ma_truong.xlsx",
         school_type: Optional[str] = None,
     ) -> str:
-        """Xuất Excel danh sách mã trường (dễ lọc / chọn để cào)."""
+        """Xuất Excel danh sách mã trường (dễ lọc / chọn để thu thập)."""
         import openpyxl
         from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
         from openpyxl.utils import get_column_letter

@@ -11,7 +11,7 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import List
+from typing import Any, Dict, List
 
 from flask import (
     Flask,
@@ -49,7 +49,7 @@ from core.admission_chance import (
     list_admission_methods,
     list_school_majors,
 )
-from core.aggregator import METHOD_COLUMN_LABELS
+from core.aggregator import METHOD_COLUMN_LABELS, build_grouped_score_view
 from core import dataset_store
 
 
@@ -98,6 +98,10 @@ def create_app() -> Flask:
     @app.route("/quy-doi")
     def quy_doi_page():
         return render_template("quy_doi.html")
+
+    @app.route("/danh-gia")
+    def danh_gia_page():
+        return render_template("danh_gia.html")
 
     @app.route("/du-lieu")
     def datasets_page():
@@ -228,7 +232,7 @@ def create_app() -> Flask:
         except OSError:
             pass
         return payload
-    # ---------- API: Cào điểm chuẩn ----------
+    # ---------- API: thu thập điểm chuẩn ----------
     @app.post("/api/crawl")
     def api_crawl():
         codes, years, _ = _parse_crawl_request()
@@ -397,7 +401,7 @@ def create_app() -> Flask:
         cached = app.config.get("LAST_CRAWL") or {}
         admissions = cached.get("admissions") or []
         if not admissions:
-            return jsonify({"ok": False, "error": "Chưa có dữ liệu cào. Hãy chạy bước 2 trước."}), 400
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu đã tổng hợp. Hãy chạy bước 2 trước."}), 400
         school = (request.args.get("school") or "").strip().upper() or None
         method = (request.args.get("method") or "").strip().upper() or None
         trends = build_trend_series(admissions, school_code=school, method=method)
@@ -405,11 +409,11 @@ def create_app() -> Flask:
 
     @app.get("/api/crawl/majors")
     def api_crawl_majors():
-        """Danh sách ngành tuyển sinh theo trường (từ dữ liệu đã cào)."""
+        """Danh sách ngành tuyển sinh theo trường (từ dữ liệu đã thu thập)."""
         cached = app.config.get("LAST_CRAWL") or {}
         admissions = cached.get("admissions") or []
         if not admissions:
-            return jsonify({"ok": False, "error": "Chưa có dữ liệu cào. Hãy chạy bước 2 trước."}), 400
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu đã tổng hợp. Hãy chạy bước 2 trước."}), 400
         school = (request.args.get("school") or "").strip().upper() or None
         schools_raw = request.args.get("schools") or ""
         school_codes = [c.strip().upper() for c in schools_raw.split(",") if c.strip()]
@@ -428,11 +432,11 @@ def create_app() -> Flask:
 
     @app.get("/api/crawl/methods")
     def api_crawl_methods():
-        """Danh sách phương thức xét tuyển có trong dữ liệu đã cào."""
+        """Danh sách phương thức xét tuyển có trong dữ liệu đã thu thập."""
         cached = app.config.get("LAST_CRAWL") or {}
         admissions = cached.get("admissions") or []
         if not admissions:
-            return jsonify({"ok": False, "error": "Chưa có dữ liệu cào. Hãy chạy bước 2 trước."}), 400
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu đã tổng hợp. Hãy chạy bước 2 trước."}), 400
         school = (request.args.get("school") or "").strip().upper() or None
         schools_raw = request.args.get("schools") or ""
         school_codes = [c.strip().upper() for c in schools_raw.split(",") if c.strip()]
@@ -456,13 +460,34 @@ def create_app() -> Flask:
         cached = app.config.get("LAST_CRAWL") or {}
         admissions = cached.get("admissions") or []
         if not admissions:
-            return jsonify({"ok": False, "error": "Chưa có dữ liệu cào. Hãy chạy bước 2 trước."}), 400
-        try:
-            score = float(str(data.get("score")).replace(",", "."))
-        except (TypeError, ValueError):
-            return jsonify({"ok": False, "error": "Điểm nhập không hợp lệ."}), 400
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu đã tổng hợp. Hãy chạy bước 2 trước."}), 400
 
+        scores_payload: List[Dict[str, Any]] = []
+        raw_scores = data.get("scores")
+        if isinstance(raw_scores, list) and raw_scores:
+            for item in raw_scores:
+                if not isinstance(item, dict):
+                    continue
+                try:
+                    sc = float(str(item.get("score")).replace(",", "."))
+                except (TypeError, ValueError):
+                    continue
+                mid = (item.get("method") or "").strip()
+                if not mid:
+                    continue
+                scores_payload.append({"method": mid, "score": sc})
+
+        score = None
         method = (data.get("method") or "THPT").upper().replace("VACT", "V-ACT")
+        if not scores_payload:
+            try:
+                score = float(str(data.get("score")).replace(",", "."))
+            except (TypeError, ValueError):
+                return jsonify({
+                    "ok": False,
+                    "error": "Nhập ít nhất một điểm theo phương thức (vd: TSA 80, SAT 1500).",
+                }), 400
+
         school = (data.get("school_code") or data.get("code") or "").strip().upper() or None
         schools_raw = data.get("school_codes") or data.get("schools") or []
         school_codes: List[str] = []
@@ -484,6 +509,37 @@ def create_app() -> Flask:
             major_kw = None
         use_ai = bool(data.get("use_ai", True))
 
+        # Nhiều phương thức → đánh giá riêng từng cái (UI pills)
+        if len(scores_payload) > 1:
+            method_results: List[Dict[str, Any]] = []
+            for item in scores_payload:
+                analysis = analyze_chance(
+                    admissions,
+                    score=float(item["score"]),
+                    method=str(item["method"]),
+                    school_codes=school_codes or None,
+                    major_keyword=major_kw,
+                    majors=majors or None,
+                )
+                # Khi multi: gọi AI theo từng phương thức nếu user bật checkbox
+                one = enrich_with_ai(analysis, use_ai=use_ai)
+                one["method_labels"] = METHOD_COLUMN_LABELS
+                method_results.append(one)
+            any_ok = any(bool(r.get("ok")) for r in method_results)
+            return jsonify({
+                "ok": True,
+                "result": {
+                    "ok": any_ok,
+                    "multi": True,
+                    "method_results": method_results,
+                    "message": (
+                        None if any_ok
+                        else "Không đánh giá được với các phương thức đã chọn."
+                    ),
+                    "method_labels": METHOD_COLUMN_LABELS,
+                },
+            })
+
         analysis = analyze_chance(
             admissions,
             score=score,
@@ -491,6 +547,7 @@ def create_app() -> Flask:
             school_codes=school_codes or None,
             major_keyword=major_kw,
             majors=majors or None,
+            scores=scores_payload or None,
         )
         result = enrich_with_ai(analysis, use_ai=use_ai)
         result["method_labels"] = METHOD_COLUMN_LABELS
@@ -527,9 +584,113 @@ def create_app() -> Flask:
             methods_by_school[code] = _enrich_methods_for_school(code, from_table)
         payload["methods_by_school"] = methods_by_school
         payload["method_labels"] = METHOD_LABELS
-        # Cache + lưu đĩa để dùng lại không cần cào
+        # Cache + lưu đĩa để dùng lại không cần thu thập
         _store_last_quy_doi(payload)
         return jsonify(payload)
+
+    @app.post("/api/quy-doi/stream")
+    def api_quy_doi_stream():
+        """NDJSON stream: mỗi trường xong → cập nhật progress 0–100% trên UI."""
+        data = request.get_json(silent=True) or {}
+        codes = parse_school_codes_text(data.get("codes") or "")
+        limit = int(data.get("limit") or 0)
+        if limit > 0:
+            codes = codes[:limit]
+        if not codes:
+            return jsonify({"ok": False, "error": "Chưa có mã trường hợp lệ."}), 400
+
+        @stream_with_context
+        def generate():
+            crawler = ScoreConversionCrawler()
+            from core.models import MethodConversionBundle
+            bundle = MethodConversionBundle()
+            total = len(codes)
+            yield json.dumps({
+                "type": "start",
+                "total": total,
+                "codes": codes,
+            }, ensure_ascii=False) + "\n"
+
+            for i, code in enumerate(codes, start=1):
+                try:
+                    part, meta = crawler.crawl_school(code)
+                    bundle.rows.extend(part.rows)
+                    bundle.notes.extend(part.notes)
+                    bundle.images.extend(part.images)
+                    bundle.ranges.extend(part.ranges)
+                    bundle.school_results.append(meta)
+                    ok = not bool(meta.get("error"))
+                    yield json.dumps({
+                        "type": "school",
+                        "index": i,
+                        "total": total,
+                        "code": code,
+                        "ok": ok,
+                        "error": meta.get("error") or "",
+                        "rows": len(part.rows),
+                        "notes": len(part.notes),
+                        "images": len(part.images),
+                        "ranges": len(part.ranges),
+                        "totals": {
+                            "rows": len(bundle.rows),
+                            "notes": len(bundle.notes),
+                            "images": len(bundle.images),
+                            "ranges": len(bundle.ranges),
+                            "schools": len(bundle.school_results),
+                        },
+                    }, ensure_ascii=False) + "\n"
+                except Exception as e:
+                    yield json.dumps({
+                        "type": "school",
+                        "index": i,
+                        "total": total,
+                        "code": code,
+                        "ok": False,
+                        "error": str(e),
+                        "rows": 0,
+                        "notes": 0,
+                        "images": 0,
+                        "ranges": 0,
+                        "totals": {
+                            "rows": len(bundle.rows),
+                            "notes": len(bundle.notes),
+                            "images": len(bundle.images),
+                            "ranges": len(bundle.ranges),
+                            "schools": len(bundle.school_results),
+                        },
+                    }, ensure_ascii=False) + "\n"
+
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            out_name = f"quy_doi_diem_{ts}.xlsx"
+            out_path = os.path.join(app.config["OUTPUT_DIR"], out_name)
+            crawler.export_excel(bundle, output_path=out_path)
+
+            payload = crawler.bundle_to_api_dict(bundle)
+            payload["ok"] = True
+            payload["download_url"] = url_for("download_file", name=out_name)
+            payload["filename"] = out_name
+            methods_by_school = {}
+            for meta in bundle.school_results:
+                code = meta.get("code") or ""
+                from_table = list_methods_from_rows(payload["rows"], code)
+                methods_by_school[code] = _enrich_methods_for_school(code, from_table)
+            payload["methods_by_school"] = methods_by_school
+            payload["method_labels"] = METHOD_LABELS
+            _store_last_quy_doi(payload)
+
+            yield json.dumps({
+                "type": "done",
+                **payload,
+            }, ensure_ascii=False) + "\n"
+
+        return Response(
+            generate(),
+            mimetype="application/x-ndjson",
+            headers={
+                "Cache-Control": "no-cache, no-store",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     @app.post("/api/quy-doi/tinh")
     def api_quy_doi_tinh():
@@ -678,9 +839,22 @@ def create_app() -> Flask:
                 f"Đã nạp dữ liệu đã lưu ({summary.get('saved_at') or 'đĩa'})."
             ],
             "trends": trends,
+            "preview": admissions[:200],
             "saved_at": summary.get("saved_at") or "",
             "from_disk": True,
         })
+
+    @app.get("/api/crawl/table")
+    def api_crawl_table():
+        """Bảng xem lại: nhóm theo trường, điểm theo phương thức × năm."""
+        cached = app.config.get("LAST_CRAWL") or {}
+        admissions = cached.get("admissions") or []
+        if not admissions:
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu đã tổng hợp."}), 400
+        years = cached.get("years") or None
+        payload = build_grouped_score_view(admissions, years=years)
+        payload["ok"] = True
+        return jsonify(payload)
 
     @app.get("/api/quy-doi/session")
     def api_quy_doi_session():
@@ -690,6 +864,7 @@ def create_app() -> Flask:
             return jsonify({"ok": True, "has_data": False})
         payload = dict(cached)
         payload["ok"] = True
+        payload["has_data"] = True
         payload["from_disk"] = True
         if not payload.get("download_url") and payload.get("filename"):
             payload["download_url"] = url_for("download_file", name=payload["filename"])
@@ -706,7 +881,7 @@ def create_app() -> Flask:
         if kind in ("admissions", "crawl"):
             payload = dataset_store.load_admissions(ROOT, path)
             if not payload or not (payload.get("admissions") or []):
-                return jsonify({"ok": False, "error": "Không tìm thấy dữ liệu cào."}), 404
+                return jsonify({"ok": False, "error": "Không tìm thấy dữ liệu đã tổng hợp."}), 404
             app.config["LAST_CRAWL"] = payload
             # Cập nhật latest nếu nạp từ snapshot
             if path and os.path.abspath(path) != os.path.abspath(dataset_store.admissions_latest_path(ROOT)):
@@ -735,6 +910,51 @@ def create_app() -> Flask:
             })
 
         return jsonify({"ok": False, "error": "kind phải là admissions hoặc quy_doi."}), 400
+
+    @app.post("/api/datasets/clear")
+    def api_datasets_clear():
+        """Làm sạch dữ liệu đã lưu theo nhóm (hoặc toàn bộ)."""
+        data = request.get_json(silent=True) or {}
+        kind = (data.get("kind") or "").strip().lower()
+        try:
+            result = dataset_store.clear_kind(ROOT, kind)
+        except ValueError as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        except OSError as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+        # Xoá cache trong bộ nhớ
+        if kind in ("schools", "truong", "school", "all"):
+            pass  # schools không cache riêng trong app.config
+        if kind in ("admissions", "crawl", "tong_hop", "all"):
+            app.config["LAST_CRAWL"] = {}
+        if kind in ("quy_doi", "quy-doi", "quydoi", "all"):
+            app.config["LAST_QUY_DOI"] = {}
+
+        return jsonify({"ok": True, **result})
+
+    @app.post("/api/datasets/delete")
+    def api_datasets_delete():
+        """Xoá một file snapshot / Excel cụ thể."""
+        data = request.get_json(silent=True) or {}
+        name = (data.get("name") or "").strip()
+        if not name:
+            return jsonify({"ok": False, "error": "Thiếu tên file."}), 400
+        try:
+            result = dataset_store.delete_dataset_file(ROOT, name)
+        except FileNotFoundError as e:
+            return jsonify({"ok": False, "error": str(e)}), 404
+        except OSError as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+        # Nếu xoá bản latest → làm trống cache tương ứng
+        base = result.get("removed") or ""
+        if base == "admissions_latest.json":
+            app.config["LAST_CRAWL"] = {}
+        elif base == "quy_doi_latest.json":
+            app.config["LAST_QUY_DOI"] = {}
+
+        return jsonify(result)
 
     @app.get("/download/<name>")
     def download_file(name: str):
