@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Tổng quan — Tuyển sinh ĐH/CĐ{% endblock %}
+{% block content %}
+<section class="hero-panel mb-4">
+  <h1 class="hero-title">Tổng hợp dữ liệu tuyển sinh Đại học &amp; Cao đẳng</h1>
+  <p class="hero-lead mb-0">
+    Lấy danh sách mã trường → cào điểm chuẩn / mã ngành / phương thức / quy chế →
+    tra cứu bảng quy đổi điểm giữa các phương thức (HSA, TSA, V-ACT, SAT, học bạ, chứng chỉ…).
+  </p>
+</section>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card step-card h-100">
+      <div class="card-body">
+        <div class="step-num">1</div>
+        <h2 class="h5">Danh sách mã trường</h2>
+        <p class="text-muted small">Tải danh bạ ĐH / Học viện / Cao đẳng, lọc và copy mã trường.</p>
+        <a href="{{ url_for('schools_page') }}" class="btn btn-teal">Mở bước 1</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card step-card h-100">
+      <div class="card-body">
+        <div class="step-num">2</div>
+        <h2 class="h5">Cào dữ liệu tuyển sinh</h2>
+        <p class="text-muted small">Dán danh sách mã đã copy, chọn năm, cào điểm chuẩn &amp; đề án, tải Excel.</p>
+        <a href="{{ url_for('crawl_page') }}" class="btn btn-teal">Mở bước 2</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card step-card h-100">
+      <div class="card-body">
+        <div class="step-num">3</div>
+        <h2 class="h5">Quy đổi điểm phương thức</h2>
+        <p class="text-muted small">
+          Lấy bảng quy đổi THPT ↔ HSA/TSA/V-ACT/SAT/học bạ từ trang
+          <span class="text-nowrap">/quy-doi-diem/</span>.
+        </p>
+        <a href="{{ url_for('quy_doi_page') }}" class="btn btn-accent">Mở bước 3</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-light border mt-4">
+  <strong>Ví dụ:</strong> Quy đổi điểm NEU (KHA) —
+  <a href="https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html" target="_blank" rel="noopener">
+    diemthi.tuyensinh247.com/quy-doi-diem/...-KHA.html
+  </a>
+</div>
+{% endblock %}

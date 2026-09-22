@@ -1,0 +1,54 @@
+{
+  "description": "Danh sách cấu hình các trường Đại học cần tổng hợp dữ liệu tuyển sinh (2021 - 2025)",
+  "schools": [
+    {
+      "code": "BKA",
+      "name": "Đại học Bách khoa Hà Nội",
+      "short_name": "Bách Khoa HN",
+      "online_slug": "dai-hoc-bach-khoa-ha-noi-BKA"
+    },
+    {
+      "code": "NEU",
+      "name": "Trường Đại học Kinh tế Quốc dân",
+      "short_name": "Kinh tế Quốc dân",
+      "online_slug": "truong-dai-hoc-kinh-te-quoc-dan-KHA"
+    },
+    {
+      "code": "QHI",
+      "name": "Trường Đại học Công nghệ - ĐHQGHN",
+      "short_name": "ĐH Công nghệ ĐHQGHN",
+      "online_slug": "truong-dai-hoc-cong-nghe-dai-hoc-quoc-gia-ha-noi-QHI"
+    },
+    {
+      "code": "FTU",
+      "name": "Trường Đại học Ngoại thương (Cơ sở phía Bắc)",
+      "short_name": "Ngoại thương HN",
+      "online_slug": "truong-dai-hoc-ngoai-thuong-phia-bac-NTH"
+    },
+    {
+      "code": "QSX",
+      "name": "Trường Đại học Bách khoa - ĐHQG TP.HCM",
+      "short_name": "Bách Khoa TP.HCM",
+      "online_slug": "truong-dai-hoc-bach-khoa-dai-hoc-quoc-gia-tphcm-QSB"
+    },
+    {
+      "code": "UEH",
+      "name": "Đại học Kinh tế TP.HCM",
+      "short_name": "Kinh tế TP.HCM",
+      "online_slug": "dai-hoc-kinh-te-tphcm-KSA"
+    },
+    {
+      "code": "QST",
+      "name": "Trường Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
+      "short_name": "KHTN TP.HCM",
+      "online_slug": "truong-dai-hoc-khoa-hoc-tu-nhien-dai-hoc-quoc-gia-tphcm-QST"
+    },
+    {
+      "code": "KMA",
+      "name": "Học viện Kỹ thuật Mật mã",
+      "short_name": "Kỹ thuật Mật mã",
+      "online_slug": "hoc-vien-ky-thuat-mat-ma-phia-bac-KMA"
+    }
+  ],
+  "years": [2021, 2022, 2023, 2024, 2025, 2026]
+}

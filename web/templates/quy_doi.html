@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+{% block title %}③ Quy đổi điểm phương thức{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">③ Quy đổi điểm giữa các phương thức</h1>
+<p class="text-muted mb-3">
+  Cào bảng quy đổi từ tuyensinh247, rồi <strong>nhập điểm</strong> để tính điểm tương đương
+  (THPT ↔ HSA / TSA / V-ACT / SAT / học bạ…) ngay trên giao diện.
+  Ví dụ NEU:
+  <a href="https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html" target="_blank" rel="noopener">KHA</a>.
+</p>
+
+<div class="card panel-card mb-3">
+  <div class="card-body">
+    <label class="form-label fw-semibold">1) Lấy bảng quy đổi theo mã trường</label>
+    <textarea id="qdCodes" class="form-control font-monospace" rows="4"
+      placeholder="KHA&#10;BKA&#10;NTH"></textarea>
+    <div class="form-text">Dán từ bước 1. Alias: NEU→KHA, FTU→NTH, HUST→BKA.</div>
+
+    <div class="row g-3 mt-1 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Giới hạn số trường</label>
+        <input type="number" class="form-control" id="qdLimit" value="0" min="0" max="500">
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-outline-secondary w-100" type="button" id="btnQdSample">
+          Thử mẫu: KHA, BKA, NTH
+        </button>
+      </div>
+      <div class="col-md-5">
+        <button class="btn btn-accent w-100" id="btnQuyDoi" type="button">
+          <i class="bi bi-cloud-download"></i> Lấy bảng quy đổi điểm
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="qdProgress" class="d-none mb-3">
+  <div class="progress" style="height: 1.2rem;">
+    <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent" style="width:100%">
+      Đang lấy quy đổi điểm…
+    </div>
+  </div>
+</div>
+
+<div id="qdSummary" class="mb-3"></div>
+
+<!-- Máy tính quy đổi -->
+<div class="card panel-card mb-4 border-accent-calc" id="calcCard">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h2 class="h5 mb-0"><i class="bi bi-calculator me-1"></i> 2) Máy tính quy đổi điểm</h2>
+      <span class="badge text-bg-light border">Nội suy tuyến tính trong khoảng bảng</span>
+    </div>
+
+    <ul class="nav nav-pills mb-3" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" id="pillMethod" data-bs-toggle="pill" data-bs-target="#calcMethodPane" type="button">
+          Phương thức (HSA/TSA/SAT…)
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="pillCert" data-bs-toggle="pill" data-bs-target="#calcCertPane" type="button">
+          Chứng chỉ (IELTS/TOEFL…)
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="calcMethodPane">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Trường</label>
+            <select id="calcSchool" class="form-select"></select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Điểm theo phương thức</label>
+            <select id="calcMethod" class="form-select"></select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Nhập điểm</label>
+            <input type="number" step="0.01" class="form-control" id="calcScore" placeholder="VD: 105">
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-teal w-100" type="button" id="btnTinhMethod">
+              <i class="bi bi-arrow-left-right"></i> Tính quy đổi
+            </button>
+          </div>
+        </div>
+        <div class="form-text mt-2">
+          Ví dụ KHA: chọn <b>HSA</b>, nhập <b>105</b> → ra khoảng THPT / SAT / V-ACT / TSA tương đương và điểm ước tính.
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="calcCertPane">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Trường</label>
+            <select id="calcCertSchool" class="form-select"></select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Loại chứng chỉ</label>
+            <select id="calcCertType" class="form-select">
+              <option value="IELTS">IELTS</option>
+              <option value="TOEFL">TOEFL</option>
+              <option value="TOEIC">TOEIC</option>
+              <option value="SAT">SAT</option>
+              <option value="ACT">ACT</option>
+              <option value="A-LEVEL">A-Level</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Điểm chứng chỉ</label>
+            <input type="number" step="0.1" class="form-control" id="calcCertScore" placeholder="VD: 6.5">
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-teal w-100" type="button" id="btnTinhCert">
+              <i class="bi bi-translate"></i> Quy đổi chứng chỉ
+            </button>
+          </div>
+        </div>
+        <div class="form-text mt-2">
+          Lấy từ bảng quy đổi chứng chỉ trong đề án tuyển sinh (nếu trường có công bố).
+        </div>
+      </div>
+    </div>
+
+    <div id="calcMsg" class="mt-3"></div>
+    <div id="calcResult" class="mt-3"></div>
+  </div>
+</div>
+
+<ul class="nav nav-tabs" id="qdTabs" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabRows" type="button">Bảng quy đổi</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabNotes" type="button">Ghi chú / công thức</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRanges" type="button">Khoảng điểm công cụ</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabImages" type="button">Ảnh bảng</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMeta" type="button">Theo trường</button></li>
+</ul>
+
+<div class="tab-content border border-top-0 rounded-bottom panel-card p-3 mb-4" id="qdTabContent">
+  <div class="tab-pane fade show active" id="tabRows">
+    <div class="table-responsive" style="max-height: 480px;">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0" id="qdRowsTable">
+        <thead class="table-light sticky-top"><tr></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="small text-muted mt-2 mb-0" id="qdRowsEmpty">Chưa có dữ liệu — hãy lấy bảng quy đổi ở trên.</p>
+  </div>
+  <div class="tab-pane fade" id="tabNotes">
+    <div id="qdNotesList" class="vstack gap-3"></div>
+  </div>
+  <div class="tab-pane fade" id="tabRanges">
+    <div class="table-responsive">
+      <table class="table table-sm table-striped" id="qdRangesTable">
+        <thead><tr><th>Mã</th><th>Trường</th><th>Phương thức</th><th>Khoảng điểm</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="tab-pane fade" id="tabImages">
+    <div id="qdImages" class="row g-3"></div>
+  </div>
+  <div class="tab-pane fade" id="tabMeta">
+    <div class="table-responsive">
+      <table class="table table-sm" id="qdMetaTable">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Trường</th><th>OK</th><th>Dòng bảng</th><th>Ghi chú</th><th>Ảnh</th><th>Khoảng</th><th>Link</th><th>Lỗi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="qdDownload"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const qdCodes = document.getElementById('qdCodes');
+qdCodes.value = window.App.loadCodes() || 'KHA\nNTH';
+
+let lastQuyDoi = null;
+
+document.getElementById('btnQdSample').addEventListener('click', () => {
+  qdCodes.value = 'KHA\nBKA\nNTH';
+  window.App.saveCodes(qdCodes.value);
+});
+
+function fillSchoolSelects(data) {
+  const schools = (data.school_results || []).filter(s => s.ok || s.code);
+  const opts = schools.map(s =>
+    `<option value="${s.code}">${s.code} — ${s.name || ''}</option>`
+  ).join('');
+  document.getElementById('calcSchool').innerHTML = opts || '<option value="">—</option>';
+  document.getElementById('calcCertSchool').innerHTML = opts || '<option value="">—</option>';
+  refreshMethodOptions();
+}
+
+function refreshMethodOptions() {
+  const code = document.getElementById('calcSchool').value;
+  const methods = (lastQuyDoi && lastQuyDoi.methods_by_school && lastQuyDoi.methods_by_school[code]) || [];
+  const sel = document.getElementById('calcMethod');
+  if (!methods.length) {
+    sel.innerHTML = `
+      <option value="THPT">Điểm thi THPT</option>
+      <option value="HOC_BA">Điểm học bạ</option>
+      <option value="HSA">Điểm ĐGNL HSA</option>
+      <option value="V-ACT">Điểm ĐGNL V-ACT</option>
+      <option value="TSA">Điểm ĐGTD TSA</option>
+      <option value="KET_HOP">Điểm xét tuyển kết hợp</option>
+      <option value="SAT">SAT</option>`;
+    return;
+  }
+  sel.innerHTML = methods.map(m =>
+    `<option value="${m.id}">${m.label}</option>`
+  ).join('');
+  // Ưu tiên thứ tự quen thuộc trên trang điểm chuẩn
+  const prefer = ['HSA', 'TSA', 'V-ACT', 'THPT', 'HOC_BA', 'KET_HOP'];
+  for (const p of prefer) {
+    if ([...sel.options].some(o => o.value === p)) {
+      sel.value = p;
+      break;
+    }
+  }
+}
+
+document.getElementById('calcSchool').addEventListener('change', refreshMethodOptions);
+
+function renderCalcResult(payload) {
+  const msg = document.getElementById('calcMsg');
+  const box = document.getElementById('calcResult');
+  const r = payload.result || {};
+  if (!payload.ok) {
+    msg.innerHTML = `<div class="alert alert-warning py-2 mb-0">${payload.error || r.message || 'Không tính được.'}</div>`;
+    box.innerHTML = '';
+    return;
+  }
+  msg.innerHTML = `<div class="alert alert-success py-2 mb-0">${r.message || 'OK'}
+    <div class="small mt-1">Trường <code>${r.ma_truong}</code> · Nguồn <b>${r.phuong_thuc_nguon}</b> = <b>${r.diem_nhap}</b>
+    (khớp khoảng <b>${r.khoang_khop}</b>)</div></div>`;
+
+  const eqs = r.equivalents || [];
+  box.innerHTML = `
+    <div class="row g-3">
+      ${eqs.map(e => {
+        const isSrc = e.phuong_thuc === r.phuong_thuc_nguon;
+        return `<div class="col-6 col-md-4 col-lg-3">
+          <div class="calc-result-tile ${isSrc ? 'is-source' : ''}">
+            <div class="small text-muted">${e.ten_hien_thi}</div>
+            <div class="calc-est">${e.diem_uoc_tinh != null ? e.diem_uoc_tinh : '—'}</div>
+            <div class="small">Khoảng: <b>${e.khoang || '—'}</b></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <p class="small text-muted mt-3 mb-0">
+      Điểm ước tính được nội suy tuyến tính trong khoảng đã khớp.
+      Đây là tham chiếu theo bảng công bố trên tuyensinh247 — cần đối chiếu đề án chính thức của trường.
+    </p>`;
+}
+
+async function tinhMethod() {
+  const code = document.getElementById('calcSchool').value;
+  const method = document.getElementById('calcMethod').value;
+  const score = document.getElementById('calcScore').value;
+  if (!code) {
+    document.getElementById('calcMsg').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Hãy lấy bảng quy đổi trước (hoặc nhập mã trường ở trên).</div>';
+    return;
+  }
+  if (score === '' || score == null) {
+    document.getElementById('calcMsg').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Nhập điểm cần quy đổi.</div>';
+    return;
+  }
+  document.getElementById('calcMsg').innerHTML =
+    '<div class="spinner-border spinner-border-sm text-teal"></div> Đang tính…';
+  try {
+    const res = await fetch('/api/quy-doi/tinh', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ code, method, score, mode: 'method', refresh: !lastQuyDoi })
+    });
+    const data = await res.json();
+    renderCalcResult(data);
+    if (data.methods && data.methods.length) {
+      lastQuyDoi = lastQuyDoi || { methods_by_school: {} };
+      lastQuyDoi.methods_by_school = lastQuyDoi.methods_by_school || {};
+      lastQuyDoi.methods_by_school[code] = data.methods;
+      refreshMethodOptions();
+      document.getElementById('calcMethod').value = method;
+    }
+  } catch (e) {
+    document.getElementById('calcMsg').innerHTML =
+      `<div class="alert alert-danger py-2 mb-0">${e.message}</div>`;
+  }
+}
+
+async function tinhCert() {
+  const code = document.getElementById('calcCertSchool').value;
+  const certificate_type = document.getElementById('calcCertType').value;
+  const score = document.getElementById('calcCertScore').value;
+  if (!code || score === '') {
+    document.getElementById('calcMsg').innerHTML =
+      '<div class="alert alert-warning py-2 mb-0">Chọn trường và nhập điểm chứng chỉ.</div>';
+    return;
+  }
+  document.getElementById('calcMsg').innerHTML =
+    '<div class="spinner-border spinner-border-sm text-teal"></div> Đang quy đổi chứng chỉ…';
+  try {
+    const res = await fetch('/api/quy-doi/tinh', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        code, score, mode: 'certificate',
+        certificate_type, method: certificate_type, refresh: true
+      })
+    });
+    const data = await res.json();
+    renderCalcResult(data);
+  } catch (e) {
+    document.getElementById('calcMsg').innerHTML =
+      `<div class="alert alert-danger py-2 mb-0">${e.message}</div>`;
+  }
+}
+
+document.getElementById('btnTinhMethod').addEventListener('click', tinhMethod);
+document.getElementById('btnTinhCert').addEventListener('click', tinhCert);
+document.getElementById('calcScore').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tinhMethod();
+});
+document.getElementById('calcCertScore').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tinhCert();
+});
+
+function renderQuyDoi(data) {
+  lastQuyDoi = data;
+  fillSchoolSelects(data);
+
+  const s = data.summary || {};
+  document.getElementById('qdSummary').innerHTML = `
+    <div class="row g-3">
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.schools || 0}</div><div class="stat-lbl">Trường</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.rows || 0}</div><div class="stat-lbl">Dòng bảng</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.notes || 0}</div><div class="stat-lbl">Ghi chú</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.ranges || 0}</div><div class="stat-lbl">Khoảng điểm</div></div></div>
+      <div class="col-6 col-md-2"><div class="stat-tile"><div class="stat-val">${s.images || 0}</div><div class="stat-lbl">Ảnh</div></div></div>
+      <div class="col-6 col-md-2 d-flex align-items-stretch">
+        <a class="btn btn-accent w-100 d-flex align-items-center justify-content-center" href="${data.download_url}">
+          <i class="bi bi-download me-1"></i> Excel
+        </a>
+      </div>
+    </div>`;
+
+  const rows = data.rows || [];
+  const colSet = [];
+  rows.forEach(r => Object.keys(r.cot_gia_tri || {}).forEach(k => { if (!colSet.includes(k)) colSet.push(k); }));
+  document.querySelector('#qdRowsTable thead tr').innerHTML =
+    ['Mã', 'Trường', 'Tiêu đề bảng', 'STT', ...colSet].map(h => `<th>${h}</th>`).join('');
+  document.querySelector('#qdRowsTable tbody').innerHTML = rows.map(r => {
+    const vals = colSet.map(c => `<td>${(r.cot_gia_tri || {})[c] || ''}</td>`).join('');
+    return `<tr>
+      <td><code>${r.ma_truong}</code></td>
+      <td>${r.ten_truong}</td>
+      <td class="small">${r.tieu_de_bang || ''}</td>
+      <td>${r.stt || ''}</td>${vals}</tr>`;
+  }).join('');
+  document.getElementById('qdRowsEmpty').style.display = rows.length ? 'none' : 'block';
+
+  document.getElementById('qdNotesList').innerHTML = (data.notes || []).map(n => `
+    <div class="border rounded-3 p-3 bg-white">
+      <div class="d-flex justify-content-between gap-2 flex-wrap">
+        <strong>${n.tieu_de}</strong>
+        <span class="badge text-bg-light border">${n.ma_truong}</span>
+      </div>
+      <p class="small text-muted mb-0 mt-2" style="white-space:pre-wrap">${n.noi_dung}</p>
+    </div>`).join('') || '<p class="text-muted mb-0">Không có ghi chú.</p>';
+
+  document.querySelector('#qdRangesTable tbody').innerHTML = (data.ranges || []).map(g => `
+    <tr><td><code>${g.ma_truong}</code></td><td>${g.ten_truong}</td>
+    <td><span class="badge text-bg-teal">${g.phuong_thuc}</span></td>
+    <td>${g.khoang_diem}</td></tr>`).join('');
+
+  document.getElementById('qdImages').innerHTML = (data.images || []).map(img => `
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100">
+        <a href="${img.url_anh}" target="_blank" rel="noopener">
+          <img src="${img.url_anh}" class="card-img-top" alt="${img.mo_ta || ''}" loading="lazy">
+        </a>
+        <div class="card-body py-2">
+          <div class="small"><code>${img.ma_truong}</code> — ${img.mo_ta || 'Ảnh quy đổi'}</div>
+        </div>
+      </div>
+    </div>`).join('') || '<p class="text-muted">Không có ảnh.</p>';
+
+  document.querySelector('#qdMetaTable tbody').innerHTML = (data.school_results || []).map(m => `
+    <tr>
+      <td><code>${m.code || ''}</code></td>
+      <td>${m.name || ''}</td>
+      <td>${m.ok ? '✓' : '✗'}</td>
+      <td>${m.row_count || 0}</td>
+      <td>${m.notes || 0}</td>
+      <td>${m.images || 0}</td>
+      <td>${m.ranges || 0}</td>
+      <td>${m.url ? `<a href="${m.url}" target="_blank" rel="noopener">mở</a>` : ''}</td>
+      <td class="small text-danger">${m.error || ''}</td>
+    </tr>`).join('');
+
+  document.getElementById('qdDownload').innerHTML =
+    `<a class="btn btn-accent" href="${data.download_url}"><i class="bi bi-file-earmark-excel"></i> Tải ${data.filename}</a>`;
+
+  // Cuộn tới máy tính
+  document.getElementById('calcCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('btnQuyDoi').addEventListener('click', async () => {
+  const prog = document.getElementById('qdProgress');
+  prog.classList.remove('d-none');
+  window.App.saveCodes(qdCodes.value);
+  try {
+    const res = await fetch('/api/quy-doi', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        codes: qdCodes.value,
+        limit: Number(document.getElementById('qdLimit').value || 0)
+      })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Lỗi lấy quy đổi điểm');
+    renderQuyDoi(data);
+    window.App.toast('Đã lấy bảng — có thể nhập điểm để tính quy đổi.');
+  } catch (e) {
+    document.getElementById('qdSummary').innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+  } finally {
+    prog.classList.add('d-none');
+  }
+});
+</script>
+{% endblock %}

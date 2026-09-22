@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}① Danh sách trường{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">① Danh sách mã trường</h1>
+    <p class="text-muted mb-0">Tải danh bạ, lọc loại hình, copy mã sang bước Cào dữ liệu / Quy đổi điểm.</p>
+  </div>
+</div>
+
+<div class="card panel-card mb-3">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Loại hình</label>
+        <select id="schoolFilter" class="form-select">
+          <option value="all">Tất cả</option>
+          <option value="dai_hoc_hoc_vien">Đại học + Học viện</option>
+          <option value="dai_hoc">Đại học</option>
+          <option value="hoc_vien">Học viện</option>
+          <option value="cao_dang">Cao đẳng</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Tìm mã / tên</label>
+        <input id="schoolKeyword" type="text" class="form-control" placeholder="VD: BKA, Ngoại thương…">
+      </div>
+      <div class="col-md-3">
+        <div class="form-check mt-4">
+          <input class="form-check-input" type="checkbox" id="schoolRefresh">
+          <label class="form-check-label" for="schoolRefresh">Làm mới từ web</label>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <button id="btnFetchSchools" class="btn btn-teal w-100" type="button">
+          <i class="bi bi-cloud-download"></i> Tải danh sách
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="schoolStats" class="mb-3"></div>
+
+<div class="card panel-card mb-3">
+  <div class="card-body p-0">
+    <div class="table-responsive" style="max-height: 420px;">
+      <table class="table table-sm table-hover mb-0 align-middle" id="schoolTable">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th style="width:3rem">#</th>
+            <th>Mã</th>
+            <th>Tên trường</th>
+            <th>Loại hình</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card panel-card">
+  <div class="card-body">
+    <label class="form-label fw-semibold">Danh sách mã (copy tại đây)</label>
+    <textarea id="codesBox" class="form-control font-monospace" rows="8" placeholder="Nhấn Tải danh sách…"></textarea>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button class="btn btn-outline-secondary" type="button" id="btnCopyCodes">
+        <i class="bi bi-clipboard"></i> Copy mã
+      </button>
+      <a class="btn btn-teal" href="{{ url_for('crawl_page') }}" id="btnToCrawl">
+        → Dùng cho Cào dữ liệu
+      </a>
+      <a class="btn btn-accent" href="{{ url_for('quy_doi_page') }}" id="btnToQuyDoi">
+        → Dùng cho Quy đổi điểm
+      </a>
+      <a class="btn btn-outline-teal d-none" id="btnDlExcel" href="#">
+        <i class="bi bi-file-earmark-excel"></i> Tải Excel danh bạ
+      </a>
+    </div>
+    <div id="schoolMsg" class="mt-3"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('btnFetchSchools').addEventListener('click', async () => {
+  const msg = document.getElementById('schoolMsg');
+  msg.innerHTML = '<div class="spinner-border spinner-border-sm text-teal"></div> Đang tải…';
+  try {
+    const res = await fetch('/api/schools/fetch', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        refresh: document.getElementById('schoolRefresh').checked,
+        filter: document.getElementById('schoolFilter').value,
+        keyword: document.getElementById('schoolKeyword').value
+      })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Lỗi');
+    window.App.saveCodes(data.codes_text);
+    document.getElementById('codesBox').value = data.codes_text;
+    const tbody = document.querySelector('#schoolTable tbody');
+    tbody.innerHTML = data.schools.map((s, i) => `
+      <tr>
+        <td class="text-muted">${i + 1}</td>
+        <td><code>${s.code}</code></td>
+        <td>${s.name}</td>
+        <td><span class="badge text-bg-light border">${s.type_label}</span></td>
+      </tr>`).join('');
+    document.getElementById('schoolStats').innerHTML = Object.entries(data.stats || {})
+      .map(([k, v]) => `<span class="badge rounded-pill text-bg-light border me-1 mb-1"><b>${v}</b> ${k}</span>`)
+      .join('') + ` <span class="badge rounded-pill text-bg-teal ms-1">${data.total} trường</span>`;
+    const dl = document.getElementById('btnDlExcel');
+    dl.href = data.excel_url;
+    dl.classList.remove('d-none');
+    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đã tải ${data.total} trường.</div>`;
+  } catch (e) {
+    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${e.message}</div>`;
+  }
+});
+
+document.getElementById('btnCopyCodes').addEventListener('click', async () => {
+  const text = document.getElementById('codesBox').value;
+  window.App.saveCodes(text);
+  await window.App.copyText(text);
+  window.App.toast('Đã copy danh sách mã.');
+});
+
+['btnToCrawl', 'btnToQuyDoi'].forEach(id => {
+  document.getElementById(id).addEventListener('click', () => {
+    window.App.saveCodes(document.getElementById('codesBox').value);
+  });
+});
+
+// Prefill nếu đã có
+document.getElementById('codesBox').value = window.App.loadCodes();
+</script>
+{% endblock %}

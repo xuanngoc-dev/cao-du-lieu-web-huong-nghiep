@@ -1,0 +1,18 @@
+# Thư viện xử lý và phân tích dữ liệu
+pandas>=2.0.0
+numpy>=1.24.0
+openpyxl>=3.1.5
+
+# Thư viện đọc bóc tách tài liệu PDF và Word
+pdfplumber>=0.10.0
+pypdf>=3.17.0
+python-docx>=1.0.0
+reportlab>=4.0.0
+
+# Thư viện thu thập dữ liệu web (crawling/scraping)
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+urllib3>=2.0.0
+
+flask>=3.0.0
+waitress>=3.0.0

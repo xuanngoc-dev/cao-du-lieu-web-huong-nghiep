@@ -1,0 +1,4638 @@
+{
+  "description": "Danh sách mã trường Đại học / Cao đẳng / Học viện (tự động lấy từ tuyensinh247)",
+  "total": 578,
+  "schools": [
+    {
+      "code": "039",
+      "name": "Trường Cao đẳng nghề Trà Vinh",
+      "short_name": "Trường Cao đẳng nghề Trà Vinh",
+      "online_slug": "truong-cao-dang-nghe-tra-vinh-039",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "063",
+      "name": "Trường Cao đẳng nghề Phú Thọ",
+      "short_name": "Trường Cao đẳng nghề Phú Thọ",
+      "online_slug": "truong-cao-dang-nghe-phu-tho-063",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "BKC",
+      "name": "Trường Cao đẳng Bách Khoa Sài Gòn",
+      "short_name": "Trường Cao đẳng Bách Khoa Sài Gòn",
+      "online_slug": "truong-cao-dang-bach-khoa-sai-gon-BKC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C0208",
+      "name": "Trường Cao đẳng An ninh mạng iSPACE",
+      "short_name": "Trường Cao đẳng An ninh mạng iSPACE",
+      "online_slug": "truong-cao-dang-an-ninh-mang-ispace-C0208",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C10",
+      "name": "Trường Cao Đẳng Lạng Sơn",
+      "short_name": "Trường Cao Đẳng Lạng Sơn",
+      "online_slug": "cao-dang-su-pham-lang-son-C10",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C111",
+      "name": "Trường Cao đẳng Bắc Kạn",
+      "short_name": "Trường Cao đẳng Bắc Kạn",
+      "online_slug": "truong-cao-dang-bac-kan-C111",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C13",
+      "name": "Trường Cao đẳng Yên Bái",
+      "short_name": "Trường Cao đẳng Yên Bái",
+      "online_slug": "truong-cao-dang-yen-bai-C13",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C14",
+      "name": "Trường Cao Đẳng Sơn La",
+      "short_name": "Trường Cao Đẳng Sơn La",
+      "online_slug": "cao-dang-son-la-C14",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C161",
+      "name": "Trường Cao đẳng Vĩnh Phúc",
+      "short_name": "Trường Cao đẳng Vĩnh Phúc",
+      "online_slug": "truong-cao-dang-vinh-phuc-C161",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C19",
+      "name": "Trường Cao Đẳng Sư Phạm Bắc Ninh",
+      "short_name": "Trường Cao Đẳng Sư Phạm Bắc Ninh",
+      "online_slug": "cao-dang-su-pham-bac-ninh-C19",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C23",
+      "name": "Trường Cao Đẳng Sư Phạm Hòa Bình",
+      "short_name": "Trường Cao Đẳng Sư Phạm Hòa Bình",
+      "online_slug": "cao-dang-su-pham-hoa-binh-C23",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C25",
+      "name": "Trường Cao Đẳng Sư Phạm Nam Định",
+      "short_name": "Trường Cao Đẳng Sư Phạm Nam Định",
+      "online_slug": "cao-dang-su-pham-nam-dinh-C25",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C26",
+      "name": "Trường Cao Đẳng Sư Phạm Thái Bình",
+      "short_name": "Trường Cao Đẳng Sư Phạm Thái Bình",
+      "online_slug": "cao-dang-su-pham-thai-binh-C26",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C32",
+      "name": "Trường Cao Đẳng Sư Phạm Quảng Trị",
+      "short_name": "Trường Cao Đẳng Sư Phạm Quảng Trị",
+      "online_slug": "cao-dang-su-pham-quang-tri-C32",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C40",
+      "name": "Trường Cao Đẳng Sư Phạm Đăk Lăk",
+      "short_name": "Trường Cao Đẳng Sư Phạm Đăk Lăk",
+      "online_slug": "cao-dang-su-pham-dak-lak-C40",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C43",
+      "name": "Trường Cao Đẳng Bình Phước",
+      "short_name": "Trường Cao Đẳng Bình Phước",
+      "online_slug": "cao-dang-su-pham-binh-phuoc-C43",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C46",
+      "name": "Trường Cao Đẳng Sư Phạm Tây Ninh",
+      "short_name": "Trường Cao Đẳng Sư Phạm Tây Ninh",
+      "online_slug": "cao-dang-su-pham-tay-ninh-C46",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C52",
+      "name": "Trường Cao Đẳng Sư Phạm Bà Rịa – Vũng Tàu",
+      "short_name": "Trường Cao Đẳng Sư Phạm Bà Rịa – Vũng Tà",
+      "online_slug": "cao-dang-su-pham-ba-ria-vung-tau-C52",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C54",
+      "name": "Trường Cao Đẳng Sư Phạm Kiên Giang",
+      "short_name": "Trường Cao Đẳng Sư Phạm Kiên Giang",
+      "online_slug": "cao-dang-su-pham-kien-giang-C54",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C55",
+      "name": "Trường Cao Đẳng Cần Thơ",
+      "short_name": "Trường Cao Đẳng Cần Thơ",
+      "online_slug": "cao-dang-can-tho-C55",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C56",
+      "name": "Trường Cao Đẳng Bến Tre",
+      "short_name": "Trường Cao Đẳng Bến Tre",
+      "online_slug": "cao-dang-ben-tre-C56",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C57",
+      "name": "Trường Cao Đẳng Sư Phạm Vĩnh Long",
+      "short_name": "Trường Cao Đẳng Sư Phạm Vĩnh Long",
+      "online_slug": "cao-dang-su-pham-vinh-long-C57",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C59",
+      "name": "Trường Cao Đẳng Sư Phạm Sóc Trăng",
+      "short_name": "Trường Cao Đẳng Sư Phạm Sóc Trăng",
+      "online_slug": "cao-dang-su-pham-soc-trang-C59",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C62",
+      "name": "Trường Cao Đẳng Sư Phạm Điện Biên",
+      "short_name": "Trường Cao Đẳng Sư Phạm Điện Biên",
+      "online_slug": "cao-dang-su-pham-dien-bien-C62",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "C94",
+      "name": "Trường Cao đẳng Kiến trúc - Xây dựng TPHCM",
+      "short_name": "Trường Cao đẳng Kiến trúc - Xây dựng TPH",
+      "online_slug": "truong-cao-dang-kien-truc-xay-dung-tphcm-C94",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CBC",
+      "name": "Trường Cao Đẳng Bán Công Công Nghệ và Quản Trị Doanh Nghiệp",
+      "short_name": "Trường Cao Đẳng Bán Công Công Nghệ và Qu",
+      "online_slug": "cao-dang-ban-cong-cong-nghe-va-quan-tri-doanh-nghiep-CBC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CBK1",
+      "name": "Trường Cao đẳng Y Khoa Phạm Ngọc Thạch",
+      "short_name": "Trường Cao đẳng Y Khoa Phạm Ngọc Thạch",
+      "online_slug": "truong-cao-dang-y-khoa-pham-ngoc-thach-CBK1",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CBL",
+      "name": "Trường Cao Đẳng Công Nghệ Và Kinh Tế Bảo Lộc",
+      "short_name": "Trường Cao Đẳng Công Nghệ Và Kinh Tế Bảo",
+      "online_slug": "cao-dang-cong-nghe-va-kinh-te-bao-loc-CBL",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CBM",
+      "name": "Trường Cao Đẳng Y Tế Bạch Mai",
+      "short_name": "Trường Cao Đẳng Y Tế Bạch Mai",
+      "online_slug": "cao-dang-y-te-bach-mai-CBM",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CBT",
+      "name": "Trường Cao Đẳng Công Nghệ và Thương Mại Hà Nội",
+      "short_name": "Trường Cao Đẳng Công Nghệ và Thương Mại ",
+      "online_slug": "cao-dang-cong-nghe-va-thuong-mai-ha-noi-CBT",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CBV",
+      "name": "Trường Cao Đẳng Bách Việt",
+      "short_name": "Trường Cao Đẳng Bách Việt",
+      "online_slug": "cao-dang-bach-viet-CBV",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CBY",
+      "name": "Trường Cao Đẳng Y Tế Bình Dương",
+      "short_name": "Trường Cao Đẳng Y Tế Bình Dương",
+      "online_slug": "cao-dang-y-te-binh-duong-CBY",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCB",
+      "name": "Trường Cao Đẳng Công Nghiệp Thái Nguyên",
+      "short_name": "Trường Cao Đẳng Công Nghiệp Thái Nguyên",
+      "online_slug": "cao-dang-cong-nghiep-thai-nguyen-CCB",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCD1902",
+      "name": "Trường Cao đẳng Công nghiệp Bắc Ninh",
+      "short_name": "Trường Cao đẳng Công nghiệp Bắc Ninh",
+      "online_slug": "truong-cao-dang-cong-nghiep-bac-ninh-CCD1902",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCE",
+      "name": "Trường Cao Đẳng Kỹ Thuật Công Nghiệp",
+      "short_name": "Trường Cao Đẳng Kỹ Thuật Công Nghiệp",
+      "online_slug": "cao-dang-ky-thuat-cong-nghiep-CCE",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCH",
+      "name": "Trường Cao Đẳng Công Nghiệp Huế",
+      "short_name": "Trường Cao Đẳng Công Nghiệp Huế",
+      "online_slug": "cao-dang-cong-nghiep-hue-CCH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCI",
+      "name": "Trường Cao Đẳng Công Nghiệp In",
+      "short_name": "Trường Cao Đẳng Công Nghiệp In",
+      "online_slug": "cao-dang-cong-nghiep-in-CCI",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCK",
+      "name": "Trường Cao Đẳng Kinh Tế Công Nghiệp Hà Nội",
+      "short_name": "Trường Cao Đẳng Kinh Tế Công Nghiệp Hà N",
+      "online_slug": "cao-dang-kinh-te-cong-nghiep-ha-noi-CCK",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCO",
+      "name": "Trường Cao Đẳng Công Nghệ Thủ Đức",
+      "short_name": "Trường Cao Đẳng Công Nghệ Thủ Đức",
+      "online_slug": "cao-dang-cong-nghe-thu-duc-CCO",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCP",
+      "name": "Trường Cao Đẳng Công Thương Miền Trung",
+      "short_name": "Trường Cao Đẳng Công Thương Miền Trung",
+      "online_slug": "cao-dang-cong-nghiep-tuy-hoa-CCP",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCS",
+      "name": "Trường Cao Đẳng Công Nghệ TPHCM",
+      "short_name": "Trường Cao Đẳng Công Nghệ TPHCM",
+      "online_slug": "cao-dang-kinh-te-ky-thuat-vinatex-tphcm-CCS",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCV",
+      "name": "Trường Cao Đẳng Công Nghiệp Việt Đức",
+      "short_name": "Trường Cao Đẳng Công Nghiệp Việt Đức",
+      "online_slug": "cao-dang-cong-nghiep-viet-duc-CCV",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCX",
+      "name": "Trường Cao Đẳng Công Nghiệp và Xây Dựng",
+      "short_name": "Trường Cao Đẳng Công Nghiệp và Xây Dựng",
+      "online_slug": "cao-dang-cong-nghiep-va-xay-dung-CCX",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCY",
+      "name": "Trường Cao Đẳng Công Nghiệp Hưng Yên",
+      "short_name": "Trường Cao Đẳng Công Nghiệp Hưng Yên",
+      "online_slug": "cao-dang-cong-nghiep-hung-yen-CCY",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCZ",
+      "name": "Trường Cao đẳng Đại Việt Đà Nẵng",
+      "short_name": "Trường Cao đẳng Đại Việt Đà Nẵng",
+      "online_slug": "truong-cao-dang-dai-viet-da-nang-CCZ",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CCZ1",
+      "name": "Trường Cao đẳng Đại Việt Cần Thơ",
+      "short_name": "Trường Cao đẳng Đại Việt Cần Thơ",
+      "online_slug": "truong-cao-dang-dai-viet-can-tho-CCZ1",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDB",
+      "name": "Trường Cao Đẳng Kinh Tế Kỹ Thuật Điện Biên",
+      "short_name": "Trường Cao Đẳng Kinh Tế Kỹ Thuật Điện Bi",
+      "online_slug": "cao-dang-kinh-te-ky-thuat-dien-bien-CDB",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDC",
+      "name": "Trường Cao đẳng Công Nghệ Thông Tin TPHCM",
+      "short_name": "Trường Cao đẳng Công Nghệ Thông Tin TPHC",
+      "online_slug": "cao-dang-cong-nghe-thong-tin-tphcm-CDC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0101",
+      "name": "Trường Cao đẳng nghề Công nghiệp Hà Nội",
+      "short_name": "Trường Cao đẳng nghề Công nghiệp Hà Nội",
+      "online_slug": "truong-cao-dang-nghe-cong-nghiep-ha-noi-CDD0101",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0115",
+      "name": "Trường Cao đẳng Ngoại ngữ và Công nghệ Hà Nội",
+      "short_name": "Trường Cao đẳng Ngoại ngữ và Công nghệ H",
+      "online_slug": "truong-cao-dang-nghe-van-lang-ha-noi-CDD0115",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0116",
+      "name": "Trường Cao đẳng nghề Viglacera",
+      "short_name": "Trường Cao đẳng nghề Viglacera",
+      "online_slug": "truong-cao-dang-nghe-viglacera-CDD0116",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0121",
+      "name": "Trường Cao đẳng Kinh tế Công nghệ Hà Nội",
+      "short_name": "Trường Cao đẳng Kinh tế Công nghệ Hà Nội",
+      "online_slug": "truong-cao-dang-kinh-te-cong-nghe-ha-noi-CDD0121",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0122",
+      "name": "Trường Cao đẳng Y Hà Nội",
+      "short_name": "Trường Cao đẳng Y Hà Nội",
+      "online_slug": "truong-cao-dang-y-ha-noi-CDD0122",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0130",
+      "name": "Trường Cao Đẳng Thương Mại Và Du Lịch Hà Nội",
+      "short_name": "Trường Cao Đẳng Thương Mại Và Du Lịch Hà",
+      "online_slug": "cao-dang-thuong-mai-va-du-lich-ha-noi-CDD0130",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0201",
+      "name": "Trường Cao đẳng Nghề Thành phố Hồ Chí Minh",
+      "short_name": "Trường Cao đẳng Nghề Thành phố Hồ Chí Mi",
+      "online_slug": "truong-cao-dang-nghe-thanh-pho-ho-chi-minh-CDD0201",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0206",
+      "name": "Trường Cao đẳng Quốc tế TPHCM",
+      "short_name": "Trường Cao đẳng Quốc tế TPHCM",
+      "online_slug": "truong-cao-dang-quoc-te-tphcm-CDD0206",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0209",
+      "name": "Trường Cao Đẳng Sài Gòn",
+      "short_name": "Trường Cao Đẳng Sài Gòn",
+      "online_slug": "truong-cao-dang-sai-gon-CDD0209",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0211",
+      "name": "Trường Cao đẳng Kỹ thuật Nguyễn Trường Tộ",
+      "short_name": "Trường Cao đẳng Kỹ thuật Nguyễn Trường T",
+      "online_slug": "truong-cao-dang-ky-thuat-nguyen-truong-to-CDD0211",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0212",
+      "name": "Trường Cao Đẳng Kinh Tế TPHCM",
+      "short_name": "Trường Cao Đẳng Kinh Tế TPHCM",
+      "online_slug": "cao-dang-kinh-te-tphcm-CDD0212",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0216",
+      "name": "Trường Cao đẳng Sài Gòn Gia Định",
+      "short_name": "Trường Cao đẳng Sài Gòn Gia Định",
+      "online_slug": "truong-cao-dang-sai-gon-gia-dinh-CDD0216",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0225",
+      "name": "Trường Cao Đẳng Bình Minh Sài Gòn",
+      "short_name": "Trường Cao Đẳng Bình Minh Sài Gòn",
+      "online_slug": "truong-cao-dang-binh-minh-sai-gon-CDD0225",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0227",
+      "name": "Trường Cao đẳng Quốc tế Kent",
+      "short_name": "Trường Cao đẳng Quốc tế Kent",
+      "online_slug": "truong-cao-dang-quoc-te-kent-CDD0227",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0229",
+      "name": "Trường Cao đẳng Bách khoa Nam Sài Gòn",
+      "short_name": "Trường Cao đẳng Bách khoa Nam Sài Gòn",
+      "online_slug": "truong-cao-dang-bach-khoa-nam-sai-gon-CDD0229",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0234",
+      "name": "Trường Cao đẳng Kỹ Thuật - Du Lịch Sài Gòn",
+      "short_name": "Trường Cao đẳng Kỹ Thuật - Du Lịch Sài G",
+      "online_slug": "truong-cao-dang-ky-thuat-du-lich-sai-gon-CDD0234",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0304",
+      "name": "Trường Cao đẳng nghề Công nghiệp Hải Phòng",
+      "short_name": "Trường Cao đẳng nghề Công nghiệp Hải Phò",
+      "online_slug": "truong-cao-dang-nghe-cong-nghiep-hai-phong-CDD0304",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0305",
+      "name": "Trường Cao đẳng nghề Bách nghệ Hải Phòng",
+      "short_name": "Trường Cao đẳng nghề Bách nghệ Hải Phòng",
+      "online_slug": "truong-cao-dang-nghe-bach-nghe-hai-phong-CDD0305",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD03051",
+      "name": "Trường Cao đẳng nghề Lao động – Xã hội Hải Phòng",
+      "short_name": "Trường Cao đẳng nghề Lao động – Xã hội H",
+      "online_slug": "truong-cao-dang-nghe-lao-dong-–-xa-hoi-hai-phong-CDD03051",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0308",
+      "name": "Trường Cao đẳng Công nghệ Bách khoa Hà Nội",
+      "short_name": "Trường Cao đẳng Công nghệ Bách khoa Hà N",
+      "online_slug": "truong-cao-dang-cong-nghe-bach-khoa-ha-noi-CDD0308",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0401",
+      "name": "Trường Cao đẳng nghề Đà Nẵng",
+      "short_name": "Trường Cao đẳng nghề Đà Nẵng",
+      "online_slug": "truong-cao-dang-nghe-da-nang-CDD0401",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0402",
+      "name": "Trường Cao đẳng nghề Hoa Sen",
+      "short_name": "Trường Cao đẳng nghề Hoa Sen",
+      "online_slug": "truong-cao-dang-nghe-hoa-sen-CDD0402",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0403",
+      "name": "Trường Cao đẳng nghề Nguyễn Văn Trỗi",
+      "short_name": "Trường Cao đẳng nghề Nguyễn Văn Trỗi",
+      "online_slug": "truong-cao-dang-nghe-nguyen-van-troi-CDD0403",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0406",
+      "name": "Trường Cao đẳng nghề Việt - Úc Đà Nẵng",
+      "short_name": "Trường Cao đẳng nghề Việt - Úc Đà Nẵng",
+      "online_slug": "truong-cao-dang-nghe-viet-uc-da-nang-CDD0406",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0408",
+      "name": "Trường Cao đẳng Công Nghệ Y- Dược Việt Nam",
+      "short_name": "Trường Cao đẳng Công Nghệ Y- Dược Việt N",
+      "online_slug": "truong-cao-dang-cong-nghe-y-duoc-viet-nam-CDD0408",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0409",
+      "name": "Trường Cao đẳng Văn hóa – Nghệ thuật Đà Nẵng",
+      "short_name": "Trường Cao đẳng Văn hóa – Nghệ thuật Đà ",
+      "online_slug": "truong-cao-dang-van-hoa-–-nghe-thuat-da-nang-CDD0409",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0410",
+      "name": "Trường Cao Đẳng Công Nghệ Ngoại Thương",
+      "short_name": "Trường Cao Đẳng Công Nghệ Ngoại Thương",
+      "online_slug": "truong-cao-dang-cong-nghe-ngoai-thuong-CDD0410",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0501",
+      "name": "Trường Cao đẳng Kỹ thuật và Công nghệ tỉnh Hà Giang",
+      "short_name": "Trường Cao đẳng Kỹ thuật và Công nghệ tỉ",
+      "online_slug": "truong-cao-dang-ky-thuat-va-cong-nghe-tinh-ha-giang-CDD0501",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD0801",
+      "name": "Trường Cao đẳng Lào Cai",
+      "short_name": "Trường Cao đẳng Lào Cai",
+      "online_slug": "truong-cao-dang-lao-cai-CDD0801",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1001",
+      "name": "Trường Cao đẳng nghề Lạng Sơn",
+      "short_name": "Trường Cao đẳng nghề Lạng Sơn",
+      "online_slug": "truong-cao-dang-nghe-lang-son-CDD1001",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1204",
+      "name": "Trường Cao đẳng Công thương Việt Nam",
+      "short_name": "Trường Cao đẳng Công thương Việt Nam",
+      "online_slug": "truong-cao-dang-nghe-cong-thuong-viet-nam-CDD1204",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1301",
+      "name": "Trường Cao đẳng Y Dược Pasteur Yên Bái",
+      "short_name": "Trường Cao đẳng Y Dược Pasteur Yên Bái",
+      "online_slug": "truong-cao-dang-y-duoc-pasteur-yen-bai-CDD1301",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD13011",
+      "name": "Trường Cao đẳng Y dược Pasteur TPHCM",
+      "short_name": "Trường Cao đẳng Y dược Pasteur TPHCM",
+      "online_slug": "truong-cao-dang-y-duoc-pasteur-tphcm-CDD13011",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1401",
+      "name": "Trường Cao đẳng Kỹ thuật công nghệ Sơn La",
+      "short_name": "Trường Cao đẳng Kỹ thuật công nghệ Sơn L",
+      "online_slug": "truong-cao-dang-ky-thuat-cong-nghe-son-la-CDD1401",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1701",
+      "name": "Trường Cao đẳng nghề Việt – Hàn Quảng Ninh",
+      "short_name": "Trường Cao đẳng nghề Việt – Hàn Quảng Ni",
+      "online_slug": "truong-cao-dang-nghe-viet-–-han-quang-ninh-CDD1701",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1803",
+      "name": "Trường Cao đẳng Ngô Gia Tự Bắc Giang",
+      "short_name": "Trường Cao đẳng Ngô Gia Tự Bắc Giang",
+      "online_slug": "truong-cao-dang-ngo-gia-tu-bac-giang-CDD1803",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1904",
+      "name": "Trường Cao đẳng Dược Hà Nội",
+      "short_name": "Trường Cao đẳng Dược Hà Nội",
+      "online_slug": "truong-cao-dang-duoc-ha-noi-CDD1904",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1908",
+      "name": "Trường Cao đẳng Y tế Bắc Ninh",
+      "short_name": "Trường Cao đẳng Y tế Bắc Ninh",
+      "online_slug": "truong-cao-dang-y-te-bac-ninh-CDD1908",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1909",
+      "name": "Trường Cao đẳng Y – Dược Cộng đồng",
+      "short_name": "Trường Cao đẳng Y – Dược Cộng đồng",
+      "online_slug": "truong-cao-dang-y-–-duoc-cong-dong-CDD1909",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD1910",
+      "name": "Trường Cao đẳng Lý Thái Tổ",
+      "short_name": "Trường Cao đẳng Lý Thái Tổ",
+      "online_slug": "truong-cao-dang-ly-thai-to-CDD1910",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD2201",
+      "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật Tô Hiệu",
+      "short_name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật ",
+      "online_slug": "truong-cao-dang-nghe-kinh-te-–-ky-thuat-to-hieu-CDD2201",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD2303",
+      "name": "Trường Cao đẳng Kỹ thuật Công nghệ Hòa Bình",
+      "short_name": "Trường Cao đẳng Kỹ thuật Công nghệ Hòa B",
+      "online_slug": "truong-cao-dang-ky-thuat-cong-nghe-hoa-binh-CDD2303",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD2402",
+      "name": "Trường Cao đẳng nghề Hà Nam",
+      "short_name": "Trường Cao đẳng nghề Hà Nam",
+      "online_slug": "truong-cao-dang-nghe-ha-nam-CDD2402",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD2502",
+      "name": "Trường Cao đẳng Văn hóa Nghệ thuật và Du lịch Nam Định",
+      "short_name": "Trường Cao đẳng Văn hóa Nghệ thuật và Du",
+      "online_slug": "truong-cao-dang-van-hoa-nghe-thuat-va-du-lich-nam-dinh-CDD2502",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD2601",
+      "name": "Trường Cao đẳng nghề Thái Bình",
+      "short_name": "Trường Cao đẳng nghề Thái Bình",
+      "online_slug": "truong-cao-dang-nghe-thai-binh-CDD2601",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD2810",
+      "name": "Trường Cao đẳng Y – Dược Hợp Lực, Thanh Hóa",
+      "short_name": "Trường Cao đẳng Y – Dược Hợp Lực, Thanh ",
+      "online_slug": "truong-cao-dang-y-–-duoc-hop-luc-thanh-hoa-CDD2810",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD2901",
+      "name": "Trường Cao đẳng Việt Đức Nghệ An",
+      "short_name": "Trường Cao đẳng Việt Đức Nghệ An",
+      "online_slug": "truong-cao-dang-viet-duc-nghe-an-CDD2901",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD3001",
+      "name": "Trường Cao đẳng nghề Việt-Đức Hà Tĩnh",
+      "short_name": "Trường Cao đẳng nghề Việt-Đức Hà Tĩnh",
+      "online_slug": "truong-cao-dang-nghe-viet-duc-ha-tinh-CDD3001",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD3102",
+      "name": "Trường Cao đẳng Kỹ thuật Công – Nông nghiệp Quảng Bình",
+      "short_name": "Trường Cao đẳng Kỹ thuật Công – Nông ngh",
+      "online_slug": "truong-cao-dang-ky-thuat-cong-–-nong-nghiep-quang-binh-CDD3102",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD3401",
+      "name": "Trường Cao đẳng Thaco",
+      "short_name": "Trường Cao đẳng Thaco",
+      "online_slug": "truong-cao-dang-thaco-CDD3401",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD3403",
+      "name": "Trường Cao đẳng Quảng Nam",
+      "short_name": "Trường Cao đẳng Quảng Nam",
+      "online_slug": "truong-cao-dang-quang-nam-CDD3403",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD3501",
+      "name": "Trường Cao đẳng Y tế Đặng Thùy Trâm",
+      "short_name": "Trường Cao đẳng Y tế Đặng Thùy Trâm",
+      "online_slug": "truong-cao-dang-y-te-dang-thuy-tram-CDD3501",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD3502",
+      "name": "Trường Cao đẳng nghề Cơ giới Quảng Ngãi",
+      "short_name": "Trường Cao đẳng nghề Cơ giới Quảng Ngãi",
+      "online_slug": "truong-cao-dang-nghe-co-gioi-quang-ngai-CDD3502",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD35021",
+      "name": "Trường Cao đẳng nghề Việt Nam-Hàn Quốc Quảng Ngãi",
+      "short_name": "Trường Cao đẳng nghề Việt Nam-Hàn Quốc Q",
+      "online_slug": "truong-cao-dang-nghe-viet-nam-han-quoc-quang-ngai-CDD35021",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD3601",
+      "name": "Trường Cao đẳng Kon Tum",
+      "short_name": "Trường Cao đẳng Kon Tum",
+      "online_slug": "truong-cao-dang-cong-dong-kon-tum-CDD3601",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD3702",
+      "name": "Trường Cao đẳng Kỹ thuật Công nghệ Quy Nhơn",
+      "short_name": "Trường Cao đẳng Kỹ thuật Công nghệ Quy N",
+      "online_slug": "truong-cao-dang-ky-thuat-cong-nghe-quy-nhon-CDD3702",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4",
+      "name": "Trường Cao đẳng Quốc Tế Sài Gòn",
+      "short_name": "Trường Cao đẳng Quốc Tế Sài Gòn",
+      "online_slug": "truong-cao-dang-quoc-te-sai-gon-CDD4",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4002",
+      "name": "Trường Cao đẳng Kỹ thuật Đắk Lắk",
+      "short_name": "Trường Cao đẳng Kỹ thuật Đắk Lắk",
+      "online_slug": "truong-cao-dang-ky-thuat-dak-lak-CDD4002",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4004",
+      "name": "Trường Cao đẳng Y tế Đắk Lắk",
+      "short_name": "Trường Cao đẳng Y tế Đắk Lắk",
+      "online_slug": "truong-cao-dang-y-te-dak-lak-CDD4004",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4101",
+      "name": "Trường Cao đẳng Kỹ thuật Công nghệ Nha Trang",
+      "short_name": "Trường Cao đẳng Kỹ thuật Công nghệ Nha T",
+      "online_slug": "truong-cao-dang-ky-thuat-cong-nghe-nha-trang-CDD4101",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4102",
+      "name": "Trường Cao đẳng Y Dược Sài Gòn",
+      "short_name": "Trường Cao đẳng Y Dược Sài Gòn",
+      "online_slug": "truong-cao-dang-y-duoc-sai-gon-CDD4102",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4201",
+      "name": "Trường Cao đẳng Đà Lạt",
+      "short_name": "Trường Cao đẳng Đà Lạt",
+      "online_slug": "truong-cao-dang-nghe-da-lat-CDD4201",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4202",
+      "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Lâm Đồng",
+      "short_name": "Trường Cao đẳng Kinh tế – Kỹ thuật Lâm Đ",
+      "online_slug": "truong-cao-dang-kinh-te-–-ky-thuat-lam-dong-CDD4202",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4401",
+      "name": "Trường Cao đẳng nghề Việt Nam – Singapore",
+      "short_name": "Trường Cao đẳng nghề Việt Nam – Singapor",
+      "online_slug": "truong-cao-dang-nghe-viet-nam-–-singapore-CDD4401",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4402",
+      "name": "Trường Cao đẳng nghề Công nghệ cao Đồng An",
+      "short_name": "Trường Cao đẳng nghề Công nghệ cao Đồng ",
+      "online_slug": "truong-cao-dang-nghe-cong-nghe-cao-dong-an-CDD4402",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4403",
+      "name": "Trường Cao đẳng Việt Nam-Hàn Quốc Bình Dương",
+      "short_name": "Trường Cao đẳng Việt Nam-Hàn Quốc Bình D",
+      "online_slug": "truong-cao-dang-viet-nam-han-quoc-binh-duong-CDD4403",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4803",
+      "name": "Trường Cao đẳng Kỹ thuật Đồng Nai",
+      "short_name": "Trường Cao đẳng Kỹ thuật Đồng Nai",
+      "online_slug": "truong-cao-dang-ky-thuat-dong-nai-CDD4803",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4805",
+      "name": "Trường Cao đẳng nghề Công nghệ cao Đồng Nai",
+      "short_name": "Trường Cao đẳng nghề Công nghệ cao Đồng ",
+      "online_slug": "truong-cao-dang-nghe-cong-nghe-cao-dong-nai-CDD4805",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4806",
+      "name": "Trường Cao đẳng Lê Quý Đôn",
+      "short_name": "Trường Cao đẳng Lê Quý Đôn",
+      "online_slug": "truong-cao-dang-le-quy-don-CDD4806",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD4808",
+      "name": "Trường Cao đẳng Hòa Bình Xuân Lộc",
+      "short_name": "Trường Cao đẳng Hòa Bình Xuân Lộc",
+      "online_slug": "truong-cao-dang-hoa-binh-xuan-loc-CDD4808",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD5101",
+      "name": "Trường Cao đẳng nghề An Giang",
+      "short_name": "Trường Cao đẳng nghề An Giang",
+      "online_slug": "truong-cao-dang-nghe-an-giang-CDD5101",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD5102",
+      "name": "Trường Cao đẳng Y tế An Giang",
+      "short_name": "Trường Cao đẳng Y tế An Giang",
+      "online_slug": "truong-cao-dang-y-te-an-giang-CDD5102",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD5203",
+      "name": "Trường Cao đẳng Kỹ thuật Công nghệ Bà Rịa – Vũng Tàu",
+      "short_name": "Trường Cao đẳng Kỹ thuật Công nghệ Bà Rị",
+      "online_slug": "truong-cao-dang-ky-thuat-cong-nghe-ba-ria-–-vung-tau-CDD5203",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD5204",
+      "name": "Trường Cao đẳng Quốc tế Vabis",
+      "short_name": "Trường Cao đẳng Quốc tế Vabis",
+      "online_slug": "truong-cao-dang-quoc-te-vabis-CDD5204",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD5401",
+      "name": "Trường Cao đẳng nghề Kiên Giang",
+      "short_name": "Trường Cao đẳng nghề Kiên Giang",
+      "online_slug": "truong-cao-dang-nghe-kien-giang-CDD5401",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD5501",
+      "name": "Trường Cao đẳng nghề Cần Thơ",
+      "short_name": "Trường Cao đẳng nghề Cần Thơ",
+      "online_slug": "truong-cao-dang-nghe-can-tho-CDD5501",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD5505",
+      "name": "Trường Cao đẳng Văn hoá Nghệ thuật Cần Thơ",
+      "short_name": "Trường Cao đẳng Văn hoá Nghệ thuật Cần T",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-can-tho-CDD5505",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD5901",
+      "name": "Trường Cao đẳng nghề Sóc Trăng",
+      "short_name": "Trường Cao đẳng nghề Sóc Trăng",
+      "online_slug": "truong-cao-dang-nghe-soc-trang-CDD5901",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD6002",
+      "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Bạc Liêu",
+      "short_name": "Trường Cao đẳng Kinh tế – Kỹ thuật Bạc L",
+      "online_slug": "truong-cao-dang-kinh-te-–-ky-thuat-bac-lieu-CDD6002",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD6201",
+      "name": "Trường Cao đẳng nghề Điện Biên",
+      "short_name": "Trường Cao đẳng nghề Điện Biên",
+      "online_slug": "truong-cao-dang-nghe-dien-bien-CDD6201",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDD6301",
+      "name": "Trường Cao đẳng Cộng đồng Đắk Nông",
+      "short_name": "Trường Cao đẳng Cộng đồng Đắk Nông",
+      "online_slug": "truong-cao-dang-cong-dong-dak-nong-CDD6301",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDG",
+      "name": "Trường Cao đẳng Kiên Giang",
+      "short_name": "Trường Cao đẳng Kiên Giang",
+      "online_slug": "truong-cao-dang-kien-giang-CDG",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDH",
+      "name": "Trường Cao Đẳng Du Lịch Hà Nội",
+      "short_name": "Trường Cao Đẳng Du Lịch Hà Nội",
+      "online_slug": "cao-dang-du-lich-ha-noi-CDH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDHD2101",
+      "name": "Trường Cao đẳng nghề Hải Dương",
+      "short_name": "Trường Cao đẳng nghề Hải Dương",
+      "online_slug": "truong-cao-dang-nghe-hai-duong-CDHD2101",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDN",
+      "name": "Trường Cao Đẳng Mỹ Thuật Trang Trí Đồng Nai",
+      "short_name": "Trường Cao Đẳng Mỹ Thuật Trang Trí Đồng ",
+      "online_slug": "cao-dang-my-thuat-trang-tri-dong-nai-CDN",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDP",
+      "name": "Trường Cao Đẳng Nông Lâm Đông Bắc",
+      "short_name": "Trường Cao Đẳng Nông Lâm Đông Bắc",
+      "online_slug": "cao-dang-nong-lam-dong-bac-CDP",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDS",
+      "name": "Trường Cao Đẳng Công Nghệ và Quản Trị Sonadezi",
+      "short_name": "Trường Cao Đẳng Công Nghệ và Quản Trị So",
+      "online_slug": "cao-dang-cong-nghe-va-quan-tri-sonadezi-CDS",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT",
+      "name": "Trường Cao Đẳng Xây Dựng Công Trình Đô Thị",
+      "short_name": "Trường Cao Đẳng Xây Dựng Công Trình Đô T",
+      "online_slug": "cao-dang-xay-dung-cong-trinh-do-thi-CDT",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0103",
+      "name": "Trường Cao đẳng Điện lực miền Bắc",
+      "short_name": "Trường Cao đẳng Điện lực miền Bắc",
+      "online_slug": "truong-cao-dang-dien-luc-mien-bac-CDT0103",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0104",
+      "name": "Trường Cao đẳng nghề Kỹ thuật Công nghệ",
+      "short_name": "Trường Cao đẳng nghề Kỹ thuật Công nghệ",
+      "online_slug": "truong-cao-dang-nghe-ky-thuat-cong-nghe-CDT0104",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0110",
+      "name": "Trường Cao đẳng nghề Kỹ thuật Mỹ nghệ Việt Nam",
+      "short_name": "Trường Cao đẳng nghề Kỹ thuật Mỹ nghệ Vi",
+      "online_slug": "truong-cao-dang-nghe-ky-thuat-my-nghe-viet-nam-CDT0110",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0112",
+      "name": "Trường Cao đẳng nghề Long Biên",
+      "short_name": "Trường Cao đẳng nghề Long Biên",
+      "online_slug": "truong-cao-dang-nghe-long-bien-CDT0112",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0113",
+      "name": "Trường Cao đẳng Giao thông vận tải Trung ương I",
+      "short_name": "Trường Cao đẳng Giao thông vận tải Trung",
+      "online_slug": "truong-cao-dang-giao-thong-van-tai-trung-uong-i-CDT0113",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0120",
+      "name": "Trường Cao đẳng Tây Đô",
+      "short_name": "Trường Cao đẳng Tây Đô",
+      "online_slug": "truong-cao-dang-tay-do-CDT0120",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0124",
+      "name": "Trường Cao đẳng Nghề Kỹ thuật và Nghiệp vụ Hà Nội",
+      "short_name": "Trường Cao đẳng Nghề Kỹ thuật và Nghiệp ",
+      "online_slug": "truong-cao-dang-nghe-ky-thuat-va-nghiep-vu-ha-noi-CDT0124",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0131",
+      "name": "Trường Cao Đẳng Truyền Hình Việt Nam",
+      "short_name": "Trường Cao Đẳng Truyền Hình Việt Nam",
+      "online_slug": "cao-dang-truyen-hinh-CDT0131",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0207",
+      "name": "Trường Cao đẳng Hàng hải và Đường thủy II",
+      "short_name": "Trường Cao đẳng Hàng hải và Đường thủy I",
+      "online_slug": "truong-cao-dang-hang-hai-va-duong-thuy-ii-CDT0207",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0209",
+      "name": "Trường Cao Đẳng Kinh Tế Đối Ngoại",
+      "short_name": "Trường Cao Đẳng Kinh Tế Đối Ngoại",
+      "online_slug": "cao-dang-kinh-te-doi-ngoai-CDT0209",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0211",
+      "name": "Trường Cao Đẳng Điện Lực TPHCM",
+      "short_name": "Trường Cao Đẳng Điện Lực TPHCM",
+      "online_slug": "cao-dang-dien-luc-tphcm-CDT0211",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0213",
+      "name": "Trường Cao Đẳng Xây Dựng TPHCM",
+      "short_name": "Trường Cao Đẳng Xây Dựng TPHCM",
+      "online_slug": "cao-dang-xay-dung-so-2-CDT0213",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0218",
+      "name": "Trường Cao đẳng Thủ Thiêm – TP. Hồ Chí Minh",
+      "short_name": "Trường Cao đẳng Thủ Thiêm – TP. Hồ Chí M",
+      "online_slug": "truong-cao-dang-thu-thiem-–-tp-ho-chi-minh-CDT0218",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT026",
+      "name": "Trường Cao đẳng Giao thông vận tải trung ương VI",
+      "short_name": "Trường Cao đẳng Giao thông vận tải trung",
+      "online_slug": "truong-cao-dang-giao-thong-van-tai-trung-uong-vi-CDT026",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0302",
+      "name": "Trường Cao đẳng Giao thông vận tải trung ương II",
+      "short_name": "Trường Cao đẳng Giao thông vận tải trung",
+      "online_slug": "truong-cao-dang-nghe-giao-thong-van-tai-trung-uong-ii-CDT0302",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0306",
+      "name": "Trường Cao đẳng VMU",
+      "short_name": "Trường Cao đẳng VMU",
+      "online_slug": "truong-cao-dang-vmu-CDT0306",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0307",
+      "name": "Trường Cao đẳng Kinh tế và Công nghệ thực phẩm",
+      "short_name": "Trường Cao đẳng Kinh tế và Công nghệ thự",
+      "online_slug": "truong-cao-dang-kinh-te-va-cong-nghe-thuc-pham-CDT0307",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0308",
+      "name": "Trường Cao đẳng Du lịch Hải Phòng",
+      "short_name": "Trường Cao đẳng Du lịch Hải Phòng",
+      "online_slug": "truong-cao-dang-nghe-du-lich-va-dich-vu-hai-phong-CDT0308",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0402",
+      "name": "Trường Cao đẳng Giao thông vận tải Trung ương V",
+      "short_name": "Trường Cao đẳng Giao thông vận tải Trung",
+      "online_slug": "truong-cao-dang-giao-thong-van-tai-trung-uong-v-CDT0402",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0404",
+      "name": "Trường Cao đẳng Du lịch Đà Nẵng",
+      "short_name": "Trường Cao đẳng Du lịch Đà Nẵng",
+      "online_slug": "truong-cao-dang-du-lich-da-nang-CDT0404",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT0407",
+      "name": "Trường Cao Đẳng Kinh Tế – Kế Hoạch Đà Nẵng",
+      "short_name": "Trường Cao Đẳng Kinh Tế – Kế Hoạch Đà Nẵ",
+      "online_slug": "cao-dang-kinh-te-ke-hoach-da-nang-CDT0407",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT119",
+      "name": "Trường Cao đẳng Ngoại ngữ Hà Nội",
+      "short_name": "Trường Cao đẳng Ngoại ngữ Hà Nội",
+      "online_slug": "truong-cao-dang-ngoai-ngu-ha-noi-CDT119",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT1203",
+      "name": "Trường Cao đẳng nghề số 1 – Bộ Quốc phòng",
+      "short_name": "Trường Cao đẳng nghề số 1 – Bộ Quốc phòn",
+      "online_slug": "truong-cao-dang-nghe-so-1-–-bo-quoc-phong-CDT1203",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT1502",
+      "name": "Trường Cao đẳng Công Thương Phú Thọ",
+      "short_name": "Trường Cao đẳng Công Thương Phú Thọ",
+      "online_slug": "truong-cao-dang-nghe-cong-nghe-giay-va-co-dien-CDT1502",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT1507",
+      "name": "Trường Cao đẳng Y Dược Phú Thọ",
+      "short_name": "Trường Cao đẳng Y Dược Phú Thọ",
+      "online_slug": "truong-cao-dang-y-duoc-phu-tho-CDT1507",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT1601",
+      "name": "Trường Cao đẳng Công nghiệp và Thương mại",
+      "short_name": "Trường Cao đẳng Công nghiệp và Thương mạ",
+      "online_slug": "truong-cao-dang-cong-nghiep-va-thuong-mai-CDT1601",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT1701",
+      "name": "Trường Cao đẳng Than Khoáng sản Việt Nam",
+      "short_name": "Trường Cao đẳng Than Khoáng sản Việt Nam",
+      "online_slug": "truong-cao-dang-than-–-khoang-san-viet-nam-CDT1701",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT1901",
+      "name": "Trường Cao đẳng Cơ điện và Xây dựng Bắc Ninh",
+      "short_name": "Trường Cao đẳng Cơ điện và Xây dựng Bắc ",
+      "online_slug": "truong-cao-dang-co-dien-va-xay-dung-bac-ninh-CDT1901",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT2103",
+      "name": "Trường Cao đẳng Cơ giới Xây dựng",
+      "short_name": "Trường Cao đẳng Cơ giới Xây dựng",
+      "online_slug": "truong-cao-dang-co-gioi-xay-dung-CDT2103",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT2104",
+      "name": "Trường Cao đẳng Hàng hải và Đường thủy I",
+      "short_name": "Trường Cao đẳng Hàng hải và Đường thủy I",
+      "online_slug": "truong-cao-dang-nghe-giao-thong-van-tai-duong-thuy-i-CDT2104",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT2108",
+      "name": "Trường Cao Đẳng Du Lịch và Công Thương",
+      "short_name": "Trường Cao Đẳng Du Lịch và Công Thương",
+      "online_slug": "cao-dang-du-lich-va-cong-thuong-CDT2108",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT2301",
+      "name": "Trường Cao đẳng nghề Sông Đà",
+      "short_name": "Trường Cao đẳng nghề Sông Đà",
+      "online_slug": "truong-cao-dang-nghe-song-da-CDT2301",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT2701",
+      "name": "Trường Cao đẳng nghề Cơ điện xây dựng Việt Xô",
+      "short_name": "Trường Cao đẳng nghề Cơ điện xây dựng Vi",
+      "online_slug": "truong-cao-dang-nghe-co-dien-xay-dung-viet-xo-CDT2701",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT2901",
+      "name": "Trường Cao đẳng Giao thông vận tải Trung ương IV",
+      "short_name": "Trường Cao đẳng Giao thông vận tải Trung",
+      "online_slug": "truong-cao-dang-giao-thong-van-tai-trung-uong-iv-CDT2901",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT2904",
+      "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật số 1 Nghệ An",
+      "short_name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật ",
+      "online_slug": "truong-cao-dang-nghe-kinh-te-–-ky-thuat-so-1-nghe-an-CDT2904",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT3001",
+      "name": "Trường Cao đẳng nghề Công nghệ Hà Tĩnh",
+      "short_name": "Trường Cao đẳng nghề Công nghệ Hà Tĩnh",
+      "online_slug": "truong-cao-dang-nghe-cong-nghe-ha-tinh-CDT3001",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT3301",
+      "name": "Trường Cao đẳng Du lịch Huế",
+      "short_name": "Trường Cao đẳng Du lịch Huế",
+      "online_slug": "truong-cao-dang-du-lich-hue-CDT3301",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT3401",
+      "name": "Trường Cao đẳng Công nghệ – Kinh tế và Thủy lợi miền Trung",
+      "short_name": "Trường Cao đẳng Công nghệ – Kinh tế và T",
+      "online_slug": "truong-cao-dang-cong-nghe-–-kinh-te-va-thuy-loi-mien-trung-CDT3401",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT3501",
+      "name": "Trường Cao đẳng Kỹ nghệ Dung Quất",
+      "short_name": "Trường Cao đẳng Kỹ nghệ Dung Quất",
+      "online_slug": "truong-cao-dang-ky-nghe-dung-quat-CDT3501",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT3503",
+      "name": "Trường Cao đẳng Quảng Ngãi",
+      "short_name": "Trường Cao đẳng Quảng Ngãi",
+      "online_slug": "truong-cao-dang-quang-ngai-CDT3503",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT3701",
+      "name": "Trường Cao đẳng Cơ điện – Xây dựng và Nông lâm Trung Bộ",
+      "short_name": "Trường Cao đẳng Cơ điện – Xây dựng và Nô",
+      "online_slug": "truong-cao-dang-co-dien-–-xay-dung-va-nong-lam-trung-bo-CDT3701",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT4103",
+      "name": "Trường Cao đẳng Du lịch Nha Trang",
+      "short_name": "Trường Cao đẳng Du lịch Nha Trang",
+      "online_slug": "truong-cao-dang-du-lich-nha-trang-CDT4103",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT4403",
+      "name": "Trường Cao đẳng Công nghệ và Nông lâm Nam Bộ",
+      "short_name": "Trường Cao đẳng Công nghệ và Nông lâm Na",
+      "online_slug": "truong-cao-dang-cong-nghe-va-nong-lam-nam-bo-CDT4403",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT4801",
+      "name": "Trường Cao đẳng Công nghệ Quốc tế LILAMA-2",
+      "short_name": "Trường Cao đẳng Công nghệ Quốc tế LILAMA",
+      "online_slug": "truong-cao-dang-cong-nghe-quoc-te-lilama-2-CDT4801",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT4803",
+      "name": "Trường Cao đẳng Thống kê II",
+      "short_name": "Trường Cao đẳng Thống kê II",
+      "online_slug": "truong-cao-dang-thong-ke-ii-CDT4803",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT4804",
+      "name": "Trường Cao đẳng nghề Cơ giới và Thủy lợi",
+      "short_name": "Trường Cao đẳng nghề Cơ giới và Thủy lợi",
+      "online_slug": "truong-cao-dang-nghe-co-gioi-va-thuy-loi-CDT4804",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT5201",
+      "name": "Trường Cao đẳng Dầu khí",
+      "short_name": "Trường Cao đẳng Dầu khí",
+      "online_slug": "truong-cao-dang-dau-khi-CDT5201",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT5202",
+      "name": "Trường Cao đẳng Du lịch Vũng Tàu",
+      "short_name": "Trường Cao đẳng Du lịch Vũng Tàu",
+      "online_slug": "truong-cao-dang-du-lich-vung-tau-CDT5202",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDT5601",
+      "name": "Trường Cao đẳng Đồng Khởi",
+      "short_name": "Trường Cao đẳng Đồng Khởi",
+      "online_slug": "truong-cao-dang-dong-khoi-CDT5601",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CDV",
+      "name": "Trường Cao Đẳng Viễn Đông",
+      "short_name": "Trường Cao Đẳng Viễn Đông",
+      "online_slug": "cao-dang-vien-dong-CDV",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CEC",
+      "name": "Trường Cao Đẳng Kinh Tế – Kỹ Thuật Cần Thơ",
+      "short_name": "Trường Cao Đẳng Kinh Tế – Kỹ Thuật Cần T",
+      "online_slug": "cao-dang-kinh-te-ky-thuat-can-tho-CEC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CEN",
+      "name": "Trường Cao Đẳng Cơ Điện Và Nông Nghiệp Nam Bộ",
+      "short_name": "Trường Cao Đẳng Cơ Điện Và Nông Nghiệp N",
+      "online_slug": "cao-dang-co-dien-va-nong-nghiep-nam-bo-CEN",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CES",
+      "name": "Trường Cao Đẳng Công Thương TPHCM",
+      "short_name": "Trường Cao Đẳng Công Thương TPHCM",
+      "online_slug": "cao-dang-cong-thuong-tphcm-CES",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CET",
+      "name": "Trường Cao Đẳng Kinh Tế-Công Nghệ TPHCM",
+      "short_name": "Trường Cao Đẳng Kinh Tế-Công Nghệ TPHCM",
+      "online_slug": "cao-dang-kinh-te-cong-nghe-tphcm-CET",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CGD",
+      "name": "Trường Cao Đẳng Giao Thông Vận Tải II",
+      "short_name": "Trường Cao Đẳng Giao Thông Vận Tải II",
+      "online_slug": "cao-dang-giao-thong-van-tai-ii-CGD",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CGS",
+      "name": "Trường Cao Đẳng Giao Thông Vận Tải Trung Ương III",
+      "short_name": "Trường Cao Đẳng Giao Thông Vận Tải Trung",
+      "online_slug": "cao-dang-giao-thong-van-tai-3-CGS",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CGT",
+      "name": "Trường Cao Đẳng Giao Thông Vận Tải TPHCM",
+      "short_name": "Trường Cao Đẳng Giao Thông Vận Tải TPHCM",
+      "online_slug": "cao-dang-giao-thong-van-tai-tphcm-CGT",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CHD",
+      "name": "Trường Cao đẳng Y Dược Hồng Đức",
+      "short_name": "Trường Cao đẳng Y Dược Hồng Đức",
+      "online_slug": "truong-cao-dang-y-duoc-hong-duc-CHD",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CHH",
+      "name": "Trường Cao Đẳng Hàng Hải I",
+      "short_name": "Trường Cao Đẳng Hàng Hải I",
+      "online_slug": "cao-dang-hang-hai-i-CHH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CHN",
+      "name": "Trường Cao Đẳng Cộng Đồng Hà Nội",
+      "short_name": "Trường Cao Đẳng Cộng Đồng Hà Nội",
+      "online_slug": "cao-dang-cong-dong-ha-noi-CHN",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CKB",
+      "name": "Trường Cao Đẳng Bách Khoa Đà Nẵng",
+      "short_name": "Trường Cao Đẳng Bách Khoa Đà Nẵng",
+      "online_slug": "cao-dang-bach-khoa-da-nang-CKB",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CKC",
+      "name": "Trường Cao Đẳng Kỹ Thuật Cao Thắng",
+      "short_name": "Trường Cao Đẳng Kỹ Thuật Cao Thắng",
+      "online_slug": "cao-dang-ky-thuat-cao-thang-CKC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CKM",
+      "name": "Trường Cao Đẳng Miền Nam",
+      "short_name": "Trường Cao Đẳng Miền Nam",
+      "online_slug": "cao-dang-kinh-te-ky-thuat-mien-nam-CKM",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CKN",
+      "name": "Trường Cao Đẳng Việt Mỹ",
+      "short_name": "Trường Cao Đẳng Việt Mỹ",
+      "online_slug": "cao-dang-kinh-te-ky-thuat-ha-noi-CKN",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CKP",
+      "name": "Trường Cao Đẳng Lý Tự Trọng TPHCM",
+      "short_name": "Trường Cao Đẳng Lý Tự Trọng TPHCM",
+      "online_slug": "cao-dang-ky-thuat-ly-tu-trong-tphcm-CKP",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CLA",
+      "name": "Trường Cao Đẳng Cộng Đồng Lào Cai",
+      "short_name": "Trường Cao Đẳng Cộng Đồng Lào Cai",
+      "online_slug": "cao-dang-cong-dong-lao-cai-CLA",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CLC",
+      "name": "Trường Cao Đẳng Lai Châu",
+      "short_name": "Trường Cao Đẳng Lai Châu",
+      "online_slug": "cao-dang-cong-dong-lai-chau-CLC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CLD",
+      "name": "Trường Cao Đẳng Điện Lực Miền Trung",
+      "short_name": "Trường Cao Đẳng Điện Lực Miền Trung",
+      "online_slug": "cao-dang-dien-luc-mien-trung-CLD",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CLH",
+      "name": "Trường Cao Đẳng Điện Tử - Điện Lạnh Hà Nội",
+      "short_name": "Trường Cao Đẳng Điện Tử - Điện Lạnh Hà N",
+      "online_slug": "cao-dang-dien-tu-dien-lanh-ha-noi-CLH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CLT",
+      "name": "Trường Cao Đẳng Lương Thực Thực Phẩm",
+      "short_name": "Trường Cao Đẳng Lương Thực Thực Phẩm",
+      "online_slug": "cao-dang-luong-thuc-thuc-pham-CLT",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CLY",
+      "name": "Trường Cao Đẳng Y Tế Lâm Đồng",
+      "short_name": "Trường Cao Đẳng Y Tế Lâm Đồng",
+      "online_slug": "cao-dang-y-te-lam-dong-CLY",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CM1",
+      "name": "Trường Cao Đẳng Sư Phạm Trung Ương",
+      "short_name": "Trường Cao Đẳng Sư Phạm Trung Ương",
+      "online_slug": "cao-dang-su-pham-trung-uong-CM1",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CM2",
+      "name": "Trường Cao Đẳng Sư Phạm TW Nha Trang",
+      "short_name": "Trường Cao Đẳng Sư Phạm TW Nha Trang",
+      "online_slug": "cao-dang-su-pham-tw-nha-trang-CM2",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CM3",
+      "name": "Trường Cao Đẳng Sư Phạm Trung Ương TPHCM",
+      "short_name": "Trường Cao Đẳng Sư Phạm Trung Ương TPHCM",
+      "online_slug": "cao-dang-su-pham-trung-uong-tphcm-CM3",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CMS",
+      "name": "Trường Cao Đẳng Thương Mại",
+      "short_name": "Trường Cao Đẳng Thương Mại",
+      "online_slug": "cao-dang-thuong-mai-CMS",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CMY",
+      "name": "Trường Cao Đẳng Y Tế Cà Mau",
+      "short_name": "Trường Cao Đẳng Y Tế Cà Mau",
+      "online_slug": "cao-dang-y-te-ca-mau-CMY",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CNB",
+      "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Thái Bình",
+      "short_name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Thái ",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-thai-binh-CNB",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CNC",
+      "name": "Trường Cao Đẳng Ngoại Ngữ – Công Nghệ Việt Nhật",
+      "short_name": "Trường Cao Đẳng Ngoại Ngữ – Công Nghệ Vi",
+      "online_slug": "cao-dang-ngoai-ngu-cong-nghe-viet-nhat-CNC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CND",
+      "name": "Trường Cao Đẳng Công Nghiệp Nam Định",
+      "short_name": "Trường Cao Đẳng Công Nghiệp Nam Định",
+      "online_slug": "cao-dang-cong-nghiep-nam-dinh-CND",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CNH",
+      "name": "Trường Cao Đẳng Công Nghệ Hà Nội",
+      "short_name": "Trường Cao Đẳng Công Nghệ Hà Nội",
+      "online_slug": "cao-dang-cong-nghe-ha-noi-CNH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CNN",
+      "name": "Trường Cao Đẳng Nông Nghiệp Nam Bộ",
+      "short_name": "Trường Cao Đẳng Nông Nghiệp Nam Bộ",
+      "online_slug": "cao-dang-nong-nghiep-nam-bo-CNN",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CNT",
+      "name": "Trường Cao Đẳng Nghệ Thuật Hà Nội",
+      "short_name": "Trường Cao Đẳng Nghệ Thuật Hà Nội",
+      "online_slug": "cao-dang-nghe-thuat-ha-noi-CNT",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CNV",
+      "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Việt Bắc",
+      "short_name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Việt ",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-viet-bac-CNV",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CNY",
+      "name": "Trường Cao Đẳng Y Tế Ninh Bình",
+      "short_name": "Trường Cao Đẳng Y Tế Ninh Bình",
+      "online_slug": "cao-dang-y-te-ninh-binh-CNY",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CPL",
+      "name": "Trường Cao Đẳng Kinh Tế Kỹ Thuật TP HCM",
+      "short_name": "Trường Cao Đẳng Kinh Tế Kỹ Thuật TP HCM",
+      "online_slug": "cao-dang-kinh-te-ky-thuat-tp-hcm-CPL",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CPN",
+      "name": "Trường Cao Đẳng Phương Đông – Đà Nẵng",
+      "short_name": "Trường Cao Đẳng Phương Đông – Đà Nẵng",
+      "online_slug": "cao-dang-phuong-dong-da-nang-CPN",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CPS",
+      "name": "Trường Cao Đẳng Phát Thanh Truyền Hình II",
+      "short_name": "Trường Cao Đẳng Phát Thanh Truyền Hình I",
+      "online_slug": "cao-dang-phat-thanh-truyen-hinh-ii-CPS",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CPT",
+      "name": "Trường Cao Đẳng Phát Thanh Truyền Hình I",
+      "short_name": "Trường Cao Đẳng Phát Thanh Truyền Hình I",
+      "online_slug": "cao-dang-phat-thanh-truyen-hinh-i-CPT",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CSB",
+      "name": "Trường Cao Đẳng Kinh Tế, Kỹ Thuật Và Thủy Sản",
+      "short_name": "Trường Cao Đẳng Kinh Tế, Kỹ Thuật Và Thủ",
+      "online_slug": "cao-dang-thuy-san-CSB",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CSG",
+      "name": "Trường Cao Đẳng Đại Việt Sài Gòn",
+      "short_name": "Trường Cao Đẳng Đại Việt Sài Gòn",
+      "online_slug": "cao-dang-dai-viet-sai-gon-CSG",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CST",
+      "name": "Trường Cao Đẳng Cộng Đồng Sóc Trăng",
+      "short_name": "Trường Cao Đẳng Cộng Đồng Sóc Trăng",
+      "online_slug": "cao-dang-cong-dong-soc-trang-CST",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CT0105",
+      "name": "Trường Cao đẳng nghề Cơ điện Hà Nội",
+      "short_name": "Trường Cao đẳng nghề Cơ điện Hà Nội",
+      "online_slug": "truong-cao-dang-nghe-co-dien-ha-noi-CT0105",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CT0202",
+      "name": "Trường Cao đẳng Kỹ nghệ II",
+      "short_name": "Trường Cao đẳng Kỹ nghệ II",
+      "online_slug": "truong-cao-dang-ky-nghe-ii-CT0202",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CTE",
+      "name": "Trường Cao Đẳng Thống Kê",
+      "short_name": "Trường Cao Đẳng Thống Kê",
+      "online_slug": "cao-dang-thong-ke-CTE",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CTH",
+      "name": "Trường Cao Đẳng Kinh Tế – Kỹ Thuật Thương Mại",
+      "short_name": "Trường Cao Đẳng Kinh Tế – Kỹ Thuật Thươn",
+      "online_slug": "cao-dang-kinh-te-ky-thuat-thuong-mai-CTH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CTM1",
+      "name": "Trường Cao đẳng Thương mại và Du lịch Thái Nguyên",
+      "short_name": "Trường Cao đẳng Thương mại và Du lịch Th",
+      "online_slug": "truong-cao-dang-thuong-mai-va-du-lich-thai-nguyen-CTM1",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CVB",
+      "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Tây Bắc",
+      "short_name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Tây B",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-tay-bac-CVB",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CVL",
+      "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Đăk Lăk",
+      "short_name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Đăk L",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-dak-lak-CVL",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CVN",
+      "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật TPHCM",
+      "short_name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật TPHCM",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-tphcm-CVN",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CVS",
+      "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật và Du Lịch Sài Gòn",
+      "short_name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật và Du",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-va-du-lich-sai-gon-CVS",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CVV",
+      "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Nghệ An",
+      "short_name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Nghệ ",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-nghe-an-CVV",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CVY",
+      "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Du Lịch Yên Bái",
+      "short_name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Du Lị",
+      "online_slug": "cao-dang-van-hoa-nghe-thuat-du-lich-yen-bai-CVY",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CXD",
+      "name": "Trường Cao Đẳng Công Nghệ và Kinh Tế Công Nghiệp",
+      "short_name": "Trường Cao Đẳng Công Nghệ và Kinh Tế Côn",
+      "online_slug": "cao-dang-cong-nghe-va-kinh-te-cong-nghiep-CXD",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CXH",
+      "name": "Trường Cao Đẳng Xây Dựng Số 1",
+      "short_name": "Trường Cao Đẳng Xây Dựng Số 1",
+      "online_slug": "cao-dang-xay-dung-so-1-CXH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYA",
+      "name": "Trường Cao Đẳng Y Tế Đồng Tháp",
+      "short_name": "Trường Cao Đẳng Y Tế Đồng Tháp",
+      "online_slug": "cao-dang-y-te-dong-thap-CYA",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYB",
+      "name": "Trường Cao Đẳng Y Tế Bạc Liêu",
+      "short_name": "Trường Cao Đẳng Y Tế Bạc Liêu",
+      "online_slug": "cao-dang-y-te-bac-lieu-CYB",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYC",
+      "name": "Trường Cao Đẳng Y Tế Cần Thơ",
+      "short_name": "Trường Cao Đẳng Y Tế Cần Thơ",
+      "online_slug": "cao-dang-y-te-can-tho-CYC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYD",
+      "name": "Trường Cao Đẳng Y Tế Đồng Nai",
+      "short_name": "Trường Cao Đẳng Y Tế Đồng Nai",
+      "online_slug": "cao-dang-y-te-dong-nai-CYD",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYE",
+      "name": "Trường Cao Đẳng Y Tế Thái Bình",
+      "short_name": "Trường Cao Đẳng Y Tế Thái Bình",
+      "online_slug": "cao-dang-y-te-thai-binh-CYE",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYF",
+      "name": "Trường Cao Đẳng Y Tế Hải Phòng",
+      "short_name": "Trường Cao Đẳng Y Tế Hải Phòng",
+      "online_slug": "cao-dang-y-te-hai-phong-CYF",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYG",
+      "name": "Trường Cao Đẳng Y Tế Kiên Giang",
+      "short_name": "Trường Cao Đẳng Y Tế Kiên Giang",
+      "online_slug": "cao-dang-y-te-kien-giang-CYG",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYH",
+      "name": "Trường Cao Đẳng Y Tế Hà Nam",
+      "short_name": "Trường Cao Đẳng Y Tế Hà Nam",
+      "online_slug": "cao-dang-y-te-ha-nam-CYH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYK",
+      "name": "Trường Cao Đẳng Y Tế Khánh Hòa",
+      "short_name": "Trường Cao Đẳng Y Tế Khánh Hòa",
+      "online_slug": "cao-dang-y-te-khanh-hoa-CYK",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYL",
+      "name": "Trường Cao Đẳng Y Tế Lạng Sơn",
+      "short_name": "Trường Cao Đẳng Y Tế Lạng Sơn",
+      "online_slug": "cao-dang-y-te-lang-son-CYL",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYM",
+      "name": "Trường Cao Đẳng Y Tế Hà Đông",
+      "short_name": "Trường Cao Đẳng Y Tế Hà Đông",
+      "online_slug": "cao-dang-y-te-ha-dong-CYM",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYN",
+      "name": "Trường Cao Đẳng Y Tế Hà Tĩnh",
+      "short_name": "Trường Cao Đẳng Y Tế Hà Tĩnh",
+      "online_slug": "cao-dang-y-te-ha-tinh-CYN",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYP",
+      "name": "Trường Cao Đẳng Y Tế Phú Thọ",
+      "short_name": "Trường Cao Đẳng Y Tế Phú Thọ",
+      "online_slug": "cao-dang-y-te-phu-tho-CYP",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYR",
+      "name": "Trường Cao Đẳng Y Tế Bình Định",
+      "short_name": "Trường Cao Đẳng Y Tế Bình Định",
+      "online_slug": "cao-dang-y-te-binh-dinh-CYR",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYS",
+      "name": "Trường Cao Đẳng Dược Trung Ương",
+      "short_name": "Trường Cao Đẳng Dược Trung Ương",
+      "online_slug": "cao-dang-duoc-trung-uong-CYS",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYT",
+      "name": "Trường Cao Đẳng Y Tế Thanh Hóa",
+      "short_name": "Trường Cao Đẳng Y Tế Thanh Hóa",
+      "online_slug": "cao-dang-y-te-thanh-hoa-CYT",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYU",
+      "name": "Trường Cao Đẳng Y Tế Quảng Nam",
+      "short_name": "Trường Cao Đẳng Y Tế Quảng Nam",
+      "online_slug": "cao-dang-y-te-quang-nam-CYU",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYV",
+      "name": "Trường Cao Đẳng Y Tế Tiền Giang",
+      "short_name": "Trường Cao Đẳng Y Tế Tiền Giang",
+      "online_slug": "cao-dang-y-te-tien-giang-CYV",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYX",
+      "name": "Trường Cao Đẳng Bình Thuận",
+      "short_name": "Trường Cao Đẳng Bình Thuận",
+      "online_slug": "cao-dang-y-te-binh-thuan-CYX",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYY",
+      "name": "Trường Cao Đẳng Y Tế Huế",
+      "short_name": "Trường Cao Đẳng Y Tế Huế",
+      "online_slug": "cao-dang-y-te-hue-CYY",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "CYZ",
+      "name": "Trường Cao Đẳng Y Tế Hà Nội",
+      "short_name": "Trường Cao Đẳng Y Tế Hà Nội",
+      "online_slug": "cao-dang-y-te-ha-noi-CYZ",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D08",
+      "name": "Trường Cao đẳng Tuyên Quang",
+      "short_name": "Trường Cao đẳng Tuyên Quang",
+      "online_slug": "truong-cao-dang-nghe-ky-thuat-cong-nghe-tuyen-quang-D08",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D20",
+      "name": "Trường Cao Đẳng Cộng Đồng Hà Tây",
+      "short_name": "Trường Cao Đẳng Cộng Đồng Hà Tây",
+      "online_slug": "cao-dang-cong-dong-ha-tay-D20",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D42",
+      "name": "Trường Cao đẳng Du lịch Sài Gòn",
+      "short_name": "Trường Cao đẳng Du lịch Sài Gòn",
+      "online_slug": "truong-cao-dang-du-lich-sai-gon-D42",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D50",
+      "name": "Trường Cao Đẳng Cộng Đồng Đồng Tháp",
+      "short_name": "Trường Cao Đẳng Cộng Đồng Đồng Tháp",
+      "online_slug": "cao-dang-cong-dong-dong-thap-D50",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D57",
+      "name": "Trường Cao Đẳng Vĩnh Long",
+      "short_name": "Trường Cao Đẳng Vĩnh Long",
+      "online_slug": "cao-dang-cong-dong-vinh-long-D57",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D61",
+      "name": "Trường Cao Đẳng Cộng Đồng Cà Mau",
+      "short_name": "Trường Cao Đẳng Cộng Đồng Cà Mau",
+      "online_slug": "cao-dang-cong-dong-ca-mau-D61",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D64",
+      "name": "Trường Cao Đẳng Cộng Đồng Hậu Giang",
+      "short_name": "Trường Cao Đẳng Cộng Đồng Hậu Giang",
+      "online_slug": "cao-dang-cong-dong-hau-giang-D64",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D70",
+      "name": "Trường Cao đẳng Bách Khoa",
+      "short_name": "Trường Cao đẳng Bách Khoa",
+      "online_slug": "truong-cao-dang-bach-khoa-viet-nam-D70",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "D76",
+      "name": "Trường Cao đẳng Công thương Hà Nội",
+      "short_name": "Trường Cao đẳng Công thương Hà Nội",
+      "online_slug": "truong-cao-dang-cong-thuong-ha-noi-D76",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "HFH1",
+      "name": "Trường Cao đẳng Hậu cần 1",
+      "short_name": "Trường Cao đẳng Hậu cần 1",
+      "online_slug": "truong-cao-dang-hau-can-1-HFH1",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "HFH2",
+      "name": "Trường Cao đẳng Hậu cần 2",
+      "short_name": "Trường Cao đẳng Hậu cần 2",
+      "online_slug": "truong-cao-dang-hau-can-2-HFH2",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "QPH",
+      "name": "Trường Cao Đẳng Công Nghiệp Quốc Phòng",
+      "short_name": "Trường Cao Đẳng Công Nghiệp Quốc Phòng",
+      "online_slug": "cao-dang-cong-nghiep-quoc-phong-QPH",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "VLSC",
+      "name": "Trường Cao đẳng Văn Lang Sài Gòn",
+      "short_name": "Trường Cao đẳng Văn Lang Sài Gòn",
+      "online_slug": "truong-cao-dang-van-lang-sai-gon-VLSC",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "YPY",
+      "name": "Trường Cao đẳng Y tế Phú Yên",
+      "short_name": "Trường Cao đẳng Y tế Phú Yên",
+      "online_slug": "truong-cao-dang-y-te-phu-yen-YPY",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "YSL",
+      "name": "Trường Cao Đẳng Y Tế Sơn La",
+      "short_name": "Trường Cao Đẳng Y Tế Sơn La",
+      "online_slug": "cao-dang-y-te-son-la-YSL",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "YT02",
+      "name": "Trường Cao đẳng Y tế Đặng Văn Ngữ",
+      "short_name": "Trường Cao đẳng Y tế Đặng Văn Ngữ",
+      "online_slug": "truong-cao-dang-y-te-dang-van-ngu-YT02",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "YTV",
+      "name": "Trường Cao Đẳng Y Tế Trà Vinh",
+      "short_name": "Trường Cao Đẳng Y Tế Trà Vinh",
+      "online_slug": "cao-dang-y-te-tra-vinh-YTV",
+      "type": "cao_dang",
+      "type_label": "Cao đẳng"
+    },
+    {
+      "code": "ANH",
+      "name": "Học Viện An Ninh Nhân Dân",
+      "short_name": "Học Viện An Ninh Nhân Dân",
+      "online_slug": "hoc-vien-an-ninh-nhan-dan-ANH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "BPH",
+      "name": "Học Viện Biên Phòng",
+      "short_name": "Học Viện Biên Phòng",
+      "online_slug": "hoc-vien-bien-phong-BPH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "BVH",
+      "name": "Học Viện Công Nghệ Bưu Chính Viễn Thông",
+      "short_name": "Học Viện Công Nghệ Bưu Chính Viễn Thông",
+      "online_slug": "hoc-vien-cong-nghe-buu-chinh-vien-thong-phia-bac-BVH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "BVS",
+      "name": "Học Viện Công Nghệ Bưu Chính Viễn Thông (Cơ sở TP.HCM)",
+      "short_name": "Học Viện Công Nghệ Bưu Chính Viễn Thông ",
+      "online_slug": "hoc-vien-cong-nghe-buu-chinh-vien-thong-phia-nam-BVS",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "CIV",
+      "name": "Học viện Công giáo Việt Nam",
+      "short_name": "Học viện Công giáo Việt Nam",
+      "online_slug": "hoc-vien-cong-giao-viet-nam-CIV",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "CSH",
+      "name": "Học Viện Cảnh Sát Nhân Dân",
+      "short_name": "Học Viện Cảnh Sát Nhân Dân",
+      "online_slug": "hoc-vien-canh-sat-nhan-dan-CSH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HBT",
+      "name": "Học viện Báo chí và Tuyên truyền",
+      "short_name": "Học viện Báo chí và Tuyên truyền",
+      "online_slug": "hoc-vien-bao-chi-va-tuyen-truyen-HBT",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HCA",
+      "name": "Học Viện Chính Trị Công An Nhân Dân",
+      "short_name": "Học Viện Chính Trị Công An Nhân Dân",
+      "online_slug": "hoc-vien-chinh-tri-cong-an-nhan-dan-HCA",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HCB",
+      "name": "Học viện Kỹ thuật và Công nghệ an ninh (Phía Bắc)",
+      "short_name": "Học viện Kỹ thuật và Công nghệ an ninh (",
+      "online_slug": "hoc-vien-ky-thuat-cong-nghe-an-ninh-phia-bac-HCB",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HCH",
+      "name": "Học Viện Hành Chính và Quản trị công",
+      "short_name": "Học Viện Hành Chính và Quản trị công",
+      "online_slug": "hoc-vien-hanh-chinh-va-quan-tri-cong-HCH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HCN",
+      "name": "Học viện Kỹ thuật và Công nghệ an ninh (Phía Nam)",
+      "short_name": "Học viện Kỹ thuật và Công nghệ an ninh (",
+      "online_slug": "hoc-vien-ky-thuat-va-cong-nghe-an-ninh-phia-nam-HCN",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HCP",
+      "name": "Học Viện Chính Sách và Phát Triển",
+      "short_name": "Học Viện Chính Sách và Phát Triển",
+      "online_slug": "hoc-vien-chinh-sach-va-phat-trien-HCP",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HCS",
+      "name": "Học Viện Hành Chính Và Quản Trị Công (phía Nam)",
+      "short_name": "Học Viện Hành Chính Và Quản Trị Công (ph",
+      "online_slug": "hoc-vien-hanh-chinh-va-quan-tri-cong-phia-nam-HCS",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HEH",
+      "name": "Học Viện Hậu Cần - Hệ Quân sự",
+      "short_name": "Học Viện Hậu Cần - Hệ Quân sự",
+      "online_slug": "hoc-vien-hau-can-he-quan-su-HEH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HHK",
+      "name": "Học Viện Hàng không Việt Nam",
+      "short_name": "Học Viện Hàng không Việt Nam",
+      "online_slug": "hoc-vien-hang-khong-viet-nam-HHK",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HPN",
+      "name": "Học Viện Phụ Nữ Việt Nam",
+      "short_name": "Học Viện Phụ Nữ Việt Nam",
+      "online_slug": "hoc-vien-phu-nu-viet-nam-HPN",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HQH",
+      "name": "Học Viện Hải Quân",
+      "short_name": "Học Viện Hải Quân",
+      "online_slug": "hoc-vien-hai-quan-HQH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HQT",
+      "name": "Học Viện Ngoại Giao",
+      "short_name": "Học Viện Ngoại Giao",
+      "online_slug": "hoc-vien-ngoai-giao-HQT",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HTA",
+      "name": "Học viện Tòa án",
+      "short_name": "Học viện Tòa án",
+      "online_slug": "hoc-vien-toa-an-HTA",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HTC",
+      "name": "Học Viện Tài chính",
+      "short_name": "Học Viện Tài chính",
+      "online_slug": "hoc-vien-tai-chinh-HTC",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HTN",
+      "name": "Học Viện Thanh Thiếu Niên Việt Nam",
+      "short_name": "Học Viện Thanh Thiếu Niên Việt Nam",
+      "online_slug": "hoc-vien-thanh-thieu-nien-viet-nam-HTN",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HVA",
+      "name": "Học Viện Âm Nhạc Huế",
+      "short_name": "Học Viện Âm Nhạc Huế",
+      "online_slug": "hoc-vien-am-nhac-hue-HVA",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HVC",
+      "name": "Học viện cán bộ TPHCM",
+      "short_name": "Học viện cán bộ TPHCM",
+      "online_slug": "hoc-vien-can-bo-tphcm-HVC",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HVD",
+      "name": "Học Viện Dân Tộc",
+      "short_name": "Học Viện Dân Tộc",
+      "online_slug": "hoc-vien-dan-toc-HVD",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HVN",
+      "name": "Học Viện Nông Nghiệp Việt Nam",
+      "short_name": "Học Viện Nông Nghiệp Việt Nam",
+      "online_slug": "hoc-vien-nong-nghiep-viet-nam-HVN",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HVQ",
+      "name": "Học Viện Quản Lý Giáo Dục",
+      "short_name": "Học Viện Quản Lý Giáo Dục",
+      "online_slug": "hoc-vien-quan-ly-giao-duc-HVQ",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "HYD",
+      "name": "Học Viện Y Dược Học Cổ Truyền Việt Nam",
+      "short_name": "Học Viện Y Dược Học Cổ Truyền Việt Nam",
+      "online_slug": "hoc-vien-y-duoc-hoc-co-truyen-viet-nam-HYD",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "KMA",
+      "name": "Học Viện Kỹ Thuật Mật Mã",
+      "short_name": "Học Viện Kỹ Thuật Mật Mã",
+      "online_slug": "hoc-vien-ky-thuat-mat-ma-KMA",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "KQH",
+      "name": "Học Viện Kỹ Thuật Quân Sự - Hệ Quân sự",
+      "short_name": "Học Viện Kỹ Thuật Quân Sự - Hệ Quân sự",
+      "online_slug": "hoc-vien-ky-thuat-quan-su-he-quan-su-KQH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "LCDF",
+      "name": "Học viện Thiết kế và Thời trang London Hà Nội",
+      "short_name": "Học viện Thiết kế và Thời trang London H",
+      "online_slug": "hoc-vien-thiet-ke-va-thoi-trang-london-ha-noi-LCDF",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "NHB",
+      "name": "Học Viện Ngân Hàng (Phân Viện Bắc Ninh)",
+      "short_name": "Học Viện Ngân Hàng (Phân Viện Bắc Ninh)",
+      "online_slug": "hoc-vien-ngan-hang-phan-vien-bac-ninh-NHB",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "NHH",
+      "name": "Học Viện Ngân Hàng",
+      "short_name": "Học Viện Ngân Hàng",
+      "online_slug": "hoc-vien-ngan-hang-NHH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "NHP",
+      "name": "Học Viện Ngân Hàng (Phân Viện Phú Yên)",
+      "short_name": "Học Viện Ngân Hàng (Phân Viện Phú Yên)",
+      "online_slug": "hoc-vien-ngan-hang-phan-vien-phu-yen-NHP",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "NQH",
+      "name": "Học Viện Khoa Học Quân Sự - Hệ Quân sự",
+      "short_name": "Học Viện Khoa Học Quân Sự - Hệ Quân sự",
+      "online_slug": "hoc-vien-khoa-hoc-quan-su-he-quan-su-NQH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "NVH",
+      "name": "Học Viện Âm Nhạc Quốc Gia Việt Nam",
+      "short_name": "Học Viện Âm Nhạc Quốc Gia Việt Nam",
+      "online_slug": "hoc-vien-am-nhac-quoc-gia-viet-nam-NVH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "PCH",
+      "name": "Học viện Phòng cháy chữa cháy và Cứu nạn cứu hộ",
+      "short_name": "Học viện Phòng cháy chữa cháy và Cứu nạn",
+      "online_slug": "dai-hoc-phong-chay-chua-chay-phia-bac-PCH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "PKH",
+      "name": "Học Viện Phòng Không – Không Quân",
+      "short_name": "Học Viện Phòng Không – Không Quân",
+      "online_slug": "hoc-vien-phong-khong-khong-quan-PKH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "YQH",
+      "name": "Học Viện Quân Y - Hệ Quân sự",
+      "short_name": "Học Viện Quân Y - Hệ Quân sự",
+      "online_slug": "hoc-vien-quan-y-he-quan-su-YQH",
+      "type": "hoc_vien",
+      "type_label": "Học viện"
+    },
+    {
+      "code": "ANS",
+      "name": "Trường Đại Học An Ninh Nhân Dân",
+      "short_name": "Trường Đại Học An Ninh Nhân Dân",
+      "online_slug": "dai-hoc-an-ninh-nhan-dan-ANS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "BKA",
+      "name": "Đại Học Bách Khoa Hà Nội",
+      "short_name": "Đại Học Bách Khoa Hà Nội",
+      "online_slug": "dai-hoc-bach-khoa-ha-noi-BKA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "BMU",
+      "name": "Trường Đại học Y Dược Buôn Ma Thuột",
+      "short_name": "Trường Đại học Y Dược Buôn Ma Thuột",
+      "online_slug": "dai-hoc-y-duoc-buon-ma-thuot-BMU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "BUV",
+      "name": "Trường Đại Học Anh Quốc Việt Nam",
+      "short_name": "Trường Đại Học Anh Quốc Việt Nam",
+      "online_slug": "dai-hoc-anh-quoc-viet-nam-BUV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "BVU",
+      "name": "Trường Đại Học Bà Rịa – Vũng Tàu",
+      "short_name": "Trường Đại Học Bà Rịa – Vũng Tàu",
+      "online_slug": "dai-hoc-ba-ria-vung-tau-BVU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "CCM",
+      "name": "Trường Đại học Công nghiệp và Thương mại Hà Nội",
+      "short_name": "Trường Đại học Công nghiệp và Thương mại",
+      "online_slug": "dai-hoc-cong-nghiep-va-thuong-mai-ha-noi-CCM",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "CEA",
+      "name": "Trường Đại học Nghệ An",
+      "short_name": "Trường Đại học Nghệ An",
+      "online_slug": "dai-hoc-nghe-an-CEA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "CMC",
+      "name": "Trường Đại Học CMC",
+      "short_name": "Trường Đại Học CMC",
+      "online_slug": "dai-hoc-cmc-CMC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "CSS",
+      "name": "Trường Đại Học Cảnh Sát Nhân Dân",
+      "short_name": "Trường Đại Học Cảnh Sát Nhân Dân",
+      "online_slug": "dai-hoc-canh-sat-nhan-dan-CSS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DAD",
+      "name": "Trường Đại Học Đông Á",
+      "short_name": "Trường Đại Học Đông Á",
+      "online_slug": "dai-hoc-dong-a-DAD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DBD",
+      "name": "Trường Đại Học Bình Dương",
+      "short_name": "Trường Đại Học Bình Dương",
+      "online_slug": "dai-hoc-binh-duong-DBD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DBG",
+      "name": "Trường Đại học Nông Lâm Bắc Giang",
+      "short_name": "Trường Đại học Nông Lâm Bắc Giang",
+      "online_slug": "dai-hoc-nong-lam-bac-giang-DBG",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DBH",
+      "name": "Trường Đại Học Quốc Tế Bắc Hà",
+      "short_name": "Trường Đại Học Quốc Tế Bắc Hà",
+      "online_slug": "dai-hoc-quoc-te-bac-ha-DBH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DBL",
+      "name": "Trường Đại Học Bạc Liêu",
+      "short_name": "Trường Đại Học Bạc Liêu",
+      "online_slug": "dai-hoc-bac-lieu-DBL",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DCA",
+      "name": "Trường Đại học Intracom",
+      "short_name": "Trường Đại học Intracom",
+      "online_slug": "dai-hoc-chu-van-an-DCA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DCD",
+      "name": "Trường Đại Học Công Nghệ Đồng Nai",
+      "short_name": "Trường Đại Học Công Nghệ Đồng Nai",
+      "online_slug": "dai-hoc-cong-nghe-dong-nai-DCD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DCH",
+      "name": "Trường Sĩ Quan Đặc Công",
+      "short_name": "Trường Sĩ Quan Đặc Công",
+      "online_slug": "truong-si-quan-dac-cong-DCH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DCL",
+      "name": "Trường Đại Học Cửu Long",
+      "short_name": "Trường Đại Học Cửu Long",
+      "online_slug": "dai-hoc-cuu-long-DCL",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DCN",
+      "name": "Đại Học Công Nghiệp Hà Nội",
+      "short_name": "Đại Học Công Nghiệp Hà Nội",
+      "online_slug": "dai-hoc-cong-nghiep-ha-noi-DCN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DCQ",
+      "name": "Trường Đại Học Công Nghệ và Quản Lý Hữu Nghị",
+      "short_name": "Trường Đại Học Công Nghệ và Quản Lý Hữu ",
+      "online_slug": "dai-hoc-cong-nghe-va-quan-ly-huu-nghi-DCQ",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DCT",
+      "name": "Trường Đại Học Công Thương TPHCM",
+      "short_name": "Trường Đại Học Công Thương TPHCM",
+      "online_slug": "dai-hoc-cong-thuong-tphcm-DCT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DCV",
+      "name": "Trường Đại học Công nghiệp Vinh",
+      "short_name": "Trường Đại học Công nghiệp Vinh",
+      "online_slug": "dai-hoc-cong-nghiep-vinh-DCV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDA",
+      "name": "Trường Đại Học Công Nghệ Đông Á",
+      "short_name": "Trường Đại Học Công Nghệ Đông Á",
+      "online_slug": "dai-hoc-cong-nghe-dong-a-DDA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDB",
+      "name": "Trường Đại Học Thành Đông",
+      "short_name": "Trường Đại Học Thành Đông",
+      "online_slug": "dai-hoc-thanh-dong-DDB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDF",
+      "name": "Trường Đại Học Ngoại Ngữ Đà Nẵng",
+      "short_name": "Trường Đại Học Ngoại Ngữ Đà Nẵng",
+      "online_slug": "dai-hoc-ngoai-ngu-da-nang-DDF",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDG",
+      "name": "Khoa Giáo dục thể chất Đà Nẵng",
+      "short_name": "Khoa Giáo dục thể chất Đà Nẵng",
+      "online_slug": "khoa-giao-duc-the-chat-da-nang-DDG",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDK",
+      "name": "Trường Đại Học Bách Khoa Đà Nẵng",
+      "short_name": "Trường Đại Học Bách Khoa Đà Nẵng",
+      "online_slug": "dai-hoc-bach-khoa-da-nang-DDK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDL",
+      "name": "Trường Đại Học Điện Lực",
+      "short_name": "Trường Đại Học Điện Lực",
+      "online_slug": "dai-hoc-dien-luc-DDL",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDM",
+      "name": "Trường Đại Học Công Nghiệp Quảng Ninh",
+      "short_name": "Trường Đại Học Công Nghiệp Quảng Ninh",
+      "online_slug": "dai-hoc-cong-nghiep-quang-ninh-DDM",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDN",
+      "name": "Trường Đại Học Đại Nam",
+      "short_name": "Trường Đại Học Đại Nam",
+      "online_slug": "dai-hoc-dai-nam-DDN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDP",
+      "name": "Phân Hiệu Đại Học Đà Nẵng tại Kon Tum",
+      "short_name": "Phân Hiệu Đại Học Đà Nẵng tại Kon Tum",
+      "online_slug": "phan-hieu-dai-hoc-da-nang-tai-kon-tum-DDP",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDQ",
+      "name": "Trường Đại Học Kinh Tế – Đại Học Đà Nẵng",
+      "short_name": "Trường Đại Học Kinh Tế – Đại Học Đà Nẵng",
+      "online_slug": "dai-hoc-kinh-te-dai-hoc-da-nang-DDQ",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDS",
+      "name": "Trường Đại Học Sư Phạm - Đại Học Đà Nẵng",
+      "short_name": "Trường Đại Học Sư Phạm - Đại Học Đà Nẵng",
+      "online_slug": "dai-hoc-su-pham-dai-hoc-da-nang-DDS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDT",
+      "name": "Đại Học Duy Tân",
+      "short_name": "Đại Học Duy Tân",
+      "online_slug": "dai-hoc-duy-tan-DDT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDU",
+      "name": "Trường Đại Học Đông Đô",
+      "short_name": "Trường Đại Học Đông Đô",
+      "online_slug": "dai-hoc-dong-do-DDU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDV",
+      "name": "Viện nghiên cứu và đào tạo Việt Anh - Đại học Đà Nẵng",
+      "short_name": "Viện nghiên cứu và đào tạo Việt Anh - Đạ",
+      "online_slug": "vien-nghien-cuu-va-dao-tao-viet-anh-dai-hoc-da-nang-DDV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DDY",
+      "name": "Trường Y Dược Đà Nẵng",
+      "short_name": "Trường Y Dược Đà Nẵng",
+      "online_slug": "truong-y-duoc-da-nang-DDY",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DFA",
+      "name": "Trường Đại học Tài chính Quản trị kinh doanh",
+      "short_name": "Trường Đại học Tài chính Quản trị kinh d",
+      "online_slug": "dai-hoc-tai-chinh-quan-tri-kinh-doanh-DFA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHA",
+      "name": "Trường Đại học Luật Huế",
+      "short_name": "Trường Đại học Luật Huế",
+      "online_slug": "dai-hoc-luat-dai-hoc-hue-DHA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHC",
+      "name": "Khoa Giáo Dục Thể Chất Huế",
+      "short_name": "Khoa Giáo Dục Thể Chất Huế",
+      "online_slug": "khoa-giao-duc-the-chat-hue-DHC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHD",
+      "name": "Trường Du Lịch - Đại Học Huế",
+      "short_name": "Trường Du Lịch - Đại Học Huế",
+      "online_slug": "truong-du-lich-dai-hoc-hue-DHD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHE",
+      "name": "Khoa Kỹ thuật và Công nghệ - Đại học Huế",
+      "short_name": "Khoa Kỹ thuật và Công nghệ - Đại học Huế",
+      "online_slug": "khoa-ky-thuat-va-cong-nghe-dai-hoc-hue-DHE",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHF",
+      "name": "Trường Đại Học Ngoại Ngữ Huế",
+      "short_name": "Trường Đại Học Ngoại Ngữ Huế",
+      "online_slug": "dai-hoc-ngoai-ngu-hue-DHF",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHH",
+      "name": "Trường Đại Học Hà Hoa Tiên",
+      "short_name": "Trường Đại Học Hà Hoa Tiên",
+      "online_slug": "dai-hoc-ha-hoa-tien-DHH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHI",
+      "name": "Khoa Quốc tế - Đại học Huế",
+      "short_name": "Khoa Quốc tế - Đại học Huế",
+      "online_slug": "khoa-quoc-te-dai-hoc-hue-DHI",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHK",
+      "name": "Trường Đại Học Kinh Tế - Đại Học Huế",
+      "short_name": "Trường Đại Học Kinh Tế - Đại Học Huế",
+      "online_slug": "dai-hoc-kinh-te-dai-hoc-hue-DHK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHL",
+      "name": "Trường Đại Học Nông Lâm Huế",
+      "short_name": "Trường Đại Học Nông Lâm Huế",
+      "online_slug": "dai-hoc-nong-lam-hue-DHL",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHN",
+      "name": "Trường Đại Học Nghệ Thuật Huế",
+      "short_name": "Trường Đại Học Nghệ Thuật Huế",
+      "online_slug": "dai-hoc-nghe-thuat-hue-DHN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHQ",
+      "name": "Phân Hiệu Đại Học Huế tại Quảng Trị",
+      "short_name": "Phân Hiệu Đại Học Huế tại Quảng Trị",
+      "online_slug": "phan-hieu-dai-hoc-hue-tai-quang-tri-DHQ",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHS",
+      "name": "Trường Đại Học Sư Phạm Huế",
+      "short_name": "Trường Đại Học Sư Phạm Huế",
+      "online_slug": "dai-hoc-su-pham-hue-DHS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHT",
+      "name": "Trường Đại Học Khoa Học Huế",
+      "short_name": "Trường Đại Học Khoa Học Huế",
+      "online_slug": "dai-hoc-khoa-hoc-hue-DHT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHV",
+      "name": "Trường Đại học Hùng Vương TPHCM",
+      "short_name": "Trường Đại học Hùng Vương TPHCM",
+      "online_slug": "dai-hoc-hung-vuong-tphcm-DHV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DHY",
+      "name": "Trường Đại Học Y Dược Huế",
+      "short_name": "Trường Đại Học Y Dược Huế",
+      "online_slug": "dai-hoc-y-duoc-hue-DHY",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DKB",
+      "name": "Trường Đại Học Kinh Tế Kỹ Thuật Bình Dương",
+      "short_name": "Trường Đại Học Kinh Tế Kỹ Thuật Bình Dươ",
+      "online_slug": "dai-hoc-kinh-te-ky-thuat-binh-duong-DKB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DKC",
+      "name": "Trường Đại học Công Nghệ TPHCM",
+      "short_name": "Trường Đại học Công Nghệ TPHCM",
+      "online_slug": "dai-hoc-cong-nghe-tphcm-DKC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DKH",
+      "name": "Trường Đại Học Dược Hà Nội",
+      "short_name": "Trường Đại Học Dược Hà Nội",
+      "online_slug": "dai-hoc-duoc-ha-noi-DKH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DKK",
+      "name": "Trường Đại Học Kinh Tế Kỹ Thuật Công Nghiệp",
+      "short_name": "Trường Đại Học Kinh Tế Kỹ Thuật Công Ngh",
+      "online_slug": "dai-hoc-kinh-te-ky-thuat-cong-nghiep-DKK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DKS",
+      "name": "Trường Đại học Kiểm Sát",
+      "short_name": "Trường Đại học Kiểm Sát",
+      "online_slug": "dai-hoc-kiem-sat-DKS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DKT",
+      "name": "Trường Đại Học Hải Dương",
+      "short_name": "Trường Đại Học Hải Dương",
+      "online_slug": "dai-hoc-hai-duong-DKT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DKY",
+      "name": "Trường Đại Học Kỹ Thuật Y Tế Hải Dương",
+      "short_name": "Trường Đại Học Kỹ Thuật Y Tế Hải Dương",
+      "online_slug": "dai-hoc-ky-thuat-y-te-hai-duong-DKY",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DLA",
+      "name": "Trường Đại Học Kinh Tế Công Nghiệp Long An",
+      "short_name": "Trường Đại Học Kinh Tế Công Nghiệp Long ",
+      "online_slug": "dai-hoc-kinh-te-cong-nghiep-long-an-DLA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DLH",
+      "name": "Trường Đại Học Lạc Hồng",
+      "short_name": "Trường Đại Học Lạc Hồng",
+      "online_slug": "dai-hoc-lac-hong-DLH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DLS",
+      "name": "Trường Đại Học Lao Động – Xã Hội (Cơ sở II)",
+      "short_name": "Trường Đại Học Lao Động – Xã Hội (Cơ sở ",
+      "online_slug": "dai-hoc-lao-dong-xa-hoi-co-so-phia-nam-DLS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DLX",
+      "name": "Trường Đại Học Lao Động – Xã Hội",
+      "short_name": "Trường Đại Học Lao Động – Xã Hội",
+      "online_slug": "dai-hoc-lao-dong-xa-hoi-co-so-ha-noi-DLX",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DMS",
+      "name": "Trường Đại Học Tài Chính Marketing",
+      "short_name": "Trường Đại Học Tài Chính Marketing",
+      "online_slug": "dai-hoc-tai-chinh-marketing-DMS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DMT",
+      "name": "Trường Đại học Tài Nguyên và Môi Trường Hà Nội",
+      "short_name": "Trường Đại học Tài Nguyên và Môi Trường ",
+      "online_slug": "dai-hoc-tai-nguyen-va-moi-truong-ha-noi-DMT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DNB",
+      "name": "Trường Đại Học Hoa Lư",
+      "short_name": "Trường Đại Học Hoa Lư",
+      "online_slug": "dai-hoc-hoa-lu-DNB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DNC",
+      "name": "Trường Đại học Nam Cần Thơ",
+      "short_name": "Trường Đại học Nam Cần Thơ",
+      "online_slug": "dai-hoc-nam-can-tho-DNC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DNT",
+      "name": "Trường Đại Học Ngoại Ngữ Tin Học TPHCM",
+      "short_name": "Trường Đại Học Ngoại Ngữ Tin Học TPHCM",
+      "online_slug": "dai-hoc-ngoai-ngu-tin-hoc-tphcm-DNT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DNU",
+      "name": "Trường Đại Học Đồng Nai",
+      "short_name": "Trường Đại Học Đồng Nai",
+      "online_slug": "dai-hoc-dong-nai-DNU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DNV",
+      "name": "Trường Đại học Nội vụ Hà Nội",
+      "short_name": "Trường Đại học Nội vụ Hà Nội",
+      "online_slug": "dai-hoc-noi-vu-ha-noi-DNV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DPC",
+      "name": "Trường Đại Học Phan Châu Trinh",
+      "short_name": "Trường Đại Học Phan Châu Trinh",
+      "online_slug": "dai-hoc-phan-chau-trinh-DPC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DPD",
+      "name": "Trường Đại Học Phương Đông",
+      "short_name": "Trường Đại Học Phương Đông",
+      "online_slug": "dai-hoc-phuong-dong-DPD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DPQ",
+      "name": "Trường Đại Học Phạm Văn Đồng",
+      "short_name": "Trường Đại Học Phạm Văn Đồng",
+      "online_slug": "dai-hoc-pham-van-dong-DPQ",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DPT",
+      "name": "Trường Đại Học Phan Thiết",
+      "short_name": "Trường Đại Học Phan Thiết",
+      "online_slug": "dai-hoc-phan-thiet-DPT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DPX",
+      "name": "Trường Đại Học Phú Xuân",
+      "short_name": "Trường Đại Học Phú Xuân",
+      "online_slug": "dai-hoc-phu-xuan-DPX",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DPY",
+      "name": "Trường Đại Học Phú Yên",
+      "short_name": "Trường Đại Học Phú Yên",
+      "online_slug": "dai-hoc-phu-yen-DPY",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DQB",
+      "name": "Trường Đại Học Quảng Bình",
+      "short_name": "Trường Đại Học Quảng Bình",
+      "online_slug": "dai-hoc-quang-binh-DQB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DQK",
+      "name": "Trường Đại Học Kinh Doanh và Công Nghệ Hà Nội",
+      "short_name": "Trường Đại Học Kinh Doanh và Công Nghệ H",
+      "online_slug": "dai-hoc-kinh-doanh-va-cong-nghe-ha-noi-DQK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DQN",
+      "name": "Trường Đại Học Quy Nhơn",
+      "short_name": "Trường Đại Học Quy Nhơn",
+      "online_slug": "dai-hoc-quy-nhon-DQN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DQT",
+      "name": "Trường Đại Học Quang Trung",
+      "short_name": "Trường Đại Học Quang Trung",
+      "online_slug": "dai-hoc-quang-trung-DQT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DQU",
+      "name": "Trường Đại Học Quảng Nam",
+      "short_name": "Trường Đại Học Quảng Nam",
+      "online_slug": "dai-hoc-quang-nam-DQU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DSD",
+      "name": "Trường Đại Học Sân Khấu Điện Ảnh TPHCM",
+      "short_name": "Trường Đại Học Sân Khấu Điện Ảnh TPHCM",
+      "online_slug": "dai-hoc-san-khau-dien-anh-tphcm-DSD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DSG",
+      "name": "Trường Đại Học Công Nghệ Sài Gòn",
+      "short_name": "Trường Đại Học Công Nghệ Sài Gòn",
+      "online_slug": "dai-hoc-cong-nghe-sai-gon-DSG",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DSK",
+      "name": "Trường Đại học Sư phạm Kỹ thuật - Đại học Đà Nẵng",
+      "short_name": "Trường Đại học Sư phạm Kỹ thuật - Đại họ",
+      "online_slug": "dai-hoc-su-pham-ky-thuat-dai-hoc-da-nang-DSK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTB",
+      "name": "Trường Đại Học Thái Bình",
+      "short_name": "Trường Đại Học Thái Bình",
+      "online_slug": "dai-hoc-thai-binh-DTB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTC",
+      "name": "Trường Đại học Công Nghệ Thông Tin và Truyền Thông Thái Nguyên",
+      "short_name": "Trường Đại học Công Nghệ Thông Tin và Tr",
+      "online_slug": "dai-hoc-cong-nghe-thong-tin-va-truyen-thong-thai-nguyen-DTC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTD",
+      "name": "Trường Đại Học Tây Đô",
+      "short_name": "Trường Đại Học Tây Đô",
+      "online_slug": "dai-hoc-tay-do-DTD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTE",
+      "name": "Trường Đại học Kinh tế và Quản trị kinh doanh Thái Nguyên",
+      "short_name": "Trường Đại học Kinh tế và Quản trị kinh ",
+      "online_slug": "dai-hoc-kinh-te-quan-tri-kinh-doanh-thai-nguyen-DTE",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTF",
+      "name": "Trường Ngoại Ngữ Thái Nguyên",
+      "short_name": "Trường Ngoại Ngữ Thái Nguyên",
+      "online_slug": "truong-ngoai-ngu-thai-nguyen-DTF",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTG",
+      "name": "Phân hiệu Đại học Thái Nguyên tại Hà Giang",
+      "short_name": "Phân hiệu Đại học Thái Nguyên tại Hà Gia",
+      "online_slug": "phan-hieu-dai-hoc-thai-nguyen-tai-ha-giang-DTG",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTK",
+      "name": "Trường Đại Học Kỹ Thuật Công Nghiệp Thái Nguyên",
+      "short_name": "Trường Đại Học Kỹ Thuật Công Nghiệp Thái",
+      "online_slug": "dai-hoc-ky-thuat-cong-nghiep-thai-nguyen-DTK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTL",
+      "name": "Trường Đại Học Thăng Long",
+      "short_name": "Trường Đại Học Thăng Long",
+      "online_slug": "dai-hoc-thang-long-DTL",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTM",
+      "name": "Trường Đại học Tài Nguyên và Môi Trường TPHCM",
+      "short_name": "Trường Đại học Tài Nguyên và Môi Trường ",
+      "online_slug": "dai-hoc-tai-nguyen-va-moi-truong-tphcm-DTM",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTN",
+      "name": "Trường Đại Học Nông Lâm Thái Nguyên",
+      "short_name": "Trường Đại Học Nông Lâm Thái Nguyên",
+      "online_slug": "dai-hoc-nong-lam-thai-nguyen-DTN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTP",
+      "name": "Phân Hiệu Đại Học Thái Nguyên Tại Lào Cai",
+      "short_name": "Phân Hiệu Đại Học Thái Nguyên Tại Lào Ca",
+      "online_slug": "phan-hieu-dai-hoc-thai-nguyen-tai-lao-cai-DTP",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTQ",
+      "name": "Khoa Quốc Tế - Đại Học Thái Nguyên",
+      "short_name": "Khoa Quốc Tế - Đại Học Thái Nguyên",
+      "online_slug": "khoa-quoc-te-dai-hoc-thai-nguyen-DTQ",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTS",
+      "name": "Đại Học Sư Phạm Thái Nguyên",
+      "short_name": "Đại Học Sư Phạm Thái Nguyên",
+      "online_slug": "dai-hoc-su-pham-thai-nguyen-DTS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTT",
+      "name": "Trường Đại Học Tôn Đức Thắng",
+      "short_name": "Trường Đại Học Tôn Đức Thắng",
+      "online_slug": "dai-hoc-ton-duc-thang-DTT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTV",
+      "name": "Trường Đại Học Lương Thế Vinh",
+      "short_name": "Trường Đại Học Lương Thế Vinh",
+      "online_slug": "dai-hoc-luong-the-vinh-DTV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTY",
+      "name": "Trường Đại Học Y Dược Thái Nguyên",
+      "short_name": "Trường Đại Học Y Dược Thái Nguyên",
+      "online_slug": "dai-hoc-y-duoc-thai-nguyen-DTY",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DTZ",
+      "name": "Trường Đại Học Khoa Học Thái Nguyên",
+      "short_name": "Trường Đại Học Khoa Học Thái Nguyên",
+      "online_slug": "dai-hoc-khoa-hoc-thai-nguyen-DTZ",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DVB",
+      "name": "Trường Đại Học Kinh tế công nghệ Thái Nguyên",
+      "short_name": "Trường Đại Học Kinh tế công nghệ Thái Ng",
+      "online_slug": "dai-hoc-kinh-te-cong-nghe-thai-nguyen-DVB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DVD",
+      "name": "Trường Đại Học Văn Hóa, Thể Thao Và Du Lịch Thanh Hóa",
+      "short_name": "Trường Đại Học Văn Hóa, Thể Thao Và Du L",
+      "online_slug": "dai-hoc-van-hoa-the-thao-va-du-lich-thanh-hoa-DVD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DVH",
+      "name": "Trường Đại Học Văn Hiến",
+      "short_name": "Trường Đại Học Văn Hiến",
+      "online_slug": "dai-hoc-van-hien-DVH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DVL",
+      "name": "Trường Đại Học Văn Lang",
+      "short_name": "Trường Đại Học Văn Lang",
+      "online_slug": "dai-hoc-van-lang-DVL",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DVP",
+      "name": "Trường Đại Học Trưng Vương",
+      "short_name": "Trường Đại Học Trưng Vương",
+      "online_slug": "dai-hoc-trung-vuong-DVP",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DVT",
+      "name": "Đại Học Trà Vinh",
+      "short_name": "Đại Học Trà Vinh",
+      "online_slug": "dai-hoc-tra-vinh-DVT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DVX",
+      "name": "Trường Đại Học Công Nghệ Vạn Xuân",
+      "short_name": "Trường Đại Học Công Nghệ Vạn Xuân",
+      "online_slug": "dai-hoc-cong-nghe-van-xuan-DVX",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "DYD",
+      "name": "Trường Đại Học Yersin Đà Lạt",
+      "short_name": "Trường Đại Học Yersin Đà Lạt",
+      "online_slug": "dai-hoc-yersin-da-lat-DYD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "EIU",
+      "name": "Trường Đại Học Quốc Tế Miền Đông",
+      "short_name": "Trường Đại Học Quốc Tế Miền Đông",
+      "online_slug": "dai-hoc-quoc-te-mien-dong-EIU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "ETU",
+      "name": "Trường Đại Học Hòa Bình",
+      "short_name": "Trường Đại Học Hòa Bình",
+      "online_slug": "dai-hoc-hoa-binh-ETU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "FBU",
+      "name": "Trường Đại Học Tài Chính Ngân Hàng Hà Nội",
+      "short_name": "Trường Đại Học Tài Chính Ngân Hàng Hà Nộ",
+      "online_slug": "dai-hoc-tai-chinh-ngan-hang-ha-noi-FBU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "FPT",
+      "name": "Trường Đại Học FPT",
+      "short_name": "Trường Đại Học FPT",
+      "online_slug": "dai-hoc-fpt-FPT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "GDU",
+      "name": "Trường Đại Học Gia Định",
+      "short_name": "Trường Đại Học Gia Định",
+      "online_slug": "dai-hoc-gia-dinh-GDU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "GHA",
+      "name": "Trường Đại Học Giao Thông Vận Tải",
+      "short_name": "Trường Đại Học Giao Thông Vận Tải",
+      "online_slug": "dai-hoc-giao-thong-van-tai-co-so-phia-bac-GHA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "GNT",
+      "name": "Trường Đại Học Sư Phạm Nghệ Thuật Trung Ương",
+      "short_name": "Trường Đại Học Sư Phạm Nghệ Thuật Trung ",
+      "online_slug": "dai-hoc-su-pham-nghe-thuat-trung-uong-GNT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "GSA",
+      "name": "Trường Đại Học Giao Thông Vận Tải (Cơ sở 2)",
+      "short_name": "Trường Đại Học Giao Thông Vận Tải (Cơ sở",
+      "online_slug": "dai-hoc-giao-thong-van-tai-co-so-phia-nam-GSA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "GTA",
+      "name": "Trường Đại học Công nghệ Giao thông vận tải",
+      "short_name": "Trường Đại học Công nghệ Giao thông vận ",
+      "online_slug": "dai-hoc-cong-nghe-giao-thong-van-tai-GTA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HDT",
+      "name": "Trường Đại Học Hồng Đức",
+      "short_name": "Trường Đại Học Hồng Đức",
+      "online_slug": "dai-hoc-hong-duc-HDT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HGH",
+      "name": "Trường Sĩ Quan Phòng Hóa",
+      "short_name": "Trường Sĩ Quan Phòng Hóa",
+      "online_slug": "truong-si-quan-phong-hoa-HGH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HHA",
+      "name": "Trường Đại Học Hàng Hải Việt Nam",
+      "short_name": "Trường Đại Học Hàng Hải Việt Nam",
+      "online_slug": "dai-hoc-hang-hai-HHA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HHT",
+      "name": "Trường Đại Học Hà Tĩnh",
+      "short_name": "Trường Đại Học Hà Tĩnh",
+      "online_slug": "dai-hoc-ha-tinh-HHT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HIU",
+      "name": "Trường Đại Học Quốc Tế Hồng Bàng",
+      "short_name": "Trường Đại Học Quốc Tế Hồng Bàng",
+      "online_slug": "dai-hoc-quoc-te-hong-bang-HIU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HLU",
+      "name": "Trường Đại Học Hạ Long",
+      "short_name": "Trường Đại Học Hạ Long",
+      "online_slug": "dai-hoc-ha-long-HLU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HNM",
+      "name": "Trường Đại học Thủ Đô Hà Nội",
+      "short_name": "Trường Đại học Thủ Đô Hà Nội",
+      "online_slug": "dai-hoc-thu-do-ha-noi-HNM",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HPU",
+      "name": "Trường Đại học Quản lý và Công nghệ Hải Phòng",
+      "short_name": "Trường Đại học Quản lý và Công nghệ Hải ",
+      "online_slug": "dai-hoc-quan-ly-va-cong-nghe-hai-phong-HPU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "HSU",
+      "name": "Trường Đại Học Hoa Sen",
+      "short_name": "Trường Đại Học Hoa Sen",
+      "online_slug": "dai-hoc-hoa-sen-HSU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "IUH",
+      "name": "Trường Đại Học Công Nghiệp TPHCM",
+      "short_name": "Trường Đại Học Công Nghiệp TPHCM",
+      "online_slug": "dai-hoc-cong-nghiep-tphcm-IUH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KCC",
+      "name": "Trường Đại học Kỹ Thuật Công Nghệ Cần Thơ",
+      "short_name": "Trường Đại học Kỹ Thuật Công Nghệ Cần Th",
+      "online_slug": "dai-hoc-ky-thuat-cong-nghe-can-tho-KCC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KCN",
+      "name": "Trường Đại Học Khoa Học Và Công Nghệ Hà Nội",
+      "short_name": "Trường Đại Học Khoa Học Và Công Nghệ Hà ",
+      "online_slug": "dai-hoc-khoa-hoc-va-cong-nghe-ha-noi-KCN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KGH",
+      "name": "Trường Sĩ Quan Không Quân - Hệ Đại học",
+      "short_name": "Trường Sĩ Quan Không Quân - Hệ Đại học",
+      "online_slug": "truong-si-quan-khong-quan-he-dai-hoc-KGH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KHA",
+      "name": "Đại Học Kinh Tế Quốc Dân",
+      "short_name": "Đại Học Kinh Tế Quốc Dân",
+      "online_slug": "dai-hoc-kinh-te-quoc-dan-KHA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KSA",
+      "name": "Đại Học Kinh Tế TPHCM",
+      "short_name": "Đại Học Kinh Tế TPHCM",
+      "online_slug": "dai-hoc-kinh-te-tphcm-KSA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KSV",
+      "name": "Đại học Kinh Tế TPHCM - Phân hiệu Vĩnh Long",
+      "short_name": "Đại học Kinh Tế TPHCM - Phân hiệu Vĩnh L",
+      "online_slug": "dai-hoc-kinh-te-tphcm-phan-hieu-vinh-long-KSV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KTA",
+      "name": "Trường Đại Học Kiến Trúc Hà Nội",
+      "short_name": "Trường Đại Học Kiến Trúc Hà Nội",
+      "online_slug": "dai-hoc-kien-truc-ha-noi-KTA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KTD",
+      "name": "Trường Đại Học Kiến Trúc Đà Nẵng",
+      "short_name": "Trường Đại Học Kiến Trúc Đà Nẵng",
+      "online_slug": "dai-hoc-kien-truc-da-nang-KTD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "KTS",
+      "name": "Trường Đại Học Kiến Trúc TPHCM",
+      "short_name": "Trường Đại Học Kiến Trúc TPHCM",
+      "online_slug": "dai-hoc-kien-truc-tphcm-KTS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LAH",
+      "name": "Trường Sĩ Quan Lục Quân 1 - Đại học Trần Quốc Tuấn",
+      "short_name": "Trường Sĩ Quan Lục Quân 1 - Đại học Trần",
+      "online_slug": "truong-si-quan-luc-quan-1-dai-hoc-tran-quoc-tuan-LAH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LBH",
+      "name": "Trường Sĩ Quan Lục Quân 2 - Đại học Nguyễn Huệ",
+      "short_name": "Trường Sĩ Quan Lục Quân 2 - Đại học Nguy",
+      "online_slug": "truong-si-quan-luc-quan-2-dai-hoc-nguyen-hue-LBH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LBS",
+      "name": "Trường Đại học Nguyễn Huệ",
+      "short_name": "Trường Đại học Nguyễn Huệ",
+      "online_slug": "dai-hoc-nguyen-hue-LBS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LCH",
+      "name": "Trường Sĩ Quan Chính Trị - Đại Học Chính Trị",
+      "short_name": "Trường Sĩ Quan Chính Trị - Đại Học Chính",
+      "online_slug": "truong-si-quan-chinh-tri-dai-hoc-chinh-tri-LCH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LDA",
+      "name": "Trường Đại Học Công Đoàn",
+      "short_name": "Trường Đại Học Công Đoàn",
+      "online_slug": "dai-hoc-cong-doan-LDA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LNA",
+      "name": "Phân hiệu Đại học Lâm nghiệp tỉnh Gia Lai",
+      "short_name": "Phân hiệu Đại học Lâm nghiệp tỉnh Gia La",
+      "online_slug": "phan-hieu-dai-hoc-lam-nghiep-tinh-gia-lai-LNA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LNH",
+      "name": "Trường Đại Học Lâm nghiệp",
+      "short_name": "Trường Đại Học Lâm nghiệp",
+      "online_slug": "dai-hoc-lam-nghiep-LNH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LNS",
+      "name": "Phân hiệu Đại Học Lâm nghiệp tại Đồng Nai",
+      "short_name": "Phân hiệu Đại Học Lâm nghiệp tại Đồng Na",
+      "online_slug": "phan-hieu-dai-hoc-lam-nghiep-tai-dong-nai-LNS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LPH",
+      "name": "Trường Đại Học Luật Hà Nội",
+      "short_name": "Trường Đại Học Luật Hà Nội",
+      "online_slug": "dai-hoc-luat-ha-noi-LPH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "LPS",
+      "name": "Trường Đại Học Luật TPHCM",
+      "short_name": "Trường Đại Học Luật TPHCM",
+      "online_slug": "dai-hoc-luat-tphcm-LPS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "MBS",
+      "name": "Trường Đại Học Mở TPHCM",
+      "short_name": "Trường Đại Học Mở TPHCM",
+      "online_slug": "dai-hoc-mo-tphcm-MBS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "MDA",
+      "name": "Trường Đại Học Mỏ Địa Chất",
+      "short_name": "Trường Đại Học Mỏ Địa Chất",
+      "online_slug": "dai-hoc-mo-dia-chat-MDA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "MHN",
+      "name": "Trường Đại Học Mở Hà Nội",
+      "short_name": "Trường Đại Học Mở Hà Nội",
+      "online_slug": "dai-hoc-mo-ha-noi-MHN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "MIT",
+      "name": "Trường Đại học Công nghệ Miền Đông",
+      "short_name": "Trường Đại học Công nghệ Miền Đông",
+      "online_slug": "dai-hoc-cong-nghe-mien-dong-MIT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "MTC",
+      "name": "Trường Đại Học Mỹ Thuật Công Nghiệp",
+      "short_name": "Trường Đại Học Mỹ Thuật Công Nghiệp",
+      "online_slug": "dai-hoc-my-thuat-cong-nghiep-MTC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "MTH",
+      "name": "Trường Đại Học Mỹ Thuật Việt Nam",
+      "short_name": "Trường Đại Học Mỹ Thuật Việt Nam",
+      "online_slug": "dai-hoc-my-thuat-viet-nam-MTH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "MTS",
+      "name": "Trường Đại Học Mỹ Thuật TPHCM",
+      "short_name": "Trường Đại Học Mỹ Thuật TPHCM",
+      "online_slug": "dai-hoc-my-thuat-tphcm-MTS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "MTU",
+      "name": "Trường Đại Học Xây Dựng Miền Tây",
+      "short_name": "Trường Đại Học Xây Dựng Miền Tây",
+      "online_slug": "dai-hoc-xay-dung-mien-tay-MTU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NHF",
+      "name": "Trường Đại Học Hà Nội",
+      "short_name": "Trường Đại Học Hà Nội",
+      "online_slug": "dai-hoc-ha-noi-NHF",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NHS",
+      "name": "Trường Đại Học Ngân Hàng TPHCM",
+      "short_name": "Trường Đại Học Ngân Hàng TPHCM",
+      "online_slug": "dai-hoc-ngan-hang-tphcm-NHS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NLG",
+      "name": "Phân hiệu Đại học Nông Lâm TPHCM tại Gia Lai",
+      "short_name": "Phân hiệu Đại học Nông Lâm TPHCM tại Gia",
+      "online_slug": "phan-hieu-dai-hoc-nong-lam-tphcm-tai-gia-lai-NLG",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NLN",
+      "name": "Phân hiệu Đại học Nông Lâm TPHCM tại Ninh Thuận",
+      "short_name": "Phân hiệu Đại học Nông Lâm TPHCM tại Nin",
+      "online_slug": "phan-hieu-dai-hoc-nong-lam-tphcm-tai-ninh-thuan-NLN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NLS",
+      "name": "Trường Đại Học Nông Lâm TPHCM",
+      "short_name": "Trường Đại Học Nông Lâm TPHCM",
+      "online_slug": "dai-hoc-nong-lam-tphcm-NLS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NTH",
+      "name": "Trường Đại học Ngoại thương",
+      "short_name": "Trường Đại học Ngoại thương",
+      "online_slug": "dai-hoc-ngoai-thuong-co-so-phia-bac-NTH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NTS",
+      "name": "Trường Đại học Ngoại thương (Cơ sở II)",
+      "short_name": "Trường Đại học Ngoại thương (Cơ sở II)",
+      "online_slug": "dai-hoc-ngoai-thuong-co-so-phia-nam-NTS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NTT",
+      "name": "Trường Đại Học Nguyễn Tất Thành",
+      "short_name": "Trường Đại Học Nguyễn Tất Thành",
+      "online_slug": "dai-hoc-nguyen-tat-thanh-NTT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NTU",
+      "name": "Trường Đại Học Nguyễn Trãi",
+      "short_name": "Trường Đại Học Nguyễn Trãi",
+      "online_slug": "dai-hoc-nguyen-trai-NTU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "NVS",
+      "name": "Nhạc Viện TPHCM",
+      "short_name": "Nhạc Viện TPHCM",
+      "online_slug": "nhac-vien-tphcm-NVS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "PBH",
+      "name": "Trường Sĩ Quan Pháo Binh",
+      "short_name": "Trường Sĩ Quan Pháo Binh",
+      "online_slug": "truong-si-quan-phao-binh-PBH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "PCS",
+      "name": "Trường Đại Học Phòng Cháy Chữa Cháy (phía Nam)",
+      "short_name": "Trường Đại Học Phòng Cháy Chữa Cháy (phí",
+      "online_slug": "dai-hoc-phong-chay-chua-chay-phia-nam-PCS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "PKA",
+      "name": "Đại Học Phenikaa",
+      "short_name": "Đại Học Phenikaa",
+      "online_slug": "dai-hoc-phenikaa-PKA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "PVU",
+      "name": "Trường Đại Học Dầu Khí Việt Nam",
+      "short_name": "Trường Đại Học Dầu Khí Việt Nam",
+      "online_slug": "dai-hoc-dau-khi-viet-nam-PVU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHD",
+      "name": "Trường Quản Trị và Kinh Doanh - ĐHQG Hà Nội",
+      "short_name": "Trường Quản Trị và Kinh Doanh - ĐHQG Hà ",
+      "online_slug": "truong-quan-tri-va-kinh-doanh-dh-quoc-gia-ha-noi-QHD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHE",
+      "name": "Trường Đại Học Kinh Tế - ĐHQG Hà Nội",
+      "short_name": "Trường Đại Học Kinh Tế - ĐHQG Hà Nội",
+      "online_slug": "dai-hoc-kinh-te-ha-noi-QHE",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHF",
+      "name": "Trường Đại Học Ngoại Ngữ - ĐH Quốc gia Hà Nội",
+      "short_name": "Trường Đại Học Ngoại Ngữ - ĐH Quốc gia H",
+      "online_slug": "dai-hoc-ngoai-ngu-ha-noi-QHF",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHI",
+      "name": "Trường Đại Học Công Nghệ – Đại Học Quốc Gia Hà Nội",
+      "short_name": "Trường Đại Học Công Nghệ – Đại Học Quốc ",
+      "online_slug": "dai-hoc-cong-nghe-dai-hoc-quoc-gia-ha-noi-QHI",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHK",
+      "name": "Trường Khoa học liên ngành và Nghệ thuật Hà Nội",
+      "short_name": "Trường Khoa học liên ngành và Nghệ thuật",
+      "online_slug": "truong-khoa-hoc-lien-nganh-va-nghe-thuat-ha-noi-QHK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHL",
+      "name": "Trường Đại học Luật – ĐHQG Hà Nội",
+      "short_name": "Trường Đại học Luật – ĐHQG Hà Nội",
+      "online_slug": "dai-hoc-luat-dai-hoc-quoc-gia-ha-noi-QHL",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHQ",
+      "name": "Trường Quốc Tế - ĐHQG Hà Nội",
+      "short_name": "Trường Quốc Tế - ĐHQG Hà Nội",
+      "online_slug": "truong-quoc-te-dai-hoc-quoc-gia-ha-noi-QHQ",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHS",
+      "name": "Trường Đại Học Giáo Dục - ĐHQG Hà Nội",
+      "short_name": "Trường Đại Học Giáo Dục - ĐHQG Hà Nội",
+      "online_slug": "dai-hoc-giao-duc-ha-noi-QHS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHT",
+      "name": "Trường Đại Học Khoa Học Tự Nhiên Hà Nội",
+      "short_name": "Trường Đại Học Khoa Học Tự Nhiên Hà Nội",
+      "online_slug": "dai-hoc-khoa-hoc-tu-nhien-dai-hoc-quoc-gia-ha-noi-QHT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHX",
+      "name": "Trường Đại Học Khoa Học Xã Hội và Nhân Văn Hà Nội",
+      "short_name": "Trường Đại Học Khoa Học Xã Hội và Nhân V",
+      "online_slug": "dai-hoc-khoa-hoc-xa-hoi-va-nhan-van-ha-noi-QHX",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QHY",
+      "name": "Trường Đại học Y Dược - ĐHQG Hà Nội",
+      "short_name": "Trường Đại học Y Dược - ĐHQG Hà Nội",
+      "online_slug": "dai-hoc-y-duoc-dai-hoc-quoc-gia-ha-noi-QHY",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QSA",
+      "name": "Trường Đại Học An Giang",
+      "short_name": "Trường Đại Học An Giang",
+      "online_slug": "dai-hoc-an-giang-QSA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QSB",
+      "name": "Trường Đại Học Bách Khoa HCM",
+      "short_name": "Trường Đại Học Bách Khoa HCM",
+      "online_slug": "dai-hoc-bach-khoa-hcm-QSB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QSC",
+      "name": "Trường Đại Học Công Nghệ Thông Tin - ĐHQG TPHCM",
+      "short_name": "Trường Đại Học Công Nghệ Thông Tin - ĐHQ",
+      "online_slug": "dai-hoc-cong-nghe-thong-tin-dhqg-tphcm-QSC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QSK",
+      "name": "Trường Đại học Kinh Tế Luật TPHCM",
+      "short_name": "Trường Đại học Kinh Tế Luật TPHCM",
+      "online_slug": "dai-hoc-kinh-te-luat-tphcm-QSK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QSP",
+      "name": "Phân hiệu Đại học Quốc gia TPHCM tại Bến Tre",
+      "short_name": "Phân hiệu Đại học Quốc gia TPHCM tại Bến",
+      "online_slug": "phan-hieu-dai-hoc-quoc-gia-tphcm-tai-ben-tre-QSP",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QSQ",
+      "name": "Trường Đại Học Quốc Tế - ĐHQG TPHCM",
+      "short_name": "Trường Đại Học Quốc Tế - ĐHQG TPHCM",
+      "online_slug": "dai-hoc-quoc-te-dhqg-tphcm-QSQ",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QST",
+      "name": "Trường Đại Học Khoa Học Tự Nhiên TPHCM",
+      "short_name": "Trường Đại Học Khoa Học Tự Nhiên TPHCM",
+      "online_slug": "dai-hoc-khoa-hoc-tu-nhien-tphcm-QST",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QSX",
+      "name": "Trường Đại Học Khoa Học Xã Hội và Nhân Văn TPHCM",
+      "short_name": "Trường Đại Học Khoa Học Xã Hội và Nhân V",
+      "online_slug": "dai-hoc-khoa-hoc-xa-hoi-va-nhan-van-tphcm-QSX",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "QSY",
+      "name": "Trường Đại học Khoa học sức khỏe TPHCM",
+      "short_name": "Trường Đại học Khoa học sức khỏe TPHCM",
+      "online_slug": "dai-hoc-khoa-hoc-suc-khoe-tphcm-QSY",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "RHM",
+      "name": "Trường Đại Học Răng – Hàm – Mặt",
+      "short_name": "Trường Đại Học Răng – Hàm – Mặt",
+      "online_slug": "dai-hoc-rang-ham-mat-RHM",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "RMU",
+      "name": "Trường Đại Học Quốc Tế RMIT Việt Nam",
+      "short_name": "Trường Đại Học Quốc Tế RMIT Việt Nam",
+      "online_slug": "dai-hoc-quoc-te-rmit-viet-nam-RMU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SDU",
+      "name": "Trường Đại học Sao Đỏ",
+      "short_name": "Trường Đại học Sao Đỏ",
+      "online_slug": "dai-hoc-sao-do-SDU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SGD",
+      "name": "Trường Đại Học Sài Gòn",
+      "short_name": "Trường Đại Học Sài Gòn",
+      "online_slug": "dai-hoc-sai-gon-SGD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SIU",
+      "name": "Trường Đại học Quốc Tế Sài Gòn",
+      "short_name": "Trường Đại học Quốc Tế Sài Gòn",
+      "online_slug": "dai-hoc-quoc-te-sai-gon-SIU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SKD",
+      "name": "Trường Đại Học Sân Khấu Điện Ảnh Hà Nội",
+      "short_name": "Trường Đại Học Sân Khấu Điện Ảnh Hà Nội",
+      "online_slug": "dai-hoc-san-khau-dien-anh-ha-noi-SKD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SKH",
+      "name": "Trường Đại Học Sư Phạm Kỹ Thuật Hưng Yên",
+      "short_name": "Trường Đại Học Sư Phạm Kỹ Thuật Hưng Yên",
+      "online_slug": "dai-hoc-su-pham-ky-thuat-hung-yen-SKH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SKN",
+      "name": "Trường Đại Học Sư Phạm Kỹ Thuật Nam Định",
+      "short_name": "Trường Đại Học Sư Phạm Kỹ Thuật Nam Định",
+      "online_slug": "dai-hoc-su-pham-ky-thuat-nam-dinh-SKN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SKV",
+      "name": "Trường Đại Học Sư Phạm Kỹ Thuật Vinh",
+      "short_name": "Trường Đại Học Sư Phạm Kỹ Thuật Vinh",
+      "online_slug": "dai-hoc-su-pham-ky-thuat-vinh-SKV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SNH",
+      "name": "Trường Sĩ Quan Công Binh - Hệ Quân sự - Đại học Ngô Quyền",
+      "short_name": "Trường Sĩ Quan Công Binh - Hệ Quân sự - ",
+      "online_slug": "truong-si-quan-cong-binh-he-quan-su-dai-hoc-ngo-quyen-SNH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SP2",
+      "name": "Trường Đại Học Sư Phạm Hà Nội 2",
+      "short_name": "Trường Đại Học Sư Phạm Hà Nội 2",
+      "online_slug": "dai-hoc-su-pham-ha-noi-2-SP2",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SPD",
+      "name": "Trường Đại Học Đồng Tháp",
+      "short_name": "Trường Đại Học Đồng Tháp",
+      "online_slug": "dai-hoc-dong-thap-SPD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SPH",
+      "name": "Trường Đại Học Sư Phạm Hà Nội",
+      "short_name": "Trường Đại Học Sư Phạm Hà Nội",
+      "online_slug": "dai-hoc-su-pham-ha-noi-SPH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SPK",
+      "name": "Trường Đại Học Công nghệ Kỹ thuật TP HCM",
+      "short_name": "Trường Đại Học Công nghệ Kỹ thuật TP HCM",
+      "online_slug": "dai-hoc-cong-nghe-ky-thuat-tphcm-SPK",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "SPS",
+      "name": "Trường Đại Học Sư Phạm TPHCM",
+      "short_name": "Trường Đại Học Sư Phạm TPHCM",
+      "online_slug": "dai-hoc-su-pham-tphcm-SPS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "STS",
+      "name": "Trường Đại Học Sư Phạm Thể Dục Thể Thao TPHCM",
+      "short_name": "Trường Đại Học Sư Phạm Thể Dục Thể Thao ",
+      "online_slug": "dai-hoc-su-pham-the-duc-the-thao-tphcm-STS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TBD",
+      "name": "Trường Đại Học Thái Bình Dương",
+      "short_name": "Trường Đại Học Thái Bình Dương",
+      "online_slug": "dai-hoc-thai-binh-duong-TBD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TCT",
+      "name": "Đại Học Cần Thơ",
+      "short_name": "Đại Học Cần Thơ",
+      "online_slug": "dai-hoc-can-tho-TCT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TDB",
+      "name": "Trường Đại Học Thể Dục Thể Thao Bắc Ninh",
+      "short_name": "Trường Đại Học Thể Dục Thể Thao Bắc Ninh",
+      "online_slug": "dai-hoc-the-duc-the-thao-bac-ninh-TDB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TDD",
+      "name": "Trường Đại học Thành Đô",
+      "short_name": "Trường Đại học Thành Đô",
+      "online_slug": "dai-hoc-thanh-do-TDD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TDH",
+      "name": "Trường Đại Học Sư Phạm Thể Dục Thể Thao Hà Nội",
+      "short_name": "Trường Đại Học Sư Phạm Thể Dục Thể Thao ",
+      "online_slug": "dai-hoc-su-pham-the-duc-the-thao-ha-noi-TDH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TDL",
+      "name": "Trường Đại Học Đà Lạt",
+      "short_name": "Trường Đại Học Đà Lạt",
+      "online_slug": "dai-hoc-da-lat-TDL",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TDM",
+      "name": "Trường Đại học Thủ Dầu Một",
+      "short_name": "Trường Đại học Thủ Dầu Một",
+      "online_slug": "dai-hoc-thu-dau-mot-TDM",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TDS",
+      "name": "Trường Đại Học Thể Dục Thể Thao TPHCM",
+      "short_name": "Trường Đại Học Thể Dục Thể Thao TPHCM",
+      "online_slug": "dai-hoc-the-duc-the-thao-tphcm-TDS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TDV",
+      "name": "Trường Đại Học Vinh",
+      "short_name": "Trường Đại Học Vinh",
+      "online_slug": "dai-hoc-vinh-TDV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TGH",
+      "name": "Trường Sĩ Quan Tăng - Thiết Giáp",
+      "short_name": "Trường Sĩ Quan Tăng - Thiết Giáp",
+      "online_slug": "truong-siquan-tang-thiet-giap-TGH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "THP",
+      "name": "Trường Đại Học Hải Phòng",
+      "short_name": "Trường Đại Học Hải Phòng",
+      "online_slug": "dai-hoc-hai-phong-THP",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "THU",
+      "name": "Trường Đại học Y khoa Tokyo Việt Nam",
+      "short_name": "Trường Đại học Y khoa Tokyo Việt Nam",
+      "online_slug": "dai-hoc-y-khoa-tokyo-viet-nam-THU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "THV",
+      "name": "Trường Đại Học Hùng Vương",
+      "short_name": "Trường Đại Học Hùng Vương",
+      "online_slug": "dai-hoc-hung-vuong-THV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TKG",
+      "name": "Trường Đại học Kiên Giang",
+      "short_name": "Trường Đại học Kiên Giang",
+      "online_slug": "dai-hoc-kien-giang-TKG",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TLA",
+      "name": "Trường Đại Học Thủy Lợi",
+      "short_name": "Trường Đại Học Thủy Lợi",
+      "online_slug": "dai-hoc-thuy-loi-co-so-1-TLA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TLS",
+      "name": "Trường Đại Học Thủy Lợi (Cơ sở 2)",
+      "short_name": "Trường Đại Học Thủy Lợi (Cơ sở 2)",
+      "online_slug": "dai-hoc-thuy-loi-co-so-2-TLS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TMU",
+      "name": "Trường Đại Học Thương Mại",
+      "short_name": "Trường Đại Học Thương Mại",
+      "online_slug": "dai-hoc-thuong-mai-TMU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TQU",
+      "name": "Trường Đại học Tân Trào",
+      "short_name": "Trường Đại học Tân Trào",
+      "online_slug": "dai-hoc-tan-trao-TQU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TSN",
+      "name": "Trường Đại Học Nha Trang",
+      "short_name": "Trường Đại Học Nha Trang",
+      "online_slug": "dai-hoc-nha-trang-TSN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TTB",
+      "name": "Trường Đại Học Tây Bắc",
+      "short_name": "Trường Đại Học Tây Bắc",
+      "online_slug": "dai-hoc-tay-bac-TTB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TTD",
+      "name": "Trường Đại Học Thể Dục Thể Thao Đà Nẵng",
+      "short_name": "Trường Đại Học Thể Dục Thể Thao Đà Nẵng",
+      "online_slug": "dai-hoc-the-duc-the-thao-da-nang-TTD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TTG",
+      "name": "Trường Đại Học Tiền Giang",
+      "short_name": "Trường Đại Học Tiền Giang",
+      "online_slug": "dai-hoc-tien-giang-TTG",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TTH",
+      "name": "Trường Sĩ Quan Thông Tin - Hệ Quân sự - Đại Học Thông Tin Liên Lạc",
+      "short_name": "Trường Sĩ Quan Thông Tin - Hệ Quân sự - ",
+      "online_slug": "truong-si-quan-thong-tin-he-quan-su-dai-hoc-thong-tin-lien-lac-TTH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TTN",
+      "name": "Trường Đại Học Tây Nguyên",
+      "short_name": "Trường Đại Học Tây Nguyên",
+      "online_slug": "dai-hoc-tay-nguyen-TTN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TTU",
+      "name": "Trường Đại học Tân Tạo",
+      "short_name": "Trường Đại học Tân Tạo",
+      "online_slug": "dai-hoc-tan-tao-TTU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "TYS",
+      "name": "Trường Đại Học Y Khoa Phạm Ngọc Thạch",
+      "short_name": "Trường Đại Học Y Khoa Phạm Ngọc Thạch",
+      "online_slug": "dai-hoc-y-khoa-pham-ngoc-thach-TYS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "UEF",
+      "name": "Trường Đại Học Kinh Tế Tài Chính TPHCM",
+      "short_name": "Trường Đại Học Kinh Tế Tài Chính TPHCM",
+      "online_slug": "dai-hoc-kinh-te-tai-chinh-tphcm-UEF",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "UFA",
+      "name": "Trường Đại học Tài Chính Kế Toán",
+      "short_name": "Trường Đại học Tài Chính Kế Toán",
+      "online_slug": "-UFA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "UKB",
+      "name": "Trường Đại Học Kinh Bắc",
+      "short_name": "Trường Đại Học Kinh Bắc",
+      "online_slug": "dai-hoc-kinh-bac-UKB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "UKH",
+      "name": "Trường Đại học Khánh Hòa",
+      "short_name": "Trường Đại học Khánh Hòa",
+      "online_slug": "dai-hoc-khanh-hoa-UKH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "UMT",
+      "name": "Trường Đại học Quản lý và công nghệ TPHCM",
+      "short_name": "Trường Đại học Quản lý và công nghệ TPHC",
+      "online_slug": "dai-hoc-quan-ly-va-cong-nghe-tphcm-UMT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "UTH",
+      "name": "Trường Đại Học Giao Thông Vận Tải TPHCM",
+      "short_name": "Trường Đại Học Giao Thông Vận Tải TPHCM",
+      "online_slug": "dai-hoc-giao-thong-van-tai-tphcm-UTH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VGU",
+      "name": "Trường Đại Học Việt Đức",
+      "short_name": "Trường Đại Học Việt Đức",
+      "online_slug": "dai-hoc-viet-duc-VGU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VHD",
+      "name": "Trường Đại Học Công Nghiệp Việt - Hung",
+      "short_name": "Trường Đại Học Công Nghiệp Việt - Hung",
+      "online_slug": "dai-hoc-cong-nghiep-viet-hung-VHD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VHH",
+      "name": "Trường Đại Học Văn Hóa Hà Nội",
+      "short_name": "Trường Đại Học Văn Hóa Hà Nội",
+      "online_slug": "dai-hoc-van-hoa-ha-noi-VHH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VHS",
+      "name": "Trường Đại Học Văn Hóa TPHCM",
+      "short_name": "Trường Đại Học Văn Hóa TPHCM",
+      "online_slug": "dai-hoc-van-hoa-tphcm-VHS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VJU",
+      "name": "Trường Đại học Việt Nhật - ĐHQG Hà Nội",
+      "short_name": "Trường Đại học Việt Nhật - ĐHQG Hà Nội",
+      "online_slug": "dai-hoc-viet-nhat-ha-noi-VJU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VKU",
+      "name": "Trường Đại học Công nghệ Thông tin và Truyền thông Việt Hàn - Đại học Đà Nẵng",
+      "short_name": "Trường Đại học Công nghệ Thông tin và Tr",
+      "online_slug": "dai-hoc-cong-nghe-thong-tin-va-truyen-thong-viet-han-dai-hoc-da-nang-VKU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VLU",
+      "name": "Trường Đại học Công nghệ kỹ thuật Vĩnh Long",
+      "short_name": "Trường Đại học Công nghệ kỹ thuật Vĩnh L",
+      "online_slug": "dai-hoc-su-pham-ky-thuat-vinh-long-VLU",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VPH",
+      "name": "Trường Sĩ Quan Kĩ Thuật Quân Sự - Hệ Quân sự - Đại Học Trần Đại Nghĩa",
+      "short_name": "Trường Sĩ Quan Kĩ Thuật Quân Sự - Hệ Quâ",
+      "online_slug": "truong-si-quan-ki-thuat-quan-su-he-quan-su-dai-hoc-tran-dai-nghia-VPH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VTT",
+      "name": "Trường Đại Học Võ Trường Toản",
+      "short_name": "Trường Đại Học Võ Trường Toản",
+      "online_slug": "dai-hoc-vo-truong-toan-VTT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "VUI",
+      "name": "Trường Đại Học Công Nghiệp Việt Trì",
+      "short_name": "Trường Đại Học Công Nghiệp Việt Trì",
+      "online_slug": "dai-hoc-cong-nghiep-viet-tri-VUI",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "XDA",
+      "name": "Trường Đại Học Xây Dựng Hà Nội",
+      "short_name": "Trường Đại Học Xây Dựng Hà Nội",
+      "online_slug": "dai-hoc-xay-dung-ha-noi-XDA",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "XDN",
+      "name": "Phân hiệu Đại học Xây dựng miền Trung tại Đà Nẵng",
+      "short_name": "Phân hiệu Đại học Xây dựng miền Trung tạ",
+      "online_slug": "phan-hieu-dai-hoc-xay-dung-mien-trung-tai-da-nang-XDN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "XDT",
+      "name": "Trường Đại Học Xây Dựng Miền Trung",
+      "short_name": "Trường Đại Học Xây Dựng Miền Trung",
+      "online_slug": "dai-hoc-xay-dung-mien-trung-XDT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YCT",
+      "name": "Trường Đại Học Y Dược Cần Thơ",
+      "short_name": "Trường Đại Học Y Dược Cần Thơ",
+      "online_slug": "dai-hoc-y-duoc-can-tho-YCT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YDD",
+      "name": "Trường Đại Học Điều Dưỡng Nam Định",
+      "short_name": "Trường Đại Học Điều Dưỡng Nam Định",
+      "online_slug": "dai-hoc-dieu-duong-nam-dinh-YDD",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YDN",
+      "name": "Trường Đại học Kỹ thuật Y Dược Đà Nẵng",
+      "short_name": "Trường Đại học Kỹ thuật Y Dược Đà Nẵng",
+      "online_slug": "dai-hoc-ky-thuat-y-duoc-da-nang-YDN",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YDS",
+      "name": "Đại Học Y Dược TPHCM",
+      "short_name": "Đại Học Y Dược TPHCM",
+      "online_slug": "dai-hoc-y-duoc-tphcm-YDS",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YHB",
+      "name": "Trường Đại Học Y Hà Nội",
+      "short_name": "Trường Đại Học Y Hà Nội",
+      "online_slug": "dai-hoc-y-ha-noi-YHB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YHT",
+      "name": "Phân hiệu Đại học Y Hà Nội tại Thanh Hóa",
+      "short_name": "Phân hiệu Đại học Y Hà Nội tại Thanh Hóa",
+      "online_slug": "phan-hieu-dai-hoc-y-ha-noi-tai-thanh-hoa-YHT",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YKV",
+      "name": "Trường Đại Học Y Khoa Vinh",
+      "short_name": "Trường Đại Học Y Khoa Vinh",
+      "online_slug": "dai-hoc-y-khoa-vinh-YKV",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YPB",
+      "name": "Trường Đại Học Y Dược Hải Phòng",
+      "short_name": "Trường Đại Học Y Dược Hải Phòng",
+      "online_slug": "dai-hoc-y-duoc-hai-phong-YPB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YTB",
+      "name": "Trường Đại Học Y Dược Thái Bình",
+      "short_name": "Trường Đại Học Y Dược Thái Bình",
+      "online_slug": "dai-hoc-y-duoc-thai-binh-YTB",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "YTC",
+      "name": "Trường Đại Học Y Tế Công Cộng",
+      "short_name": "Trường Đại Học Y Tế Công Cộng",
+      "online_slug": "dai-hoc-y-te-cong-cong-YTC",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    },
+    {
+      "code": "ZNH",
+      "name": "Trường Đại học Văn hóa Nghệ thuật Quân đội",
+      "short_name": "Trường Đại học Văn hóa Nghệ thuật Quân đ",
+      "online_slug": "dai-hoc-van-hoa-nghe-thuat-quan-doi-ZNH",
+      "type": "dai_hoc",
+      "type_label": "Đại học"
+    }
+  ],
+  "years": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ]
+}

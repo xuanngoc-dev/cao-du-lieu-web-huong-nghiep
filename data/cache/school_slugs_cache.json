@@ -1,0 +1,4626 @@
+{
+  "KHA": {
+    "code": "KHA",
+    "name": "Đại Học Kinh Tế Quốc Dân",
+    "slug": "dai-hoc-kinh-te-quoc-dan-KHA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "BKA": {
+    "code": "BKA",
+    "name": "Đại Học Bách Khoa Hà Nội",
+    "slug": "dai-hoc-bach-khoa-ha-noi-BKA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HTC": {
+    "code": "HTC",
+    "name": "Học Viện Tài chính",
+    "slug": "hoc-vien-tai-chinh-HTC",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NHH": {
+    "code": "NHH",
+    "name": "Học Viện Ngân Hàng",
+    "slug": "hoc-vien-ngan-hang-NHH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NTH": {
+    "code": "NTH",
+    "name": "Trường Đại học Ngoại thương",
+    "slug": "dai-hoc-ngoai-thuong-co-so-phia-bac-NTH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QSB": {
+    "code": "QSB",
+    "name": "Trường Đại Học Bách Khoa HCM",
+    "slug": "dai-hoc-bach-khoa-hcm-QSB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YHB": {
+    "code": "YHB",
+    "name": "Trường Đại Học Y Hà Nội",
+    "slug": "dai-hoc-y-ha-noi-YHB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "BVH": {
+    "code": "BVH",
+    "name": "Học Viện Công Nghệ Bưu Chính Viễn Thông",
+    "slug": "hoc-vien-cong-nghe-buu-chinh-vien-thong-phia-bac-BVH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SPH": {
+    "code": "SPH",
+    "name": "Trường Đại Học Sư Phạm Hà Nội",
+    "slug": "dai-hoc-su-pham-ha-noi-SPH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TMU": {
+    "code": "TMU",
+    "name": "Trường Đại Học Thương Mại",
+    "slug": "dai-hoc-thuong-mai-TMU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SPS": {
+    "code": "SPS",
+    "name": "Trường Đại Học Sư Phạm TPHCM",
+    "slug": "dai-hoc-su-pham-tphcm-SPS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YDS": {
+    "code": "YDS",
+    "name": "Đại Học Y Dược TPHCM",
+    "slug": "dai-hoc-y-duoc-tphcm-YDS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHI": {
+    "code": "QHI",
+    "name": "Trường Đại Học Công Nghệ – Đại Học Quốc Gia Hà Nội",
+    "slug": "dai-hoc-cong-nghe-dai-hoc-quoc-gia-ha-noi-QHI",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HNM": {
+    "code": "HNM",
+    "name": "Trường Đại học Thủ Đô Hà Nội",
+    "slug": "dai-hoc-thu-do-ha-noi-HNM",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "GHA": {
+    "code": "GHA",
+    "name": "Trường Đại Học Giao Thông Vận Tải",
+    "slug": "dai-hoc-giao-thong-van-tai-co-so-phia-bac-GHA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YTB": {
+    "code": "YTB",
+    "name": "Trường Đại Học Y Dược Thái Bình",
+    "slug": "dai-hoc-y-duoc-thai-binh-YTB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KMA": {
+    "code": "KMA",
+    "name": "Học Viện Kỹ Thuật Mật Mã",
+    "slug": "hoc-vien-ky-thuat-mat-ma-KMA",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DCN": {
+    "code": "DCN",
+    "name": "Đại Học Công Nghiệp Hà Nội",
+    "slug": "dai-hoc-cong-nghiep-ha-noi-DCN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YPB": {
+    "code": "YPB",
+    "name": "Trường Đại Học Y Dược Hải Phòng",
+    "slug": "dai-hoc-y-duoc-hai-phong-YPB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "IUH": {
+    "code": "IUH",
+    "name": "Trường Đại Học Công Nghiệp TPHCM",
+    "slug": "dai-hoc-cong-nghiep-tphcm-IUH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HPN": {
+    "code": "HPN",
+    "name": "Học Viện Phụ Nữ Việt Nam",
+    "slug": "hoc-vien-phu-nu-viet-nam-HPN",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DKH": {
+    "code": "DKH",
+    "name": "Trường Đại Học Dược Hà Nội",
+    "slug": "dai-hoc-duoc-ha-noi-DKH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "ANH": {
+    "code": "ANH",
+    "name": "Học Viện An Ninh Nhân Dân",
+    "slug": "hoc-vien-an-ninh-nhan-dan-ANH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DKY": {
+    "code": "DKY",
+    "name": "Trường Đại Học Kỹ Thuật Y Tế Hải Dương",
+    "slug": "dai-hoc-ky-thuat-y-te-hai-duong-DKY",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "UTH": {
+    "code": "UTH",
+    "name": "Trường Đại Học Giao Thông Vận Tải TPHCM",
+    "slug": "dai-hoc-giao-thong-van-tai-tphcm-UTH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HYD": {
+    "code": "HYD",
+    "name": "Học Viện Y Dược Học Cổ Truyền Việt Nam",
+    "slug": "hoc-vien-y-duoc-hoc-co-truyen-viet-nam-HYD",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "CSH": {
+    "code": "CSH",
+    "name": "Học Viện Cảnh Sát Nhân Dân",
+    "slug": "hoc-vien-canh-sat-nhan-dan-CSH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DKK": {
+    "code": "DKK",
+    "name": "Trường Đại Học Kinh Tế Kỹ Thuật Công Nghiệp",
+    "slug": "dai-hoc-kinh-te-ky-thuat-cong-nghiep-DKK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DCT": {
+    "code": "DCT",
+    "name": "Trường Đại Học Công Thương TPHCM",
+    "slug": "dai-hoc-cong-thuong-tphcm-DCT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LAH": {
+    "code": "LAH",
+    "name": "Trường Sĩ Quan Lục Quân 1 - Đại học Trần Quốc Tuấn",
+    "slug": "truong-si-quan-luc-quan-1-dai-hoc-tran-quoc-tuan-LAH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HQH": {
+    "code": "HQH",
+    "name": "Học Viện Hải Quân",
+    "slug": "hoc-vien-hai-quan-HQH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HHK": {
+    "code": "HHK",
+    "name": "Học Viện Hàng không Việt Nam",
+    "slug": "hoc-vien-hang-khong-viet-nam-HHK",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "PKA": {
+    "code": "PKA",
+    "name": "Đại Học Phenikaa",
+    "slug": "dai-hoc-phenikaa-PKA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "PKH": {
+    "code": "PKH",
+    "name": "Học Viện Phòng Không – Không Quân",
+    "slug": "hoc-vien-phong-khong-khong-quan-PKH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "CSS": {
+    "code": "CSS",
+    "name": "Trường Đại Học Cảnh Sát Nhân Dân",
+    "slug": "dai-hoc-canh-sat-nhan-dan-CSS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TTH": {
+    "code": "TTH",
+    "name": "Trường Sĩ Quan Thông Tin - Hệ Quân sự - Đại Học Thông Tin Liên Lạc",
+    "slug": "truong-si-quan-thong-tin-he-quan-su-dai-hoc-thong-tin-lien-lac-TTH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NHF": {
+    "code": "NHF",
+    "name": "Trường Đại Học Hà Nội",
+    "slug": "dai-hoc-ha-noi-NHF",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KQH": {
+    "code": "KQH",
+    "name": "Học Viện Kỹ Thuật Quân Sự - Hệ Quân sự",
+    "slug": "hoc-vien-ky-thuat-quan-su-he-quan-su-KQH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YTC": {
+    "code": "YTC",
+    "name": "Trường Đại Học Y Tế Công Cộng",
+    "slug": "dai-hoc-y-te-cong-cong-YTC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HQT": {
+    "code": "HQT",
+    "name": "Học Viện Ngoại Giao",
+    "slug": "hoc-vien-ngoai-giao-HQT",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "ANS": {
+    "code": "ANS",
+    "name": "Trường Đại Học An Ninh Nhân Dân",
+    "slug": "dai-hoc-an-ninh-nhan-dan-ANS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YCT": {
+    "code": "YCT",
+    "name": "Trường Đại Học Y Dược Cần Thơ",
+    "slug": "dai-hoc-y-duoc-can-tho-YCT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TDM": {
+    "code": "TDM",
+    "name": "Trường Đại học Thủ Dầu Một",
+    "slug": "dai-hoc-thu-dau-mot-TDM",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TYS": {
+    "code": "TYS",
+    "name": "Trường Đại Học Y Khoa Phạm Ngọc Thạch",
+    "slug": "dai-hoc-y-khoa-pham-ngoc-thach-TYS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTL": {
+    "code": "DTL",
+    "name": "Trường Đại Học Thăng Long",
+    "slug": "dai-hoc-thang-long-DTL",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TLA": {
+    "code": "TLA",
+    "name": "Trường Đại Học Thủy Lợi",
+    "slug": "dai-hoc-thuy-loi-co-so-1-TLA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QST": {
+    "code": "QST",
+    "name": "Trường Đại Học Khoa Học Tự Nhiên TPHCM",
+    "slug": "dai-hoc-khoa-hoc-tu-nhien-tphcm-QST",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VHH": {
+    "code": "VHH",
+    "name": "Trường Đại Học Văn Hóa Hà Nội",
+    "slug": "dai-hoc-van-hoa-ha-noi-VHH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTT": {
+    "code": "DTT",
+    "name": "Trường Đại Học Tôn Đức Thắng",
+    "slug": "dai-hoc-ton-duc-thang-DTT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HVN": {
+    "code": "HVN",
+    "name": "Học Viện Nông Nghiệp Việt Nam",
+    "slug": "hoc-vien-nong-nghiep-viet-nam-HVN",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHX": {
+    "code": "QHX",
+    "name": "Trường Đại Học Khoa Học Xã Hội và Nhân Văn Hà Nội",
+    "slug": "dai-hoc-khoa-hoc-xa-hoi-va-nhan-van-ha-noi-QHX",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LPH": {
+    "code": "LPH",
+    "name": "Trường Đại Học Luật Hà Nội",
+    "slug": "dai-hoc-luat-ha-noi-LPH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHF": {
+    "code": "QHF",
+    "name": "Trường Đại Học Ngoại Ngữ - ĐH Quốc gia Hà Nội",
+    "slug": "dai-hoc-ngoai-ngu-ha-noi-QHF",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HBT": {
+    "code": "HBT",
+    "name": "Học viện Báo chí và Tuyên truyền",
+    "slug": "hoc-vien-bao-chi-va-tuyen-truyen-HBT",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHT": {
+    "code": "QHT",
+    "name": "Trường Đại Học Khoa Học Tự Nhiên Hà Nội",
+    "slug": "dai-hoc-khoa-hoc-tu-nhien-dai-hoc-quoc-gia-ha-noi-QHT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHE": {
+    "code": "QHE",
+    "name": "Trường Đại Học Kinh Tế - ĐHQG Hà Nội",
+    "slug": "dai-hoc-kinh-te-ha-noi-QHE",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QSX": {
+    "code": "QSX",
+    "name": "Trường Đại Học Khoa Học Xã Hội và Nhân Văn TPHCM",
+    "slug": "dai-hoc-khoa-hoc-xa-hoi-va-nhan-van-tphcm-QSX",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTS": {
+    "code": "DTS",
+    "name": "Đại Học Sư Phạm Thái Nguyên",
+    "slug": "dai-hoc-su-pham-thai-nguyen-DTS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LCH": {
+    "code": "LCH",
+    "name": "Trường Sĩ Quan Chính Trị - Đại Học Chính Trị",
+    "slug": "truong-si-quan-chinh-tri-dai-hoc-chinh-tri-LCH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TCT": {
+    "code": "TCT",
+    "name": "Đại Học Cần Thơ",
+    "slug": "dai-hoc-can-tho-TCT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DKS": {
+    "code": "DKS",
+    "name": "Trường Đại học Kiểm Sát",
+    "slug": "dai-hoc-kiem-sat-DKS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "BPH": {
+    "code": "BPH",
+    "name": "Học Viện Biên Phòng",
+    "slug": "hoc-vien-bien-phong-BPH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHL": {
+    "code": "QHL",
+    "name": "Trường Đại học Luật – ĐHQG Hà Nội",
+    "slug": "dai-hoc-luat-dai-hoc-quoc-gia-ha-noi-QHL",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHS": {
+    "code": "DHS",
+    "name": "Trường Đại Học Sư Phạm Huế",
+    "slug": "dai-hoc-su-pham-hue-DHS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QSC": {
+    "code": "QSC",
+    "name": "Trường Đại Học Công Nghệ Thông Tin - ĐHQG TPHCM",
+    "slug": "dai-hoc-cong-nghe-thong-tin-dhqg-tphcm-QSC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SGD": {
+    "code": "SGD",
+    "name": "Trường Đại Học Sài Gòn",
+    "slug": "dai-hoc-sai-gon-SGD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NQH": {
+    "code": "NQH",
+    "name": "Học Viện Khoa Học Quân Sự - Hệ Quân sự",
+    "slug": "hoc-vien-khoa-hoc-quan-su-he-quan-su-NQH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NTS": {
+    "code": "NTS",
+    "name": "Trường Đại học Ngoại thương (Cơ sở II)",
+    "slug": "dai-hoc-ngoai-thuong-co-so-phia-nam-NTS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HTA": {
+    "code": "HTA",
+    "name": "Học viện Tòa án",
+    "slug": "hoc-vien-toa-an-HTA",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDS": {
+    "code": "DDS",
+    "name": "Trường Đại Học Sư Phạm - Đại Học Đà Nẵng",
+    "slug": "dai-hoc-su-pham-dai-hoc-da-nang-DDS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SP2": {
+    "code": "SP2",
+    "name": "Trường Đại Học Sư Phạm Hà Nội 2",
+    "slug": "dai-hoc-su-pham-ha-noi-2-SP2",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHS": {
+    "code": "QHS",
+    "name": "Trường Đại Học Giáo Dục - ĐHQG Hà Nội",
+    "slug": "dai-hoc-giao-duc-ha-noi-QHS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VHS": {
+    "code": "VHS",
+    "name": "Trường Đại Học Văn Hóa TPHCM",
+    "slug": "dai-hoc-van-hoa-tphcm-VHS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SPK": {
+    "code": "SPK",
+    "name": "Trường Đại Học Công nghệ Kỹ thuật TP HCM",
+    "slug": "dai-hoc-cong-nghe-ky-thuat-tphcm-SPK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HTN": {
+    "code": "HTN",
+    "name": "Học Viện Thanh Thiếu Niên Việt Nam",
+    "slug": "hoc-vien-thanh-thieu-nien-viet-nam-HTN",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YQH": {
+    "code": "YQH",
+    "name": "Học Viện Quân Y - Hệ Quân sự",
+    "slug": "hoc-vien-quan-y-he-quan-su-YQH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QSK": {
+    "code": "QSK",
+    "name": "Trường Đại học Kinh Tế Luật TPHCM",
+    "slug": "dai-hoc-kinh-te-luat-tphcm-QSK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HEH": {
+    "code": "HEH",
+    "name": "Học Viện Hậu Cần - Hệ Quân sự",
+    "slug": "hoc-vien-hau-can-he-quan-su-HEH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LPS": {
+    "code": "LPS",
+    "name": "Trường Đại Học Luật TPHCM",
+    "slug": "dai-hoc-luat-tphcm-LPS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDF": {
+    "code": "DDF",
+    "name": "Trường Đại Học Ngoại Ngữ Đà Nẵng",
+    "slug": "dai-hoc-ngoai-ngu-da-nang-DDF",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KSA": {
+    "code": "KSA",
+    "name": "Đại Học Kinh Tế TPHCM",
+    "slug": "dai-hoc-kinh-te-tphcm-KSA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHY": {
+    "code": "QHY",
+    "name": "Trường Đại học Y Dược - ĐHQG Hà Nội",
+    "slug": "dai-hoc-y-duoc-dai-hoc-quoc-gia-ha-noi-QHY",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDK": {
+    "code": "DDK",
+    "name": "Trường Đại Học Bách Khoa Đà Nẵng",
+    "slug": "dai-hoc-bach-khoa-da-nang-DDK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHF": {
+    "code": "DHF",
+    "name": "Trường Đại Học Ngoại Ngữ Huế",
+    "slug": "dai-hoc-ngoai-ngu-hue-DHF",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DMS": {
+    "code": "DMS",
+    "name": "Trường Đại Học Tài Chính Marketing",
+    "slug": "dai-hoc-tai-chinh-marketing-DMS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "GSA": {
+    "code": "GSA",
+    "name": "Trường Đại Học Giao Thông Vận Tải (Cơ sở 2)",
+    "slug": "dai-hoc-giao-thong-van-tai-co-so-phia-nam-GSA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TSN": {
+    "code": "TSN",
+    "name": "Trường Đại Học Nha Trang",
+    "slug": "dai-hoc-nha-trang-TSN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LBH": {
+    "code": "LBH",
+    "name": "Trường Sĩ Quan Lục Quân 2 - Đại học Nguyễn Huệ",
+    "slug": "truong-si-quan-luc-quan-2-dai-hoc-nguyen-hue-LBH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "BVS": {
+    "code": "BVS",
+    "name": "Học Viện Công Nghệ Bưu Chính Viễn Thông (Cơ sở TP.HCM)",
+    "slug": "hoc-vien-cong-nghe-buu-chinh-vien-thong-phia-nam-BVS",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YKV": {
+    "code": "YKV",
+    "name": "Trường Đại Học Y Khoa Vinh",
+    "slug": "dai-hoc-y-khoa-vinh-YKV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YDN": {
+    "code": "YDN",
+    "name": "Trường Đại học Kỹ thuật Y Dược Đà Nẵng",
+    "slug": "dai-hoc-ky-thuat-y-duoc-da-nang-YDN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTY": {
+    "code": "DTY",
+    "name": "Trường Đại Học Y Dược Thái Nguyên",
+    "slug": "dai-hoc-y-duoc-thai-nguyen-DTY",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHY": {
+    "code": "DHY",
+    "name": "Trường Đại Học Y Dược Huế",
+    "slug": "dai-hoc-y-duoc-hue-DHY",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDY": {
+    "code": "DDY",
+    "name": "Trường Y Dược Đà Nẵng",
+    "slug": "truong-y-duoc-da-nang-DDY",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KTS": {
+    "code": "KTS",
+    "name": "Trường Đại Học Kiến Trúc TPHCM",
+    "slug": "dai-hoc-kien-truc-tphcm-KTS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HCA": {
+    "code": "HCA",
+    "name": "Học Viện Chính Trị Công An Nhân Dân",
+    "slug": "hoc-vien-chinh-tri-cong-an-nhan-dan-HCA",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QSY": {
+    "code": "QSY",
+    "name": "Trường Đại học Khoa học sức khỏe TPHCM",
+    "slug": "dai-hoc-khoa-hoc-suc-khoe-tphcm-QSY",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QSQ": {
+    "code": "QSQ",
+    "name": "Trường Đại Học Quốc Tế - ĐHQG TPHCM",
+    "slug": "dai-hoc-quoc-te-dhqg-tphcm-QSQ",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "THV": {
+    "code": "THV",
+    "name": "Trường Đại Học Hùng Vương",
+    "slug": "dai-hoc-hung-vuong-THV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "THP": {
+    "code": "THP",
+    "name": "Trường Đại Học Hải Phòng",
+    "slug": "dai-hoc-hai-phong-THP",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HCP": {
+    "code": "HCP",
+    "name": "Học Viện Chính Sách và Phát Triển",
+    "slug": "hoc-vien-chinh-sach-va-phat-trien-HCP",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "MHN": {
+    "code": "MHN",
+    "name": "Trường Đại Học Mở Hà Nội",
+    "slug": "dai-hoc-mo-ha-noi-MHN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LDA": {
+    "code": "LDA",
+    "name": "Trường Đại Học Công Đoàn",
+    "slug": "dai-hoc-cong-doan-LDA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HHA": {
+    "code": "HHA",
+    "name": "Trường Đại Học Hàng Hải Việt Nam",
+    "slug": "dai-hoc-hang-hai-HHA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KTA": {
+    "code": "KTA",
+    "name": "Trường Đại Học Kiến Trúc Hà Nội",
+    "slug": "dai-hoc-kien-truc-ha-noi-KTA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TDV": {
+    "code": "TDV",
+    "name": "Trường Đại Học Vinh",
+    "slug": "dai-hoc-vinh-TDV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QSA": {
+    "code": "QSA",
+    "name": "Trường Đại Học An Giang",
+    "slug": "dai-hoc-an-giang-QSA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HCH": {
+    "code": "HCH",
+    "name": "Học Viện Hành Chính và Quản trị công",
+    "slug": "hoc-vien-hanh-chinh-va-quan-tri-cong-HCH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SPD": {
+    "code": "SPD",
+    "name": "Trường Đại Học Đồng Tháp",
+    "slug": "dai-hoc-dong-thap-SPD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHK": {
+    "code": "QHK",
+    "name": "Trường Khoa học liên ngành và Nghệ thuật Hà Nội",
+    "slug": "truong-khoa-hoc-lien-nganh-va-nghe-thuat-ha-noi-QHK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TTN": {
+    "code": "TTN",
+    "name": "Trường Đại Học Tây Nguyên",
+    "slug": "dai-hoc-tay-nguyen-TTN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DQN": {
+    "code": "DQN",
+    "name": "Trường Đại Học Quy Nhơn",
+    "slug": "dai-hoc-quy-nhon-DQN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHC": {
+    "code": "DHC",
+    "name": "Khoa Giáo Dục Thể Chất Huế",
+    "slug": "khoa-giao-duc-the-chat-hue-DHC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "GNT": {
+    "code": "GNT",
+    "name": "Trường Đại Học Sư Phạm Nghệ Thuật Trung Ương",
+    "slug": "dai-hoc-su-pham-nghe-thuat-trung-uong-GNT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDQ": {
+    "code": "DDQ",
+    "name": "Trường Đại Học Kinh Tế – Đại Học Đà Nẵng",
+    "slug": "dai-hoc-kinh-te-dai-hoc-da-nang-DDQ",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTF": {
+    "code": "DTF",
+    "name": "Trường Ngoại Ngữ Thái Nguyên",
+    "slug": "truong-ngoai-ngu-thai-nguyen-DTF",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HLU": {
+    "code": "HLU",
+    "name": "Trường Đại Học Hạ Long",
+    "slug": "dai-hoc-ha-long-HLU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DKT": {
+    "code": "DKT",
+    "name": "Trường Đại Học Hải Dương",
+    "slug": "dai-hoc-hai-duong-DKT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DQB": {
+    "code": "DQB",
+    "name": "Trường Đại Học Quảng Bình",
+    "slug": "dai-hoc-quang-binh-DQB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DPQ": {
+    "code": "DPQ",
+    "name": "Trường Đại Học Phạm Văn Đồng",
+    "slug": "dai-hoc-pham-van-dong-DPQ",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HHT": {
+    "code": "HHT",
+    "name": "Trường Đại Học Hà Tĩnh",
+    "slug": "dai-hoc-ha-tinh-HHT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DMT": {
+    "code": "DMT",
+    "name": "Trường Đại học Tài Nguyên và Môi Trường Hà Nội",
+    "slug": "dai-hoc-tai-nguyen-va-moi-truong-ha-noi-DMT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HCS": {
+    "code": "HCS",
+    "name": "Học Viện Hành Chính Và Quản Trị Công (phía Nam)",
+    "slug": "hoc-vien-hanh-chinh-va-quan-tri-cong-phia-nam-HCS",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NHS": {
+    "code": "NHS",
+    "name": "Trường Đại Học Ngân Hàng TPHCM",
+    "slug": "dai-hoc-ngan-hang-tphcm-NHS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DLX": {
+    "code": "DLX",
+    "name": "Trường Đại Học Lao Động – Xã Hội",
+    "slug": "dai-hoc-lao-dong-xa-hoi-co-so-ha-noi-DLX",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DBL": {
+    "code": "DBL",
+    "name": "Trường Đại Học Bạc Liêu",
+    "slug": "dai-hoc-bac-lieu-DBL",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DQU": {
+    "code": "DQU",
+    "name": "Trường Đại Học Quảng Nam",
+    "slug": "dai-hoc-quang-nam-DQU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DLS": {
+    "code": "DLS",
+    "name": "Trường Đại Học Lao Động – Xã Hội (Cơ sở II)",
+    "slug": "dai-hoc-lao-dong-xa-hoi-co-so-phia-nam-DLS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DPY": {
+    "code": "DPY",
+    "name": "Trường Đại Học Phú Yên",
+    "slug": "dai-hoc-phu-yen-DPY",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDP": {
+    "code": "DDP",
+    "name": "Phân Hiệu Đại Học Đà Nẵng tại Kon Tum",
+    "slug": "phan-hieu-dai-hoc-da-nang-tai-kon-tum-DDP",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TDH": {
+    "code": "TDH",
+    "name": "Trường Đại Học Sư Phạm Thể Dục Thể Thao Hà Nội",
+    "slug": "dai-hoc-su-pham-the-duc-the-thao-ha-noi-TDH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KCC": {
+    "code": "KCC",
+    "name": "Trường Đại học Kỹ Thuật Công Nghệ Cần Thơ",
+    "slug": "dai-hoc-ky-thuat-cong-nghe-can-tho-KCC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHQ": {
+    "code": "QHQ",
+    "name": "Trường Quốc Tế - ĐHQG Hà Nội",
+    "slug": "truong-quoc-te-dai-hoc-quoc-gia-ha-noi-QHQ",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KCN": {
+    "code": "KCN",
+    "name": "Trường Đại Học Khoa Học Và Công Nghệ Hà Nội",
+    "slug": "dai-hoc-khoa-hoc-va-cong-nghe-ha-noi-KCN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DCV": {
+    "code": "DCV",
+    "name": "Trường Đại học Công nghiệp Vinh",
+    "slug": "dai-hoc-cong-nghiep-vinh-DCV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DVT": {
+    "code": "DVT",
+    "name": "Đại Học Trà Vinh",
+    "slug": "dai-hoc-tra-vinh-DVT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NLS": {
+    "code": "NLS",
+    "name": "Trường Đại Học Nông Lâm TPHCM",
+    "slug": "dai-hoc-nong-lam-tphcm-NLS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HVC": {
+    "code": "HVC",
+    "name": "Học viện cán bộ TPHCM",
+    "slug": "hoc-vien-can-bo-tphcm-HVC",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "XDA": {
+    "code": "XDA",
+    "name": "Trường Đại Học Xây Dựng Hà Nội",
+    "slug": "dai-hoc-xay-dung-ha-noi-XDA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SKH": {
+    "code": "SKH",
+    "name": "Trường Đại Học Sư Phạm Kỹ Thuật Hưng Yên",
+    "slug": "dai-hoc-su-pham-ky-thuat-hung-yen-SKH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "MBS": {
+    "code": "MBS",
+    "name": "Trường Đại Học Mở TPHCM",
+    "slug": "dai-hoc-mo-tphcm-MBS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "FBU": {
+    "code": "FBU",
+    "name": "Trường Đại Học Tài Chính Ngân Hàng Hà Nội",
+    "slug": "dai-hoc-tai-chinh-ngan-hang-ha-noi-FBU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "GTA": {
+    "code": "GTA",
+    "name": "Trường Đại học Công nghệ Giao thông vận tải",
+    "slug": "dai-hoc-cong-nghe-giao-thong-van-tai-GTA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "MDA": {
+    "code": "MDA",
+    "name": "Trường Đại Học Mỏ Địa Chất",
+    "slug": "dai-hoc-mo-dia-chat-MDA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDL": {
+    "code": "DDL",
+    "name": "Trường Đại Học Điện Lực",
+    "slug": "dai-hoc-dien-luc-DDL",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TDS": {
+    "code": "TDS",
+    "name": "Trường Đại Học Thể Dục Thể Thao TPHCM",
+    "slug": "dai-hoc-the-duc-the-thao-tphcm-TDS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DPD": {
+    "code": "DPD",
+    "name": "Trường Đại Học Phương Đông",
+    "slug": "dai-hoc-phuong-dong-DPD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VLU": {
+    "code": "VLU",
+    "name": "Trường Đại học Công nghệ kỹ thuật Vĩnh Long",
+    "slug": "dai-hoc-su-pham-ky-thuat-vinh-long-VLU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KTD": {
+    "code": "KTD",
+    "name": "Trường Đại Học Kiến Trúc Đà Nẵng",
+    "slug": "dai-hoc-kien-truc-da-nang-KTD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DQK": {
+    "code": "DQK",
+    "name": "Trường Đại Học Kinh Doanh và Công Nghệ Hà Nội",
+    "slug": "dai-hoc-kinh-doanh-va-cong-nghe-ha-noi-DQK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTK": {
+    "code": "DTK",
+    "name": "Trường Đại Học Kỹ Thuật Công Nghiệp Thái Nguyên",
+    "slug": "dai-hoc-ky-thuat-cong-nghiep-thai-nguyen-DTK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "STS": {
+    "code": "STS",
+    "name": "Trường Đại Học Sư Phạm Thể Dục Thể Thao TPHCM",
+    "slug": "dai-hoc-su-pham-the-duc-the-thao-tphcm-STS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "UKH": {
+    "code": "UKH",
+    "name": "Trường Đại học Khánh Hòa",
+    "slug": "dai-hoc-khanh-hoa-UKH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DSK": {
+    "code": "DSK",
+    "name": "Trường Đại học Sư phạm Kỹ thuật - Đại học Đà Nẵng",
+    "slug": "dai-hoc-su-pham-ky-thuat-dai-hoc-da-nang-DSK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NHB": {
+    "code": "NHB",
+    "name": "Học Viện Ngân Hàng (Phân Viện Bắc Ninh)",
+    "slug": "hoc-vien-ngan-hang-phan-vien-bac-ninh-NHB",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHI": {
+    "code": "DHI",
+    "name": "Khoa Quốc tế - Đại học Huế",
+    "slug": "khoa-quoc-te-dai-hoc-hue-DHI",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "CMC": {
+    "code": "CMC",
+    "name": "Trường Đại Học CMC",
+    "slug": "dai-hoc-cmc-CMC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NTT": {
+    "code": "NTT",
+    "name": "Trường Đại Học Nguyễn Tất Thành",
+    "slug": "dai-hoc-nguyen-tat-thanh-NTT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHK": {
+    "code": "DHK",
+    "name": "Trường Đại Học Kinh Tế - Đại Học Huế",
+    "slug": "dai-hoc-kinh-te-dai-hoc-hue-DHK",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHD": {
+    "code": "DHD",
+    "name": "Trường Du Lịch - Đại Học Huế",
+    "slug": "truong-du-lich-dai-hoc-hue-DHD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KGH": {
+    "code": "KGH",
+    "name": "Trường Sĩ Quan Không Quân - Hệ Đại học",
+    "slug": "truong-si-quan-khong-quan-he-dai-hoc-KGH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTC": {
+    "code": "DTC",
+    "name": "Trường Đại học Công Nghệ Thông Tin và Truyền Thông Thái Nguyên",
+    "slug": "dai-hoc-cong-nghe-thong-tin-va-truyen-thong-thai-nguyen-DTC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HGH": {
+    "code": "HGH",
+    "name": "Trường Sĩ Quan Phòng Hóa",
+    "slug": "truong-si-quan-phong-hoa-HGH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TGH": {
+    "code": "TGH",
+    "name": "Trường Sĩ Quan Tăng - Thiết Giáp",
+    "slug": "truong-siquan-tang-thiet-giap-TGH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HVQ": {
+    "code": "HVQ",
+    "name": "Học Viện Quản Lý Giáo Dục",
+    "slug": "hoc-vien-quan-ly-giao-duc-HVQ",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDT": {
+    "code": "DDT",
+    "name": "Đại Học Duy Tân",
+    "slug": "dai-hoc-duy-tan-DDT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DNC": {
+    "code": "DNC",
+    "name": "Trường Đại học Nam Cần Thơ",
+    "slug": "dai-hoc-nam-can-tho-DNC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HIU": {
+    "code": "HIU",
+    "name": "Trường Đại Học Quốc Tế Hồng Bàng",
+    "slug": "dai-hoc-quoc-te-hong-bang-HIU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TTU": {
+    "code": "TTU",
+    "name": "Trường Đại học Tân Tạo",
+    "slug": "dai-hoc-tan-tao-TTU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TTD": {
+    "code": "TTD",
+    "name": "Trường Đại Học Thể Dục Thể Thao Đà Nẵng",
+    "slug": "dai-hoc-the-duc-the-thao-da-nang-TTD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DCL": {
+    "code": "DCL",
+    "name": "Trường Đại Học Cửu Long",
+    "slug": "dai-hoc-cuu-long-DCL",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DVL": {
+    "code": "DVL",
+    "name": "Trường Đại Học Văn Lang",
+    "slug": "dai-hoc-van-lang-DVL",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DPC": {
+    "code": "DPC",
+    "name": "Trường Đại Học Phan Châu Trinh",
+    "slug": "dai-hoc-phan-chau-trinh-DPC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "UKB": {
+    "code": "UKB",
+    "name": "Trường Đại Học Kinh Bắc",
+    "slug": "dai-hoc-kinh-bac-UKB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "ETU": {
+    "code": "ETU",
+    "name": "Trường Đại Học Hòa Bình",
+    "slug": "dai-hoc-hoa-binh-ETU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDN": {
+    "code": "DDN",
+    "name": "Trường Đại Học Đại Nam",
+    "slug": "dai-hoc-dai-nam-DDN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VTT": {
+    "code": "VTT",
+    "name": "Trường Đại Học Võ Trường Toản",
+    "slug": "dai-hoc-vo-truong-toan-VTT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DAD": {
+    "code": "DAD",
+    "name": "Trường Đại Học Đông Á",
+    "slug": "dai-hoc-dong-a-DAD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SNH": {
+    "code": "SNH",
+    "name": "Trường Sĩ Quan Công Binh - Hệ Quân sự - Đại học Ngô Quyền",
+    "slug": "truong-si-quan-cong-binh-he-quan-su-dai-hoc-ngo-quyen-SNH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DCH": {
+    "code": "DCH",
+    "name": "Trường Sĩ Quan Đặc Công",
+    "slug": "truong-si-quan-dac-cong-DCH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HCB": {
+    "code": "HCB",
+    "name": "Học viện Kỹ thuật và Công nghệ an ninh (Phía Bắc)",
+    "slug": "hoc-vien-ky-thuat-cong-nghe-an-ninh-phia-bac-HCB",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HCN": {
+    "code": "HCN",
+    "name": "Học viện Kỹ thuật và Công nghệ an ninh (Phía Nam)",
+    "slug": "hoc-vien-ky-thuat-va-cong-nghe-an-ninh-phia-nam-HCN",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "PBH": {
+    "code": "PBH",
+    "name": "Trường Sĩ Quan Pháo Binh",
+    "slug": "truong-si-quan-phao-binh-PBH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "KSV": {
+    "code": "KSV",
+    "name": "Đại học Kinh Tế TPHCM - Phân hiệu Vĩnh Long",
+    "slug": "dai-hoc-kinh-te-tphcm-phan-hieu-vinh-long-KSV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QHD": {
+    "code": "QHD",
+    "name": "Trường Quản Trị và Kinh Doanh - ĐHQG Hà Nội",
+    "slug": "truong-quan-tri-va-kinh-doanh-dh-quoc-gia-ha-noi-QHD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VGU": {
+    "code": "VGU",
+    "name": "Trường Đại Học Việt Đức",
+    "slug": "dai-hoc-viet-duc-VGU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TLS": {
+    "code": "TLS",
+    "name": "Trường Đại Học Thủy Lợi (Cơ sở 2)",
+    "slug": "dai-hoc-thuy-loi-co-so-2-TLS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SDU": {
+    "code": "SDU",
+    "name": "Trường Đại học Sao Đỏ",
+    "slug": "dai-hoc-sao-do-SDU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "PCS": {
+    "code": "PCS",
+    "name": "Trường Đại Học Phòng Cháy Chữa Cháy (phía Nam)",
+    "slug": "dai-hoc-phong-chay-chua-chay-phia-nam-PCS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "PCH": {
+    "code": "PCH",
+    "name": "Học viện Phòng cháy chữa cháy và Cứu nạn cứu hộ",
+    "slug": "dai-hoc-phong-chay-chua-chay-phia-bac-PCH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NLN": {
+    "code": "NLN",
+    "name": "Phân hiệu Đại học Nông Lâm TPHCM tại Ninh Thuận",
+    "slug": "phan-hieu-dai-hoc-nong-lam-tphcm-tai-ninh-thuan-NLN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTD": {
+    "code": "DTD",
+    "name": "Trường Đại Học Tây Đô",
+    "slug": "dai-hoc-tay-do-DTD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DKC": {
+    "code": "DKC",
+    "name": "Trường Đại học Công Nghệ TPHCM",
+    "slug": "dai-hoc-cong-nghe-tphcm-DKC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDU": {
+    "code": "DDU",
+    "name": "Trường Đại Học Đông Đô",
+    "slug": "dai-hoc-dong-do-DDU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DLH": {
+    "code": "DLH",
+    "name": "Trường Đại Học Lạc Hồng",
+    "slug": "dai-hoc-lac-hong-DLH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDB": {
+    "code": "DDB",
+    "name": "Trường Đại Học Thành Đông",
+    "slug": "dai-hoc-thanh-dong-DDB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHA": {
+    "code": "DHA",
+    "name": "Trường Đại học Luật Huế",
+    "slug": "dai-hoc-luat-dai-hoc-hue-DHA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DYD": {
+    "code": "DYD",
+    "name": "Trường Đại Học Yersin Đà Lạt",
+    "slug": "dai-hoc-yersin-da-lat-DYD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TDD": {
+    "code": "TDD",
+    "name": "Trường Đại học Thành Đô",
+    "slug": "dai-hoc-thanh-do-TDD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DBD": {
+    "code": "DBD",
+    "name": "Trường Đại Học Bình Dương",
+    "slug": "dai-hoc-binh-duong-DBD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTV": {
+    "code": "DTV",
+    "name": "Trường Đại Học Lương Thế Vinh",
+    "slug": "dai-hoc-luong-the-vinh-DTV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VJU": {
+    "code": "VJU",
+    "name": "Trường Đại học Việt Nhật - ĐHQG Hà Nội",
+    "slug": "dai-hoc-viet-nhat-ha-noi-VJU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "BVU": {
+    "code": "BVU",
+    "name": "Trường Đại Học Bà Rịa – Vũng Tàu",
+    "slug": "dai-hoc-ba-ria-vung-tau-BVU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHN": {
+    "code": "DHN",
+    "name": "Trường Đại Học Nghệ Thuật Huế",
+    "slug": "dai-hoc-nghe-thuat-hue-DHN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "MIT": {
+    "code": "MIT",
+    "name": "Trường Đại học Công nghệ Miền Đông",
+    "slug": "dai-hoc-cong-nghe-mien-dong-MIT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "FPT": {
+    "code": "FPT",
+    "name": "Trường Đại Học FPT",
+    "slug": "dai-hoc-fpt-FPT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DKB": {
+    "code": "DKB",
+    "name": "Trường Đại Học Kinh Tế Kỹ Thuật Bình Dương",
+    "slug": "dai-hoc-kinh-te-ky-thuat-binh-duong-DKB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "UEF": {
+    "code": "UEF",
+    "name": "Trường Đại Học Kinh Tế Tài Chính TPHCM",
+    "slug": "dai-hoc-kinh-te-tai-chinh-tphcm-UEF",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DFA": {
+    "code": "DFA",
+    "name": "Trường Đại học Tài chính Quản trị kinh doanh",
+    "slug": "dai-hoc-tai-chinh-quan-tri-kinh-doanh-DFA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TTG": {
+    "code": "TTG",
+    "name": "Trường Đại Học Tiền Giang",
+    "slug": "dai-hoc-tien-giang-TTG",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTE": {
+    "code": "DTE",
+    "name": "Trường Đại học Kinh tế và Quản trị kinh doanh Thái Nguyên",
+    "slug": "dai-hoc-kinh-te-quan-tri-kinh-doanh-thai-nguyen-DTE",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "PVU": {
+    "code": "PVU",
+    "name": "Trường Đại Học Dầu Khí Việt Nam",
+    "slug": "dai-hoc-dau-khi-viet-nam-PVU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DNT": {
+    "code": "DNT",
+    "name": "Trường Đại Học Ngoại Ngữ Tin Học TPHCM",
+    "slug": "dai-hoc-ngoai-ngu-tin-hoc-tphcm-DNT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SKV": {
+    "code": "SKV",
+    "name": "Trường Đại Học Sư Phạm Kỹ Thuật Vinh",
+    "slug": "dai-hoc-su-pham-ky-thuat-vinh-SKV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "CEA": {
+    "code": "CEA",
+    "name": "Trường Đại học Nghệ An",
+    "slug": "dai-hoc-nghe-an-CEA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LNH": {
+    "code": "LNH",
+    "name": "Trường Đại Học Lâm nghiệp",
+    "slug": "dai-hoc-lam-nghiep-LNH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DVH": {
+    "code": "DVH",
+    "name": "Trường Đại Học Văn Hiến",
+    "slug": "dai-hoc-van-hien-DVH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DQT": {
+    "code": "DQT",
+    "name": "Trường Đại Học Quang Trung",
+    "slug": "dai-hoc-quang-trung-DQT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HSU": {
+    "code": "HSU",
+    "name": "Trường Đại Học Hoa Sen",
+    "slug": "dai-hoc-hoa-sen-HSU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DPT": {
+    "code": "DPT",
+    "name": "Trường Đại Học Phan Thiết",
+    "slug": "dai-hoc-phan-thiet-DPT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DVP": {
+    "code": "DVP",
+    "name": "Trường Đại Học Trưng Vương",
+    "slug": "dai-hoc-trung-vuong-DVP",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YDD": {
+    "code": "YDD",
+    "name": "Trường Đại Học Điều Dưỡng Nam Định",
+    "slug": "dai-hoc-dieu-duong-nam-dinh-YDD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "THU": {
+    "code": "THU",
+    "name": "Trường Đại học Y khoa Tokyo Việt Nam",
+    "slug": "dai-hoc-y-khoa-tokyo-viet-nam-THU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DCD": {
+    "code": "DCD",
+    "name": "Trường Đại Học Công Nghệ Đồng Nai",
+    "slug": "dai-hoc-cong-nghe-dong-nai-DCD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "EIU": {
+    "code": "EIU",
+    "name": "Trường Đại Học Quốc Tế Miền Đông",
+    "slug": "dai-hoc-quoc-te-mien-dong-EIU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDV": {
+    "code": "DDV",
+    "name": "Viện nghiên cứu và đào tạo Việt Anh - Đại học Đà Nẵng",
+    "slug": "vien-nghien-cuu-va-dao-tao-viet-anh-dai-hoc-da-nang-DDV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TDB": {
+    "code": "TDB",
+    "name": "Trường Đại Học Thể Dục Thể Thao Bắc Ninh",
+    "slug": "dai-hoc-the-duc-the-thao-bac-ninh-TDB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHE": {
+    "code": "DHE",
+    "name": "Khoa Kỹ thuật và Công nghệ - Đại học Huế",
+    "slug": "khoa-ky-thuat-va-cong-nghe-dai-hoc-hue-DHE",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTB": {
+    "code": "DTB",
+    "name": "Trường Đại Học Thái Bình",
+    "slug": "dai-hoc-thai-binh-DTB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HVD": {
+    "code": "HVD",
+    "name": "Học Viện Dân Tộc",
+    "slug": "hoc-vien-dan-toc-HVD",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHT": {
+    "code": "DHT",
+    "name": "Trường Đại Học Khoa Học Huế",
+    "slug": "dai-hoc-khoa-hoc-hue-DHT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTZ": {
+    "code": "DTZ",
+    "name": "Trường Đại Học Khoa Học Thái Nguyên",
+    "slug": "dai-hoc-khoa-hoc-thai-nguyen-DTZ",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HDT": {
+    "code": "HDT",
+    "name": "Trường Đại Học Hồng Đức",
+    "slug": "dai-hoc-hong-duc-HDT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DNU": {
+    "code": "DNU",
+    "name": "Trường Đại Học Đồng Nai",
+    "slug": "dai-hoc-dong-nai-DNU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LNS": {
+    "code": "LNS",
+    "name": "Phân hiệu Đại Học Lâm nghiệp tại Đồng Nai",
+    "slug": "phan-hieu-dai-hoc-lam-nghiep-tai-dong-nai-LNS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTM": {
+    "code": "DTM",
+    "name": "Trường Đại học Tài Nguyên và Môi Trường TPHCM",
+    "slug": "dai-hoc-tai-nguyen-va-moi-truong-tphcm-DTM",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NTU": {
+    "code": "NTU",
+    "name": "Trường Đại Học Nguyễn Trãi",
+    "slug": "dai-hoc-nguyen-trai-NTU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "CCM": {
+    "code": "CCM",
+    "name": "Trường Đại học Công nghiệp và Thương mại Hà Nội",
+    "slug": "dai-hoc-cong-nghiep-va-thuong-mai-ha-noi-CCM",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VUI": {
+    "code": "VUI",
+    "name": "Trường Đại Học Công Nghiệp Việt Trì",
+    "slug": "dai-hoc-cong-nghiep-viet-tri-VUI",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "QSP": {
+    "code": "QSP",
+    "name": "Phân hiệu Đại học Quốc gia TPHCM tại Bến Tre",
+    "slug": "phan-hieu-dai-hoc-quoc-gia-tphcm-tai-ben-tre-QSP",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHL": {
+    "code": "DHL",
+    "name": "Trường Đại Học Nông Lâm Huế",
+    "slug": "dai-hoc-nong-lam-hue-DHL",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTQ": {
+    "code": "DTQ",
+    "name": "Khoa Quốc Tế - Đại Học Thái Nguyên",
+    "slug": "khoa-quoc-te-dai-hoc-thai-nguyen-DTQ",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SIU": {
+    "code": "SIU",
+    "name": "Trường Đại học Quốc Tế Sài Gòn",
+    "slug": "dai-hoc-quoc-te-sai-gon-SIU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DCA": {
+    "code": "DCA",
+    "name": "Trường Đại học Intracom",
+    "slug": "dai-hoc-chu-van-an-DCA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DLA": {
+    "code": "DLA",
+    "name": "Trường Đại Học Kinh Tế Công Nghiệp Long An",
+    "slug": "dai-hoc-kinh-te-cong-nghiep-long-an-DLA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DBH": {
+    "code": "DBH",
+    "name": "Trường Đại Học Quốc Tế Bắc Hà",
+    "slug": "dai-hoc-quoc-te-bac-ha-DBH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SKN": {
+    "code": "SKN",
+    "name": "Trường Đại Học Sư Phạm Kỹ Thuật Nam Định",
+    "slug": "dai-hoc-su-pham-ky-thuat-nam-dinh-SKN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NLG": {
+    "code": "NLG",
+    "name": "Phân hiệu Đại học Nông Lâm TPHCM tại Gia Lai",
+    "slug": "phan-hieu-dai-hoc-nong-lam-tphcm-tai-gia-lai-NLG",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTN": {
+    "code": "DTN",
+    "name": "Trường Đại Học Nông Lâm Thái Nguyên",
+    "slug": "dai-hoc-nong-lam-thai-nguyen-DTN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "UMT": {
+    "code": "UMT",
+    "name": "Trường Đại học Quản lý và công nghệ TPHCM",
+    "slug": "dai-hoc-quan-ly-va-cong-nghe-tphcm-UMT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DCQ": {
+    "code": "DCQ",
+    "name": "Trường Đại Học Công Nghệ và Quản Lý Hữu Nghị",
+    "slug": "dai-hoc-cong-nghe-va-quan-ly-huu-nghi-DCQ",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHQ": {
+    "code": "DHQ",
+    "name": "Phân Hiệu Đại Học Huế tại Quảng Trị",
+    "slug": "phan-hieu-dai-hoc-hue-tai-quang-tri-DHQ",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TBD": {
+    "code": "TBD",
+    "name": "Trường Đại Học Thái Bình Dương",
+    "slug": "dai-hoc-thai-binh-duong-TBD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHV": {
+    "code": "DHV",
+    "name": "Trường Đại học Hùng Vương TPHCM",
+    "slug": "dai-hoc-hung-vuong-tphcm-DHV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DVB": {
+    "code": "DVB",
+    "name": "Trường Đại Học Kinh tế công nghệ Thái Nguyên",
+    "slug": "dai-hoc-kinh-te-cong-nghe-thai-nguyen-DVB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DPX": {
+    "code": "DPX",
+    "name": "Trường Đại Học Phú Xuân",
+    "slug": "dai-hoc-phu-xuan-DPX",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HPU": {
+    "code": "HPU",
+    "name": "Trường Đại học Quản lý và Công nghệ Hải Phòng",
+    "slug": "dai-hoc-quan-ly-va-cong-nghe-hai-phong-HPU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "MTU": {
+    "code": "MTU",
+    "name": "Trường Đại Học Xây Dựng Miền Tây",
+    "slug": "dai-hoc-xay-dung-mien-tay-MTU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VHD": {
+    "code": "VHD",
+    "name": "Trường Đại Học Công Nghiệp Việt - Hung",
+    "slug": "dai-hoc-cong-nghiep-viet-hung-VHD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LNA": {
+    "code": "LNA",
+    "name": "Phân hiệu Đại học Lâm nghiệp tỉnh Gia Lai",
+    "slug": "phan-hieu-dai-hoc-lam-nghiep-tinh-gia-lai-LNA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NHP": {
+    "code": "NHP",
+    "name": "Học Viện Ngân Hàng (Phân Viện Phú Yên)",
+    "slug": "hoc-vien-ngan-hang-phan-vien-phu-yen-NHP",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "UFA": {
+    "code": "UFA",
+    "name": "Trường Đại học Tài Chính Kế Toán",
+    "slug": "-UFA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "GDU": {
+    "code": "GDU",
+    "name": "Trường Đại Học Gia Định",
+    "slug": "dai-hoc-gia-dinh-GDU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDM": {
+    "code": "DDM",
+    "name": "Trường Đại Học Công Nghiệp Quảng Ninh",
+    "slug": "dai-hoc-cong-nghiep-quang-ninh-DDM",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "XDT": {
+    "code": "XDT",
+    "name": "Trường Đại Học Xây Dựng Miền Trung",
+    "slug": "dai-hoc-xay-dung-mien-trung-XDT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DSG": {
+    "code": "DSG",
+    "name": "Trường Đại Học Công Nghệ Sài Gòn",
+    "slug": "dai-hoc-cong-nghe-sai-gon-DSG",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "XDN": {
+    "code": "XDN",
+    "name": "Phân hiệu Đại học Xây dựng miền Trung tại Đà Nẵng",
+    "slug": "phan-hieu-dai-hoc-xay-dung-mien-trung-tai-da-nang-XDN",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DBG": {
+    "code": "DBG",
+    "name": "Trường Đại học Nông Lâm Bắc Giang",
+    "slug": "dai-hoc-nong-lam-bac-giang-DBG",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TTB": {
+    "code": "TTB",
+    "name": "Trường Đại Học Tây Bắc",
+    "slug": "dai-hoc-tay-bac-TTB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TDL": {
+    "code": "TDL",
+    "name": "Trường Đại Học Đà Lạt",
+    "slug": "dai-hoc-da-lat-TDL",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTP": {
+    "code": "DTP",
+    "name": "Phân Hiệu Đại Học Thái Nguyên Tại Lào Cai",
+    "slug": "phan-hieu-dai-hoc-thai-nguyen-tai-lao-cai-DTP",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TQU": {
+    "code": "TQU",
+    "name": "Trường Đại học Tân Trào",
+    "slug": "dai-hoc-tan-trao-TQU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "TKG": {
+    "code": "TKG",
+    "name": "Trường Đại học Kiên Giang",
+    "slug": "dai-hoc-kien-giang-TKG",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DVD": {
+    "code": "DVD",
+    "name": "Trường Đại Học Văn Hóa, Thể Thao Và Du Lịch Thanh Hóa",
+    "slug": "dai-hoc-van-hoa-the-thao-va-du-lich-thanh-hoa-DVD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DTG": {
+    "code": "DTG",
+    "name": "Phân hiệu Đại học Thái Nguyên tại Hà Giang",
+    "slug": "phan-hieu-dai-hoc-thai-nguyen-tai-ha-giang-DTG",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DNB": {
+    "code": "DNB",
+    "name": "Trường Đại Học Hoa Lư",
+    "slug": "dai-hoc-hoa-lu-DNB",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LBS": {
+    "code": "LBS",
+    "name": "Trường Đại học Nguyễn Huệ",
+    "slug": "dai-hoc-nguyen-hue-LBS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "HVA": {
+    "code": "HVA",
+    "name": "Học Viện Âm Nhạc Huế",
+    "slug": "hoc-vien-am-nhac-hue-HVA",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NVH": {
+    "code": "NVH",
+    "name": "Học Viện Âm Nhạc Quốc Gia Việt Nam",
+    "slug": "hoc-vien-am-nhac-quoc-gia-viet-nam-NVH",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "NVS": {
+    "code": "NVS",
+    "name": "Nhạc Viện TPHCM",
+    "slug": "nhac-vien-tphcm-NVS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DVX": {
+    "code": "DVX",
+    "name": "Trường Đại Học Công Nghệ Vạn Xuân",
+    "slug": "dai-hoc-cong-nghe-van-xuan-DVX",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DHH": {
+    "code": "DHH",
+    "name": "Trường Đại Học Hà Hoa Tiên",
+    "slug": "dai-hoc-ha-hoa-tien-DHH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "MTC": {
+    "code": "MTC",
+    "name": "Trường Đại Học Mỹ Thuật Công Nghiệp",
+    "slug": "dai-hoc-my-thuat-cong-nghiep-MTC",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "MTS": {
+    "code": "MTS",
+    "name": "Trường Đại Học Mỹ Thuật TPHCM",
+    "slug": "dai-hoc-my-thuat-tphcm-MTS",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "MTH": {
+    "code": "MTH",
+    "name": "Trường Đại Học Mỹ Thuật Việt Nam",
+    "slug": "dai-hoc-my-thuat-viet-nam-MTH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "YHT": {
+    "code": "YHT",
+    "name": "Phân hiệu Đại học Y Hà Nội tại Thanh Hóa",
+    "slug": "phan-hieu-dai-hoc-y-ha-noi-tai-thanh-hoa-YHT",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "RMU": {
+    "code": "RMU",
+    "name": "Trường Đại Học Quốc Tế RMIT Việt Nam",
+    "slug": "dai-hoc-quoc-te-rmit-viet-nam-RMU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "RHM": {
+    "code": "RHM",
+    "name": "Trường Đại Học Răng – Hàm – Mặt",
+    "slug": "dai-hoc-rang-ham-mat-RHM",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "SKD": {
+    "code": "SKD",
+    "name": "Trường Đại Học Sân Khấu Điện Ảnh Hà Nội",
+    "slug": "dai-hoc-san-khau-dien-anh-ha-noi-SKD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "CIV": {
+    "code": "CIV",
+    "name": "Học viện Công giáo Việt Nam",
+    "slug": "hoc-vien-cong-giao-viet-nam-CIV",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "ZNH": {
+    "code": "ZNH",
+    "name": "Trường Đại học Văn hóa Nghệ thuật Quân đội",
+    "slug": "dai-hoc-van-hoa-nghe-thuat-quan-doi-ZNH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "LCDF": {
+    "code": "LCDF",
+    "name": "Học viện Thiết kế và Thời trang London Hà Nội",
+    "slug": "hoc-vien-thiet-ke-va-thoi-trang-london-ha-noi-LCDF",
+    "type": "hoc_vien",
+    "type_label": "Học viện",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DNV": {
+    "code": "DNV",
+    "name": "Trường Đại học Nội vụ Hà Nội",
+    "slug": "dai-hoc-noi-vu-ha-noi-DNV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VPH": {
+    "code": "VPH",
+    "name": "Trường Sĩ Quan Kĩ Thuật Quân Sự - Hệ Quân sự - Đại Học Trần Đại Nghĩa",
+    "slug": "truong-si-quan-ki-thuat-quan-su-he-quan-su-dai-hoc-tran-dai-nghia-VPH",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DSD": {
+    "code": "DSD",
+    "name": "Trường Đại Học Sân Khấu Điện Ảnh TPHCM",
+    "slug": "dai-hoc-san-khau-dien-anh-tphcm-DSD",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDA": {
+    "code": "DDA",
+    "name": "Trường Đại Học Công Nghệ Đông Á",
+    "slug": "dai-hoc-cong-nghe-dong-a-DDA",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "BUV": {
+    "code": "BUV",
+    "name": "Trường Đại Học Anh Quốc Việt Nam",
+    "slug": "dai-hoc-anh-quoc-viet-nam-BUV",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "BMU": {
+    "code": "BMU",
+    "name": "Trường Đại học Y Dược Buôn Ma Thuột",
+    "slug": "dai-hoc-y-duoc-buon-ma-thuot-BMU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "DDG": {
+    "code": "DDG",
+    "name": "Khoa Giáo dục thể chất Đà Nẵng",
+    "slug": "khoa-giao-duc-the-chat-da-nang-DDG",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "VKU": {
+    "code": "VKU",
+    "name": "Trường Đại học Công nghệ Thông tin và Truyền thông Việt Hàn - Đại học Đà Nẵng",
+    "slug": "dai-hoc-cong-nghe-thong-tin-va-truyen-thong-viet-han-dai-hoc-da-nang-VKU",
+    "type": "dai_hoc",
+    "type_label": "Đại học",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html"
+  },
+  "CDD0209": {
+    "code": "CDD0209",
+    "name": "Trường Cao Đẳng Sài Gòn",
+    "slug": "truong-cao-dang-sai-gon-CDD0209",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT026": {
+    "code": "CDT026",
+    "name": "Trường Cao đẳng Giao thông vận tải trung ương VI",
+    "slug": "truong-cao-dang-giao-thong-van-tai-trung-uong-vi-CDT026",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0229": {
+    "code": "CDD0229",
+    "name": "Trường Cao đẳng Bách khoa Nam Sài Gòn",
+    "slug": "truong-cao-dang-bach-khoa-nam-sai-gon-CDD0229",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0410": {
+    "code": "CDD0410",
+    "name": "Trường Cao Đẳng Công Nghệ Ngoại Thương",
+    "slug": "truong-cao-dang-cong-nghe-ngoai-thuong-CDD0410",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "063": {
+    "code": "063",
+    "name": "Trường Cao đẳng nghề Phú Thọ",
+    "slug": "truong-cao-dang-nghe-phu-tho-063",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0124": {
+    "code": "CDT0124",
+    "name": "Trường Cao đẳng Nghề Kỹ thuật và Nghiệp vụ Hà Nội",
+    "slug": "truong-cao-dang-nghe-ky-thuat-va-nghiep-vu-ha-noi-CDT0124",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0101": {
+    "code": "CDD0101",
+    "name": "Trường Cao đẳng nghề Công nghiệp Hà Nội",
+    "slug": "truong-cao-dang-nghe-cong-nghiep-ha-noi-CDD0101",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0113": {
+    "code": "CDT0113",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương I",
+    "slug": "truong-cao-dang-giao-thong-van-tai-trung-uong-i-CDT0113",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0216": {
+    "code": "CDD0216",
+    "name": "Trường Cao đẳng Sài Gòn Gia Định",
+    "slug": "truong-cao-dang-sai-gon-gia-dinh-CDD0216",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CBK1": {
+    "code": "CBK1",
+    "name": "Trường Cao đẳng Y Khoa Phạm Ngọc Thạch",
+    "slug": "truong-cao-dang-y-khoa-pham-ngoc-thach-CBK1",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT1701": {
+    "code": "CDT1701",
+    "name": "Trường Cao đẳng Than Khoáng sản Việt Nam",
+    "slug": "truong-cao-dang-than-–-khoang-san-viet-nam-CDT1701",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT2104": {
+    "code": "CDT2104",
+    "name": "Trường Cao đẳng Hàng hải và Đường thủy I",
+    "slug": "truong-cao-dang-nghe-giao-thong-van-tai-duong-thuy-i-CDT2104",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1904": {
+    "code": "CDD1904",
+    "name": "Trường Cao đẳng Dược Hà Nội",
+    "slug": "truong-cao-dang-duoc-ha-noi-CDD1904",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0308": {
+    "code": "CDT0308",
+    "name": "Trường Cao đẳng Du lịch Hải Phòng",
+    "slug": "truong-cao-dang-nghe-du-lich-va-dich-vu-hai-phong-CDT0308",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0302": {
+    "code": "CDT0302",
+    "name": "Trường Cao đẳng Giao thông vận tải trung ương II",
+    "slug": "truong-cao-dang-nghe-giao-thong-van-tai-trung-uong-ii-CDT0302",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D08": {
+    "code": "D08",
+    "name": "Trường Cao đẳng Tuyên Quang",
+    "slug": "truong-cao-dang-nghe-ky-thuat-cong-nghe-tuyen-quang-D08",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1908": {
+    "code": "CDD1908",
+    "name": "Trường Cao đẳng Y tế Bắc Ninh",
+    "slug": "truong-cao-dang-y-te-bac-ninh-CDD1908",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4102": {
+    "code": "CDD4102",
+    "name": "Trường Cao đẳng Y Dược Sài Gòn",
+    "slug": "truong-cao-dang-y-duoc-sai-gon-CDD4102",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "YT02": {
+    "code": "YT02",
+    "name": "Trường Cao đẳng Y tế Đặng Văn Ngữ",
+    "slug": "truong-cao-dang-y-te-dang-van-ngu-YT02",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0201": {
+    "code": "CDD0201",
+    "name": "Trường Cao đẳng Nghề Thành phố Hồ Chí Minh",
+    "slug": "truong-cao-dang-nghe-thanh-pho-ho-chi-minh-CDD0201",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CHD": {
+    "code": "CHD",
+    "name": "Trường Cao đẳng Y Dược Hồng Đức",
+    "slug": "truong-cao-dang-y-duoc-hong-duc-CHD",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0218": {
+    "code": "CDT0218",
+    "name": "Trường Cao đẳng Thủ Thiêm – TP. Hồ Chí Minh",
+    "slug": "truong-cao-dang-thu-thiem-–-tp-ho-chi-minh-CDT0218",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0110": {
+    "code": "CDT0110",
+    "name": "Trường Cao đẳng nghề Kỹ thuật Mỹ nghệ Việt Nam",
+    "slug": "truong-cao-dang-nghe-ky-thuat-my-nghe-viet-nam-CDT0110",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4402": {
+    "code": "CDD4402",
+    "name": "Trường Cao đẳng nghề Công nghệ cao Đồng An",
+    "slug": "truong-cao-dang-nghe-cong-nghe-cao-dong-an-CDD4402",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1909": {
+    "code": "CDD1909",
+    "name": "Trường Cao đẳng Y – Dược Cộng đồng",
+    "slug": "truong-cao-dang-y-–-duoc-cong-dong-CDD1909",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C161": {
+    "code": "C161",
+    "name": "Trường Cao đẳng Vĩnh Phúc",
+    "slug": "truong-cao-dang-vinh-phuc-C161",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CT0202": {
+    "code": "CT0202",
+    "name": "Trường Cao đẳng Kỹ nghệ II",
+    "slug": "truong-cao-dang-ky-nghe-ii-CT0202",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0211": {
+    "code": "CDD0211",
+    "name": "Trường Cao đẳng Kỹ thuật Nguyễn Trường Tộ",
+    "slug": "truong-cao-dang-ky-thuat-nguyen-truong-to-CDD0211",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4": {
+    "code": "CDD4",
+    "name": "Trường Cao đẳng Quốc Tế Sài Gòn",
+    "slug": "truong-cao-dang-quoc-te-sai-gon-CDD4",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "VLSC": {
+    "code": "VLSC",
+    "name": "Trường Cao đẳng Văn Lang Sài Gòn",
+    "slug": "truong-cao-dang-van-lang-sai-gon-VLSC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0225": {
+    "code": "CDD0225",
+    "name": "Trường Cao Đẳng Bình Minh Sài Gòn",
+    "slug": "truong-cao-dang-binh-minh-sai-gon-CDD0225",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C0208": {
+    "code": "C0208",
+    "name": "Trường Cao đẳng An ninh mạng iSPACE",
+    "slug": "truong-cao-dang-an-ninh-mang-ispace-C0208",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0103": {
+    "code": "CDT0103",
+    "name": "Trường Cao đẳng Điện lực miền Bắc",
+    "slug": "truong-cao-dang-dien-luc-mien-bac-CDT0103",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT1601": {
+    "code": "CDT1601",
+    "name": "Trường Cao đẳng Công nghiệp và Thương mại",
+    "slug": "truong-cao-dang-cong-nghiep-va-thuong-mai-CDT1601",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT1203": {
+    "code": "CDT1203",
+    "name": "Trường Cao đẳng nghề số 1 – Bộ Quốc phòng",
+    "slug": "truong-cao-dang-nghe-so-1-–-bo-quoc-phong-CDT1203",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD2502": {
+    "code": "CDD2502",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật và Du lịch Nam Định",
+    "slug": "truong-cao-dang-van-hoa-nghe-thuat-va-du-lich-nam-dinh-CDD2502",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD2201": {
+    "code": "CDD2201",
+    "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật Tô Hiệu",
+    "slug": "truong-cao-dang-nghe-kinh-te-–-ky-thuat-to-hieu-CDD2201",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT2301": {
+    "code": "CDT2301",
+    "name": "Trường Cao đẳng nghề Sông Đà",
+    "slug": "truong-cao-dang-nghe-song-da-CDT2301",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT2103": {
+    "code": "CDT2103",
+    "name": "Trường Cao đẳng Cơ giới Xây dựng",
+    "slug": "truong-cao-dang-co-gioi-xay-dung-CDT2103",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD2402": {
+    "code": "CDD2402",
+    "name": "Trường Cao đẳng nghề Hà Nam",
+    "slug": "truong-cao-dang-nghe-ha-nam-CDD2402",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0501": {
+    "code": "CDD0501",
+    "name": "Trường Cao đẳng Kỹ thuật và Công nghệ tỉnh Hà Giang",
+    "slug": "truong-cao-dang-ky-thuat-va-cong-nghe-tinh-ha-giang-CDD0501",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD6201": {
+    "code": "CDD6201",
+    "name": "Trường Cao đẳng nghề Điện Biên",
+    "slug": "truong-cao-dang-nghe-dien-bien-CDD6201",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0112": {
+    "code": "CDT0112",
+    "name": "Trường Cao đẳng nghề Long Biên",
+    "slug": "truong-cao-dang-nghe-long-bien-CDT0112",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0115": {
+    "code": "CDD0115",
+    "name": "Trường Cao đẳng Ngoại ngữ và Công nghệ Hà Nội",
+    "slug": "truong-cao-dang-nghe-van-lang-ha-noi-CDD0115",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0402": {
+    "code": "CDD0402",
+    "name": "Trường Cao đẳng nghề Hoa Sen",
+    "slug": "truong-cao-dang-nghe-hoa-sen-CDD0402",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT119": {
+    "code": "CDT119",
+    "name": "Trường Cao đẳng Ngoại ngữ Hà Nội",
+    "slug": "truong-cao-dang-ngoai-ngu-ha-noi-CDT119",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1301": {
+    "code": "CDD1301",
+    "name": "Trường Cao đẳng Y Dược Pasteur Yên Bái",
+    "slug": "truong-cao-dang-y-duoc-pasteur-yen-bai-CDD1301",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT1507": {
+    "code": "CDT1507",
+    "name": "Trường Cao đẳng Y Dược Phú Thọ",
+    "slug": "truong-cao-dang-y-duoc-phu-tho-CDT1507",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1803": {
+    "code": "CDD1803",
+    "name": "Trường Cao đẳng Ngô Gia Tự Bắc Giang",
+    "slug": "truong-cao-dang-ngo-gia-tu-bac-giang-CDD1803",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0304": {
+    "code": "CDD0304",
+    "name": "Trường Cao đẳng nghề Công nghiệp Hải Phòng",
+    "slug": "truong-cao-dang-nghe-cong-nghiep-hai-phong-CDD0304",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0305": {
+    "code": "CDD0305",
+    "name": "Trường Cao đẳng nghề Bách nghệ Hải Phòng",
+    "slug": "truong-cao-dang-nghe-bach-nghe-hai-phong-CDD0305",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDHD2101": {
+    "code": "CDHD2101",
+    "name": "Trường Cao đẳng nghề Hải Dương",
+    "slug": "truong-cao-dang-nghe-hai-duong-CDHD2101",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1401": {
+    "code": "CDD1401",
+    "name": "Trường Cao đẳng Kỹ thuật công nghệ Sơn La",
+    "slug": "truong-cao-dang-ky-thuat-cong-nghe-son-la-CDD1401",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD2601": {
+    "code": "CDD2601",
+    "name": "Trường Cao đẳng nghề Thái Bình",
+    "slug": "truong-cao-dang-nghe-thai-binh-CDD2601",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1701": {
+    "code": "CDD1701",
+    "name": "Trường Cao đẳng nghề Việt – Hàn Quảng Ninh",
+    "slug": "truong-cao-dang-nghe-viet-–-han-quang-ninh-CDD1701",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT1502": {
+    "code": "CDT1502",
+    "name": "Trường Cao đẳng Công Thương Phú Thọ",
+    "slug": "truong-cao-dang-nghe-cong-nghe-giay-va-co-dien-CDT1502",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CTM1": {
+    "code": "CTM1",
+    "name": "Trường Cao đẳng Thương mại và Du lịch Thái Nguyên",
+    "slug": "truong-cao-dang-thuong-mai-va-du-lich-thai-nguyen-CTM1",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0306": {
+    "code": "CDT0306",
+    "name": "Trường Cao đẳng VMU",
+    "slug": "truong-cao-dang-vmu-CDT0306",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0104": {
+    "code": "CDT0104",
+    "name": "Trường Cao đẳng nghề Kỹ thuật Công nghệ",
+    "slug": "truong-cao-dang-nghe-ky-thuat-cong-nghe-CDT0104",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CT0105": {
+    "code": "CT0105",
+    "name": "Trường Cao đẳng nghề Cơ điện Hà Nội",
+    "slug": "truong-cao-dang-nghe-co-dien-ha-noi-CT0105",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT2701": {
+    "code": "CDT2701",
+    "name": "Trường Cao đẳng nghề Cơ điện xây dựng Việt Xô",
+    "slug": "truong-cao-dang-nghe-co-dien-xay-dung-viet-xo-CDT2701",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1001": {
+    "code": "CDD1001",
+    "name": "Trường Cao đẳng nghề Lạng Sơn",
+    "slug": "truong-cao-dang-nghe-lang-son-CDD1001",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD03051": {
+    "code": "CDD03051",
+    "name": "Trường Cao đẳng nghề Lao động – Xã hội Hải Phòng",
+    "slug": "truong-cao-dang-nghe-lao-dong-–-xa-hoi-hai-phong-CDD03051",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0307": {
+    "code": "CDT0307",
+    "name": "Trường Cao đẳng Kinh tế và Công nghệ thực phẩm",
+    "slug": "truong-cao-dang-kinh-te-va-cong-nghe-thuc-pham-CDT0307",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "HFH2": {
+    "code": "HFH2",
+    "name": "Trường Cao đẳng Hậu cần 2",
+    "slug": "truong-cao-dang-hau-can-2-HFH2",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "HFH1": {
+    "code": "HFH1",
+    "name": "Trường Cao đẳng Hậu cần 1",
+    "slug": "truong-cao-dang-hau-can-1-HFH1",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0116": {
+    "code": "CDD0116",
+    "name": "Trường Cao đẳng nghề Viglacera",
+    "slug": "truong-cao-dang-nghe-viglacera-CDD0116",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0234": {
+    "code": "CDD0234",
+    "name": "Trường Cao đẳng Kỹ Thuật - Du Lịch Sài Gòn",
+    "slug": "truong-cao-dang-ky-thuat-du-lich-sai-gon-CDD0234",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYT": {
+    "code": "CYT",
+    "name": "Trường Cao Đẳng Y Tế Thanh Hóa",
+    "slug": "cao-dang-y-te-thanh-hoa-CYT",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYB": {
+    "code": "CYB",
+    "name": "Trường Cao Đẳng Y Tế Bạc Liêu",
+    "slug": "cao-dang-y-te-bac-lieu-CYB",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD5101": {
+    "code": "CDD5101",
+    "name": "Trường Cao đẳng nghề An Giang",
+    "slug": "truong-cao-dang-nghe-an-giang-CDD5101",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C52": {
+    "code": "C52",
+    "name": "Trường Cao Đẳng Sư Phạm Bà Rịa – Vũng Tàu",
+    "slug": "cao-dang-su-pham-ba-ria-vung-tau-C52",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCI": {
+    "code": "CCI",
+    "name": "Trường Cao Đẳng Công Nghiệp In",
+    "slug": "cao-dang-cong-nghiep-in-CCI",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYN": {
+    "code": "CYN",
+    "name": "Trường Cao Đẳng Y Tế Hà Tĩnh",
+    "slug": "cao-dang-y-te-ha-tinh-CYN",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4004": {
+    "code": "CDD4004",
+    "name": "Trường Cao đẳng Y tế Đắk Lắk",
+    "slug": "truong-cao-dang-y-te-dak-lak-CDD4004",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCZ": {
+    "code": "CCZ",
+    "name": "Trường Cao đẳng Đại Việt Đà Nẵng",
+    "slug": "truong-cao-dang-dai-viet-da-nang-CCZ",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CKB": {
+    "code": "CKB",
+    "name": "Trường Cao Đẳng Bách Khoa Đà Nẵng",
+    "slug": "cao-dang-bach-khoa-da-nang-CKB",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C56": {
+    "code": "C56",
+    "name": "Trường Cao Đẳng Bến Tre",
+    "slug": "cao-dang-ben-tre-C56",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CMS": {
+    "code": "CMS",
+    "name": "Trường Cao Đẳng Thương Mại",
+    "slug": "cao-dang-thuong-mai-CMS",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CNV": {
+    "code": "CNV",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Việt Bắc",
+    "slug": "cao-dang-van-hoa-nghe-thuat-viet-bac-CNV",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C55": {
+    "code": "C55",
+    "name": "Trường Cao Đẳng Cần Thơ",
+    "slug": "cao-dang-can-tho-C55",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C14": {
+    "code": "C14",
+    "name": "Trường Cao Đẳng Sơn La",
+    "slug": "cao-dang-son-la-C14",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D64": {
+    "code": "D64",
+    "name": "Trường Cao Đẳng Cộng Đồng Hậu Giang",
+    "slug": "cao-dang-cong-dong-hau-giang-D64",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C54": {
+    "code": "C54",
+    "name": "Trường Cao Đẳng Sư Phạm Kiên Giang",
+    "slug": "cao-dang-su-pham-kien-giang-C54",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CST": {
+    "code": "CST",
+    "name": "Trường Cao Đẳng Cộng Đồng Sóc Trăng",
+    "slug": "cao-dang-cong-dong-soc-trang-CST",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "YTV": {
+    "code": "YTV",
+    "name": "Trường Cao Đẳng Y Tế Trà Vinh",
+    "slug": "cao-dang-y-te-tra-vinh-YTV",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D57": {
+    "code": "D57",
+    "name": "Trường Cao Đẳng Vĩnh Long",
+    "slug": "cao-dang-cong-dong-vinh-long-D57",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CBM": {
+    "code": "CBM",
+    "name": "Trường Cao Đẳng Y Tế Bạch Mai",
+    "slug": "cao-dang-y-te-bach-mai-CBM",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CXH": {
+    "code": "CXH",
+    "name": "Trường Cao Đẳng Xây Dựng Số 1",
+    "slug": "cao-dang-xay-dung-so-1-CXH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CKN": {
+    "code": "CKN",
+    "name": "Trường Cao Đẳng Việt Mỹ",
+    "slug": "cao-dang-kinh-te-ky-thuat-ha-noi-CKN",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CEN": {
+    "code": "CEN",
+    "name": "Trường Cao Đẳng Cơ Điện Và Nông Nghiệp Nam Bộ",
+    "slug": "cao-dang-co-dien-va-nong-nghiep-nam-bo-CEN",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD5505": {
+    "code": "CDD5505",
+    "name": "Trường Cao đẳng Văn hoá Nghệ thuật Cần Thơ",
+    "slug": "cao-dang-van-hoa-nghe-thuat-can-tho-CDD5505",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT4803": {
+    "code": "CDT4803",
+    "name": "Trường Cao đẳng Thống kê II",
+    "slug": "truong-cao-dang-thong-ke-ii-CDT4803",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYD": {
+    "code": "CYD",
+    "name": "Trường Cao Đẳng Y Tế Đồng Nai",
+    "slug": "cao-dang-y-te-dong-nai-CYD",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D70": {
+    "code": "D70",
+    "name": "Trường Cao đẳng Bách Khoa",
+    "slug": "truong-cao-dang-bach-khoa-viet-nam-D70",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4403": {
+    "code": "CDD4403",
+    "name": "Trường Cao đẳng Việt Nam-Hàn Quốc Bình Dương",
+    "slug": "truong-cao-dang-viet-nam-han-quoc-binh-duong-CDD4403",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CEC": {
+    "code": "CEC",
+    "name": "Trường Cao Đẳng Kinh Tế – Kỹ Thuật Cần Thơ",
+    "slug": "cao-dang-kinh-te-ky-thuat-can-tho-CEC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYC": {
+    "code": "CYC",
+    "name": "Trường Cao Đẳng Y Tế Cần Thơ",
+    "slug": "cao-dang-y-te-can-tho-CYC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CBL": {
+    "code": "CBL",
+    "name": "Trường Cao Đẳng Công Nghệ Và Kinh Tế Bảo Lộc",
+    "slug": "cao-dang-cong-nghe-va-kinh-te-bao-loc-CBL",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CBY": {
+    "code": "CBY",
+    "name": "Trường Cao Đẳng Y Tế Bình Dương",
+    "slug": "cao-dang-y-te-binh-duong-CBY",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT5202": {
+    "code": "CDT5202",
+    "name": "Trường Cao đẳng Du lịch Vũng Tàu",
+    "slug": "truong-cao-dang-du-lich-vung-tau-CDT5202",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C94": {
+    "code": "C94",
+    "name": "Trường Cao đẳng Kiến trúc - Xây dựng TPHCM",
+    "slug": "truong-cao-dang-kien-truc-xay-dung-tphcm-C94",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4401": {
+    "code": "CDD4401",
+    "name": "Trường Cao đẳng nghề Việt Nam – Singapore",
+    "slug": "truong-cao-dang-nghe-viet-nam-–-singapore-CDD4401",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT3501": {
+    "code": "CDT3501",
+    "name": "Trường Cao đẳng Kỹ nghệ Dung Quất",
+    "slug": "truong-cao-dang-ky-nghe-dung-quat-CDT3501",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4808": {
+    "code": "CDD4808",
+    "name": "Trường Cao đẳng Hòa Bình Xuân Lộc",
+    "slug": "truong-cao-dang-hoa-binh-xuan-loc-CDD4808",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDG": {
+    "code": "CDG",
+    "name": "Trường Cao đẳng Kiên Giang",
+    "slug": "truong-cao-dang-kien-giang-CDG",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C43": {
+    "code": "C43",
+    "name": "Trường Cao Đẳng Bình Phước",
+    "slug": "cao-dang-su-pham-binh-phuoc-C43",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYV": {
+    "code": "CYV",
+    "name": "Trường Cao Đẳng Y Tế Tiền Giang",
+    "slug": "cao-dang-y-te-tien-giang-CYV",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD3501": {
+    "code": "CDD3501",
+    "name": "Trường Cao đẳng Y tế Đặng Thùy Trâm",
+    "slug": "truong-cao-dang-y-te-dang-thuy-tram-CDD3501",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4201": {
+    "code": "CDD4201",
+    "name": "Trường Cao đẳng Đà Lạt",
+    "slug": "truong-cao-dang-nghe-da-lat-CDD4201",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CM2": {
+    "code": "CM2",
+    "name": "Trường Cao Đẳng Sư Phạm TW Nha Trang",
+    "slug": "cao-dang-su-pham-tw-nha-trang-CM2",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYM": {
+    "code": "CYM",
+    "name": "Trường Cao Đẳng Y Tế Hà Đông",
+    "slug": "cao-dang-y-te-ha-dong-CYM",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCP": {
+    "code": "CCP",
+    "name": "Trường Cao Đẳng Công Thương Miền Trung",
+    "slug": "cao-dang-cong-nghiep-tuy-hoa-CCP",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CVB": {
+    "code": "CVB",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Tây Bắc",
+    "slug": "cao-dang-van-hoa-nghe-thuat-tay-bac-CVB",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD3601": {
+    "code": "CDD3601",
+    "name": "Trường Cao đẳng Kon Tum",
+    "slug": "truong-cao-dang-cong-dong-kon-tum-CDD3601",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0404": {
+    "code": "CDT0404",
+    "name": "Trường Cao đẳng Du lịch Đà Nẵng",
+    "slug": "truong-cao-dang-du-lich-da-nang-CDT0404",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD3702": {
+    "code": "CDD3702",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Quy Nhơn",
+    "slug": "truong-cao-dang-ky-thuat-cong-nghe-quy-nhon-CDD3702",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT3701": {
+    "code": "CDT3701",
+    "name": "Trường Cao đẳng Cơ điện – Xây dựng và Nông lâm Trung Bộ",
+    "slug": "truong-cao-dang-co-dien-–-xay-dung-va-nong-lam-trung-bo-CDT3701",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CKM": {
+    "code": "CKM",
+    "name": "Trường Cao Đẳng Miền Nam",
+    "slug": "cao-dang-kinh-te-ky-thuat-mien-nam-CKM",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0408": {
+    "code": "CDD0408",
+    "name": "Trường Cao đẳng Công Nghệ Y- Dược Việt Nam",
+    "slug": "truong-cao-dang-cong-nghe-y-duoc-viet-nam-CDD0408",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0213": {
+    "code": "CDT0213",
+    "name": "Trường Cao Đẳng Xây Dựng TPHCM",
+    "slug": "cao-dang-xay-dung-so-2-CDT0213",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CM3": {
+    "code": "CM3",
+    "name": "Trường Cao Đẳng Sư Phạm Trung Ương TPHCM",
+    "slug": "cao-dang-su-pham-trung-uong-tphcm-CM3",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CKP": {
+    "code": "CKP",
+    "name": "Trường Cao Đẳng Lý Tự Trọng TPHCM",
+    "slug": "cao-dang-ky-thuat-ly-tu-trong-tphcm-CKP",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0801": {
+    "code": "CDD0801",
+    "name": "Trường Cao đẳng Lào Cai",
+    "slug": "truong-cao-dang-lao-cai-CDD0801",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CGS": {
+    "code": "CGS",
+    "name": "Trường Cao Đẳng Giao Thông Vận Tải Trung Ương III",
+    "slug": "cao-dang-giao-thong-van-tai-3-CGS",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C10": {
+    "code": "C10",
+    "name": "Trường Cao Đẳng Lạng Sơn",
+    "slug": "cao-dang-su-pham-lang-son-C10",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CLC": {
+    "code": "CLC",
+    "name": "Trường Cao Đẳng Lai Châu",
+    "slug": "cao-dang-cong-dong-lai-chau-CLC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CGT": {
+    "code": "CGT",
+    "name": "Trường Cao Đẳng Giao Thông Vận Tải TPHCM",
+    "slug": "cao-dang-giao-thong-van-tai-tphcm-CGT",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C23": {
+    "code": "C23",
+    "name": "Trường Cao Đẳng Sư Phạm Hòa Bình",
+    "slug": "cao-dang-su-pham-hoa-binh-C23",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0211": {
+    "code": "CDT0211",
+    "name": "Trường Cao Đẳng Điện Lực TPHCM",
+    "slug": "cao-dang-dien-luc-tphcm-CDT0211",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT1901": {
+    "code": "CDT1901",
+    "name": "Trường Cao đẳng Cơ điện và Xây dựng Bắc Ninh",
+    "slug": "truong-cao-dang-co-dien-va-xay-dung-bac-ninh-CDT1901",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT3301": {
+    "code": "CDT3301",
+    "name": "Trường Cao đẳng Du lịch Huế",
+    "slug": "truong-cao-dang-du-lich-hue-CDT3301",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CM1": {
+    "code": "CM1",
+    "name": "Trường Cao Đẳng Sư Phạm Trung Ương",
+    "slug": "cao-dang-su-pham-trung-uong-CM1",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0130": {
+    "code": "CDD0130",
+    "name": "Trường Cao Đẳng Thương Mại Và Du Lịch Hà Nội",
+    "slug": "cao-dang-thuong-mai-va-du-lich-ha-noi-CDD0130",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYZ": {
+    "code": "CYZ",
+    "name": "Trường Cao Đẳng Y Tế Hà Nội",
+    "slug": "cao-dang-y-te-ha-noi-CYZ",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D20": {
+    "code": "D20",
+    "name": "Trường Cao Đẳng Cộng Đồng Hà Tây",
+    "slug": "cao-dang-cong-dong-ha-tay-D20",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDP": {
+    "code": "CDP",
+    "name": "Trường Cao Đẳng Nông Lâm Đông Bắc",
+    "slug": "cao-dang-nong-lam-dong-bac-CDP",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CNC": {
+    "code": "CNC",
+    "name": "Trường Cao Đẳng Ngoại Ngữ – Công Nghệ Việt Nhật",
+    "slug": "cao-dang-ngoai-ngu-cong-nghe-viet-nhat-CNC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CTE": {
+    "code": "CTE",
+    "name": "Trường Cao Đẳng Thống Kê",
+    "slug": "cao-dang-thong-ke-CTE",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CPN": {
+    "code": "CPN",
+    "name": "Trường Cao Đẳng Phương Đông – Đà Nẵng",
+    "slug": "cao-dang-phuong-dong-da-nang-CPN",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C25": {
+    "code": "C25",
+    "name": "Trường Cao Đẳng Sư Phạm Nam Định",
+    "slug": "cao-dang-su-pham-nam-dinh-C25",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYF": {
+    "code": "CYF",
+    "name": "Trường Cao Đẳng Y Tế Hải Phòng",
+    "slug": "cao-dang-y-te-hai-phong-CYF",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYS": {
+    "code": "CYS",
+    "name": "Trường Cao Đẳng Dược Trung Ương",
+    "slug": "cao-dang-duoc-trung-uong-CYS",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C19": {
+    "code": "C19",
+    "name": "Trường Cao Đẳng Sư Phạm Bắc Ninh",
+    "slug": "cao-dang-su-pham-bac-ninh-C19",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CNN": {
+    "code": "CNN",
+    "name": "Trường Cao Đẳng Nông Nghiệp Nam Bộ",
+    "slug": "cao-dang-nong-nghiep-nam-bo-CNN",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0206": {
+    "code": "CDD0206",
+    "name": "Trường Cao đẳng Quốc tế TPHCM",
+    "slug": "truong-cao-dang-quoc-te-tphcm-CDD0206",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0212": {
+    "code": "CDD0212",
+    "name": "Trường Cao Đẳng Kinh Tế TPHCM",
+    "slug": "cao-dang-kinh-te-tphcm-CDD0212",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CPL": {
+    "code": "CPL",
+    "name": "Trường Cao Đẳng Kinh Tế Kỹ Thuật TP HCM",
+    "slug": "cao-dang-kinh-te-ky-thuat-tp-hcm-CPL",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0131": {
+    "code": "CDT0131",
+    "name": "Trường Cao Đẳng Truyền Hình Việt Nam",
+    "slug": "cao-dang-truyen-hinh-CDT0131",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCK": {
+    "code": "CCK",
+    "name": "Trường Cao Đẳng Kinh Tế Công Nghiệp Hà Nội",
+    "slug": "cao-dang-kinh-te-cong-nghiep-ha-noi-CCK",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CSG": {
+    "code": "CSG",
+    "name": "Trường Cao Đẳng Đại Việt Sài Gòn",
+    "slug": "cao-dang-dai-viet-sai-gon-CSG",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCS": {
+    "code": "CCS",
+    "name": "Trường Cao Đẳng Công Nghệ TPHCM",
+    "slug": "cao-dang-kinh-te-ky-thuat-vinatex-tphcm-CCS",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CKC": {
+    "code": "CKC",
+    "name": "Trường Cao Đẳng Kỹ Thuật Cao Thắng",
+    "slug": "cao-dang-ky-thuat-cao-thang-CKC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDC": {
+    "code": "CDC",
+    "name": "Trường Cao đẳng Công Nghệ Thông Tin TPHCM",
+    "slug": "cao-dang-cong-nghe-thong-tin-tphcm-CDC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CPS": {
+    "code": "CPS",
+    "name": "Trường Cao Đẳng Phát Thanh Truyền Hình II",
+    "slug": "cao-dang-phat-thanh-truyen-hinh-ii-CPS",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CES": {
+    "code": "CES",
+    "name": "Trường Cao Đẳng Công Thương TPHCM",
+    "slug": "cao-dang-cong-thuong-tphcm-CES",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0209": {
+    "code": "CDT0209",
+    "name": "Trường Cao Đẳng Kinh Tế Đối Ngoại",
+    "slug": "cao-dang-kinh-te-doi-ngoai-CDT0209",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1204": {
+    "code": "CDD1204",
+    "name": "Trường Cao đẳng Công thương Việt Nam",
+    "slug": "truong-cao-dang-nghe-cong-thuong-viet-nam-CDD1204",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CBT": {
+    "code": "CBT",
+    "name": "Trường Cao Đẳng Công Nghệ và Thương Mại Hà Nội",
+    "slug": "cao-dang-cong-nghe-va-thuong-mai-ha-noi-CBT",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CLH": {
+    "code": "CLH",
+    "name": "Trường Cao Đẳng Điện Tử - Điện Lạnh Hà Nội",
+    "slug": "cao-dang-dien-tu-dien-lanh-ha-noi-CLH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT": {
+    "code": "CDT",
+    "name": "Trường Cao Đẳng Xây Dựng Công Trình Đô Thị",
+    "slug": "cao-dang-xay-dung-cong-trinh-do-thi-CDT",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCO": {
+    "code": "CCO",
+    "name": "Trường Cao Đẳng Công Nghệ Thủ Đức",
+    "slug": "cao-dang-cong-nghe-thu-duc-CCO",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDH": {
+    "code": "CDH",
+    "name": "Trường Cao Đẳng Du Lịch Hà Nội",
+    "slug": "cao-dang-du-lich-ha-noi-CDH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYE": {
+    "code": "CYE",
+    "name": "Trường Cao Đẳng Y Tế Thái Bình",
+    "slug": "cao-dang-y-te-thai-binh-CYE",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD3102": {
+    "code": "CDD3102",
+    "name": "Trường Cao đẳng Kỹ thuật Công – Nông nghiệp Quảng Bình",
+    "slug": "truong-cao-dang-ky-thuat-cong-–-nong-nghiep-quang-binh-CDD3102",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0227": {
+    "code": "CDD0227",
+    "name": "Trường Cao đẳng Quốc tế Kent",
+    "slug": "truong-cao-dang-quoc-te-kent-CDD0227",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CET": {
+    "code": "CET",
+    "name": "Trường Cao Đẳng Kinh Tế-Công Nghệ TPHCM",
+    "slug": "cao-dang-kinh-te-cong-nghe-tphcm-CET",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CVN": {
+    "code": "CVN",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật TPHCM",
+    "slug": "cao-dang-van-hoa-nghe-thuat-tphcm-CVN",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CVS": {
+    "code": "CVS",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật và Du Lịch Sài Gòn",
+    "slug": "cao-dang-van-hoa-nghe-thuat-va-du-lich-sai-gon-CVS",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0207": {
+    "code": "CDT0207",
+    "name": "Trường Cao đẳng Hàng hải và Đường thủy II",
+    "slug": "truong-cao-dang-hang-hai-va-duong-thuy-ii-CDT0207",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCZ1": {
+    "code": "CCZ1",
+    "name": "Trường Cao đẳng Đại Việt Cần Thơ",
+    "slug": "truong-cao-dang-dai-viet-can-tho-CCZ1",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D42": {
+    "code": "D42",
+    "name": "Trường Cao đẳng Du lịch Sài Gòn",
+    "slug": "truong-cao-dang-du-lich-sai-gon-D42",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0120": {
+    "code": "CDT0120",
+    "name": "Trường Cao đẳng Tây Đô",
+    "slug": "truong-cao-dang-tay-do-CDT0120",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCD1902": {
+    "code": "CCD1902",
+    "name": "Trường Cao đẳng Công nghiệp Bắc Ninh",
+    "slug": "truong-cao-dang-cong-nghiep-bac-ninh-CCD1902",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD2303": {
+    "code": "CDD2303",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Hòa Bình",
+    "slug": "truong-cao-dang-ky-thuat-cong-nghe-hoa-binh-CDD2303",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0308": {
+    "code": "CDD0308",
+    "name": "Trường Cao đẳng Công nghệ Bách khoa Hà Nội",
+    "slug": "truong-cao-dang-cong-nghe-bach-khoa-ha-noi-CDD0308",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CBC": {
+    "code": "CBC",
+    "name": "Trường Cao Đẳng Bán Công Công Nghệ và Quản Trị Doanh Nghiệp",
+    "slug": "cao-dang-ban-cong-cong-nghe-va-quan-tri-doanh-nghiep-CBC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0121": {
+    "code": "CDD0121",
+    "name": "Trường Cao đẳng Kinh tế Công nghệ Hà Nội",
+    "slug": "truong-cao-dang-kinh-te-cong-nghe-ha-noi-CDD0121",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C13": {
+    "code": "C13",
+    "name": "Trường Cao đẳng Yên Bái",
+    "slug": "truong-cao-dang-yen-bai-C13",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "039": {
+    "code": "039",
+    "name": "Trường Cao đẳng nghề Trà Vinh",
+    "slug": "truong-cao-dang-nghe-tra-vinh-039",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4805": {
+    "code": "CDD4805",
+    "name": "Trường Cao đẳng nghề Công nghệ cao Đồng Nai",
+    "slug": "truong-cao-dang-nghe-cong-nghe-cao-dong-nai-CDD4805",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT4804": {
+    "code": "CDT4804",
+    "name": "Trường Cao đẳng nghề Cơ giới và Thủy lợi",
+    "slug": "truong-cao-dang-nghe-co-gioi-va-thuy-loi-CDT4804",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDV": {
+    "code": "CDV",
+    "name": "Trường Cao Đẳng Viễn Đông",
+    "slug": "cao-dang-vien-dong-CDV",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CBV": {
+    "code": "CBV",
+    "name": "Trường Cao Đẳng Bách Việt",
+    "slug": "cao-dang-bach-viet-CBV",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4202": {
+    "code": "CDD4202",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Lâm Đồng",
+    "slug": "truong-cao-dang-kinh-te-–-ky-thuat-lam-dong-CDD4202",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CHN": {
+    "code": "CHN",
+    "name": "Trường Cao Đẳng Cộng Đồng Hà Nội",
+    "slug": "cao-dang-cong-dong-ha-noi-CHN",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD5901": {
+    "code": "CDD5901",
+    "name": "Trường Cao đẳng nghề Sóc Trăng",
+    "slug": "truong-cao-dang-nghe-soc-trang-CDD5901",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDS": {
+    "code": "CDS",
+    "name": "Trường Cao Đẳng Công Nghệ và Quản Trị Sonadezi",
+    "slug": "cao-dang-cong-nghe-va-quan-tri-sonadezi-CDS",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CMY": {
+    "code": "CMY",
+    "name": "Trường Cao Đẳng Y Tế Cà Mau",
+    "slug": "cao-dang-y-te-ca-mau-CMY",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CHH": {
+    "code": "CHH",
+    "name": "Trường Cao Đẳng Hàng Hải I",
+    "slug": "cao-dang-hang-hai-i-CHH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYH": {
+    "code": "CYH",
+    "name": "Trường Cao Đẳng Y Tế Hà Nam",
+    "slug": "cao-dang-y-te-ha-nam-CYH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYR": {
+    "code": "CYR",
+    "name": "Trường Cao Đẳng Y Tế Bình Định",
+    "slug": "cao-dang-y-te-binh-dinh-CYR",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYU": {
+    "code": "CYU",
+    "name": "Trường Cao Đẳng Y Tế Quảng Nam",
+    "slug": "cao-dang-y-te-quang-nam-CYU",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C46": {
+    "code": "C46",
+    "name": "Trường Cao Đẳng Sư Phạm Tây Ninh",
+    "slug": "cao-dang-su-pham-tay-ninh-C46",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYG": {
+    "code": "CYG",
+    "name": "Trường Cao Đẳng Y Tế Kiên Giang",
+    "slug": "cao-dang-y-te-kien-giang-CYG",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CNT": {
+    "code": "CNT",
+    "name": "Trường Cao Đẳng Nghệ Thuật Hà Nội",
+    "slug": "cao-dang-nghe-thuat-ha-noi-CNT",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "QPH": {
+    "code": "QPH",
+    "name": "Trường Cao Đẳng Công Nghiệp Quốc Phòng",
+    "slug": "cao-dang-cong-nghiep-quoc-phong-QPH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4803": {
+    "code": "CDD4803",
+    "name": "Trường Cao đẳng Kỹ thuật Đồng Nai",
+    "slug": "truong-cao-dang-ky-thuat-dong-nai-CDD4803",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD5204": {
+    "code": "CDD5204",
+    "name": "Trường Cao đẳng Quốc tế Vabis",
+    "slug": "truong-cao-dang-quoc-te-vabis-CDD5204",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT3401": {
+    "code": "CDT3401",
+    "name": "Trường Cao đẳng Công nghệ – Kinh tế và Thủy lợi miền Trung",
+    "slug": "truong-cao-dang-cong-nghe-–-kinh-te-va-thuy-loi-mien-trung-CDT3401",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD2901": {
+    "code": "CDD2901",
+    "name": "Trường Cao đẳng Việt Đức Nghệ An",
+    "slug": "truong-cao-dang-viet-duc-nghe-an-CDD2901",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT2901": {
+    "code": "CDT2901",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương IV",
+    "slug": "truong-cao-dang-giao-thong-van-tai-trung-uong-iv-CDT2901",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD6301": {
+    "code": "CDD6301",
+    "name": "Trường Cao đẳng Cộng đồng Đắk Nông",
+    "slug": "truong-cao-dang-cong-dong-dak-nong-CDD6301",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0403": {
+    "code": "CDD0403",
+    "name": "Trường Cao đẳng nghề Nguyễn Văn Trỗi",
+    "slug": "truong-cao-dang-nghe-nguyen-van-troi-CDD0403",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0401": {
+    "code": "CDD0401",
+    "name": "Trường Cao đẳng nghề Đà Nẵng",
+    "slug": "truong-cao-dang-nghe-da-nang-CDD0401",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CVL": {
+    "code": "CVL",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Đăk Lăk",
+    "slug": "cao-dang-van-hoa-nghe-thuat-dak-lak-CVL",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CVY": {
+    "code": "CVY",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Du Lịch Yên Bái",
+    "slug": "cao-dang-van-hoa-nghe-thuat-du-lich-yen-bai-CVY",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CLT": {
+    "code": "CLT",
+    "name": "Trường Cao Đẳng Lương Thực Thực Phẩm",
+    "slug": "cao-dang-luong-thuc-thuc-pham-CLT",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT2108": {
+    "code": "CDT2108",
+    "name": "Trường Cao Đẳng Du Lịch và Công Thương",
+    "slug": "cao-dang-du-lich-va-cong-thuong-CDT2108",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD3403": {
+    "code": "CDD3403",
+    "name": "Trường Cao đẳng Quảng Nam",
+    "slug": "truong-cao-dang-quang-nam-CDD3403",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D50": {
+    "code": "D50",
+    "name": "Trường Cao Đẳng Cộng Đồng Đồng Tháp",
+    "slug": "cao-dang-cong-dong-dong-thap-D50",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CLY": {
+    "code": "CLY",
+    "name": "Trường Cao Đẳng Y Tế Lâm Đồng",
+    "slug": "cao-dang-y-te-lam-dong-CLY",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "BKC": {
+    "code": "BKC",
+    "name": "Trường Cao đẳng Bách Khoa Sài Gòn",
+    "slug": "truong-cao-dang-bach-khoa-sai-gon-BKC",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4806": {
+    "code": "CDD4806",
+    "name": "Trường Cao đẳng Lê Quý Đôn",
+    "slug": "truong-cao-dang-le-quy-don-CDD4806",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0402": {
+    "code": "CDT0402",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương V",
+    "slug": "truong-cao-dang-giao-thong-van-tai-trung-uong-v-CDT0402",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYA": {
+    "code": "CYA",
+    "name": "Trường Cao Đẳng Y Tế Đồng Tháp",
+    "slug": "cao-dang-y-te-dong-thap-CYA",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT4403": {
+    "code": "CDT4403",
+    "name": "Trường Cao đẳng Công nghệ và Nông lâm Nam Bộ",
+    "slug": "truong-cao-dang-cong-nghe-va-nong-lam-nam-bo-CDT4403",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C111": {
+    "code": "C111",
+    "name": "Trường Cao đẳng Bắc Kạn",
+    "slug": "truong-cao-dang-bac-kan-C111",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCE": {
+    "code": "CCE",
+    "name": "Trường Cao Đẳng Kỹ Thuật Công Nghiệp",
+    "slug": "cao-dang-ky-thuat-cong-nghiep-CCE",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD5102": {
+    "code": "CDD5102",
+    "name": "Trường Cao đẳng Y tế An Giang",
+    "slug": "truong-cao-dang-y-te-an-giang-CDD5102",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0122": {
+    "code": "CDD0122",
+    "name": "Trường Cao đẳng Y Hà Nội",
+    "slug": "truong-cao-dang-y-ha-noi-CDD0122",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD13011": {
+    "code": "CDD13011",
+    "name": "Trường Cao đẳng Y dược Pasteur TPHCM",
+    "slug": "truong-cao-dang-y-duoc-pasteur-tphcm-CDD13011",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D76": {
+    "code": "D76",
+    "name": "Trường Cao đẳng Công thương Hà Nội",
+    "slug": "truong-cao-dang-cong-thuong-ha-noi-D76",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYL": {
+    "code": "CYL",
+    "name": "Trường Cao Đẳng Y Tế Lạng Sơn",
+    "slug": "cao-dang-y-te-lang-son-CYL",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYP": {
+    "code": "CYP",
+    "name": "Trường Cao Đẳng Y Tế Phú Thọ",
+    "slug": "cao-dang-y-te-phu-tho-CYP",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYK": {
+    "code": "CYK",
+    "name": "Trường Cao Đẳng Y Tế Khánh Hòa",
+    "slug": "cao-dang-y-te-khanh-hoa-CYK",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "YPY": {
+    "code": "YPY",
+    "name": "Trường Cao đẳng Y tế Phú Yên",
+    "slug": "truong-cao-dang-y-te-phu-yen-YPY",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD2810": {
+    "code": "CDD2810",
+    "name": "Trường Cao đẳng Y – Dược Hợp Lực, Thanh Hóa",
+    "slug": "truong-cao-dang-y-–-duoc-hop-luc-thanh-hoa-CDD2810",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CNY": {
+    "code": "CNY",
+    "name": "Trường Cao Đẳng Y Tế Ninh Bình",
+    "slug": "cao-dang-y-te-ninh-binh-CNY",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYY": {
+    "code": "CYY",
+    "name": "Trường Cao Đẳng Y Tế Huế",
+    "slug": "cao-dang-y-te-hue-CYY",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "YSL": {
+    "code": "YSL",
+    "name": "Trường Cao Đẳng Y Tế Sơn La",
+    "slug": "cao-dang-y-te-son-la-YSL",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCV": {
+    "code": "CCV",
+    "name": "Trường Cao Đẳng Công Nghiệp Việt Đức",
+    "slug": "cao-dang-cong-nghiep-viet-duc-CCV",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CXD": {
+    "code": "CXD",
+    "name": "Trường Cao Đẳng Công Nghệ và Kinh Tế Công Nghiệp",
+    "slug": "cao-dang-cong-nghe-va-kinh-te-cong-nghiep-CXD",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCX": {
+    "code": "CCX",
+    "name": "Trường Cao Đẳng Công Nghiệp và Xây Dựng",
+    "slug": "cao-dang-cong-nghiep-va-xay-dung-CCX",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CTH": {
+    "code": "CTH",
+    "name": "Trường Cao Đẳng Kinh Tế – Kỹ Thuật Thương Mại",
+    "slug": "cao-dang-kinh-te-ky-thuat-thuong-mai-CTH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD5203": {
+    "code": "CDD5203",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Bà Rịa – Vũng Tàu",
+    "slug": "truong-cao-dang-ky-thuat-cong-nghe-ba-ria-–-vung-tau-CDD5203",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT3503": {
+    "code": "CDT3503",
+    "name": "Trường Cao đẳng Quảng Ngãi",
+    "slug": "truong-cao-dang-quang-ngai-CDT3503",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCY": {
+    "code": "CCY",
+    "name": "Trường Cao Đẳng Công Nghiệp Hưng Yên",
+    "slug": "cao-dang-cong-nghiep-hung-yen-CCY",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4101": {
+    "code": "CDD4101",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Nha Trang",
+    "slug": "truong-cao-dang-ky-thuat-cong-nghe-nha-trang-CDD4101",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD6002": {
+    "code": "CDD6002",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Bạc Liêu",
+    "slug": "truong-cao-dang-kinh-te-–-ky-thuat-bac-lieu-CDD6002",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT4801": {
+    "code": "CDT4801",
+    "name": "Trường Cao đẳng Công nghệ Quốc tế LILAMA-2",
+    "slug": "truong-cao-dang-cong-nghe-quoc-te-lilama-2-CDT4801",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT5601": {
+    "code": "CDT5601",
+    "name": "Trường Cao đẳng Đồng Khởi",
+    "slug": "truong-cao-dang-dong-khoi-CDT5601",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD3401": {
+    "code": "CDD3401",
+    "name": "Trường Cao đẳng Thaco",
+    "slug": "truong-cao-dang-thaco-CDD3401",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CVV": {
+    "code": "CVV",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Nghệ An",
+    "slug": "cao-dang-van-hoa-nghe-thuat-nghe-an-CVV",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD3001": {
+    "code": "CDD3001",
+    "name": "Trường Cao đẳng nghề Việt-Đức Hà Tĩnh",
+    "slug": "truong-cao-dang-nghe-viet-duc-ha-tinh-CDD3001",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCH": {
+    "code": "CCH",
+    "name": "Trường Cao Đẳng Công Nghiệp Huế",
+    "slug": "cao-dang-cong-nghiep-hue-CCH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C26": {
+    "code": "C26",
+    "name": "Trường Cao Đẳng Sư Phạm Thái Bình",
+    "slug": "cao-dang-su-pham-thai-binh-C26",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDB": {
+    "code": "CDB",
+    "name": "Trường Cao Đẳng Kinh Tế Kỹ Thuật Điện Biên",
+    "slug": "cao-dang-kinh-te-ky-thuat-dien-bien-CDB",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0409": {
+    "code": "CDD0409",
+    "name": "Trường Cao đẳng Văn hóa – Nghệ thuật Đà Nẵng",
+    "slug": "truong-cao-dang-van-hoa-–-nghe-thuat-da-nang-CDD0409",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT3001": {
+    "code": "CDT3001",
+    "name": "Trường Cao đẳng nghề Công nghệ Hà Tĩnh",
+    "slug": "truong-cao-dang-nghe-cong-nghe-ha-tinh-CDT3001",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD5401": {
+    "code": "CDD5401",
+    "name": "Trường Cao đẳng nghề Kiên Giang",
+    "slug": "truong-cao-dang-nghe-kien-giang-CDD5401",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD35021": {
+    "code": "CDD35021",
+    "name": "Trường Cao đẳng nghề Việt Nam-Hàn Quốc Quảng Ngãi",
+    "slug": "truong-cao-dang-nghe-viet-nam-han-quoc-quang-ngai-CDD35021",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD3502": {
+    "code": "CDD3502",
+    "name": "Trường Cao đẳng nghề Cơ giới Quảng Ngãi",
+    "slug": "truong-cao-dang-nghe-co-gioi-quang-ngai-CDD3502",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT2904": {
+    "code": "CDT2904",
+    "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật số 1 Nghệ An",
+    "slug": "truong-cao-dang-nghe-kinh-te-–-ky-thuat-so-1-nghe-an-CDT2904",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDN": {
+    "code": "CDN",
+    "name": "Trường Cao Đẳng Mỹ Thuật Trang Trí Đồng Nai",
+    "slug": "cao-dang-my-thuat-trang-tri-dong-nai-CDN",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD5501": {
+    "code": "CDD5501",
+    "name": "Trường Cao đẳng nghề Cần Thơ",
+    "slug": "truong-cao-dang-nghe-can-tho-CDD5501",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT5201": {
+    "code": "CDT5201",
+    "name": "Trường Cao đẳng Dầu khí",
+    "slug": "truong-cao-dang-dau-khi-CDT5201",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "D61": {
+    "code": "D61",
+    "name": "Trường Cao Đẳng Cộng Đồng Cà Mau",
+    "slug": "cao-dang-cong-dong-ca-mau-D61",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT4103": {
+    "code": "CDT4103",
+    "name": "Trường Cao đẳng Du lịch Nha Trang",
+    "slug": "truong-cao-dang-du-lich-nha-trang-CDT4103",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD4002": {
+    "code": "CDD4002",
+    "name": "Trường Cao đẳng Kỹ thuật Đắk Lắk",
+    "slug": "truong-cao-dang-ky-thuat-dak-lak-CDD4002",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CNB": {
+    "code": "CNB",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Thái Bình",
+    "slug": "cao-dang-van-hoa-nghe-thuat-thai-binh-CNB",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CND": {
+    "code": "CND",
+    "name": "Trường Cao Đẳng Công Nghiệp Nam Định",
+    "slug": "cao-dang-cong-nghiep-nam-dinh-CND",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDT0407": {
+    "code": "CDT0407",
+    "name": "Trường Cao Đẳng Kinh Tế – Kế Hoạch Đà Nẵng",
+    "slug": "cao-dang-kinh-te-ke-hoach-da-nang-CDT0407",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CNH": {
+    "code": "CNH",
+    "name": "Trường Cao Đẳng Công Nghệ Hà Nội",
+    "slug": "cao-dang-cong-nghe-ha-noi-CNH",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD1910": {
+    "code": "CDD1910",
+    "name": "Trường Cao đẳng Lý Thái Tổ",
+    "slug": "truong-cao-dang-ly-thai-to-CDD1910",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CDD0406": {
+    "code": "CDD0406",
+    "name": "Trường Cao đẳng nghề Việt - Úc Đà Nẵng",
+    "slug": "truong-cao-dang-nghe-viet-uc-da-nang-CDD0406",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CPT": {
+    "code": "CPT",
+    "name": "Trường Cao Đẳng Phát Thanh Truyền Hình I",
+    "slug": "cao-dang-phat-thanh-truyen-hinh-i-CPT",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C57": {
+    "code": "C57",
+    "name": "Trường Cao Đẳng Sư Phạm Vĩnh Long",
+    "slug": "cao-dang-su-pham-vinh-long-C57",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C59": {
+    "code": "C59",
+    "name": "Trường Cao Đẳng Sư Phạm Sóc Trăng",
+    "slug": "cao-dang-su-pham-soc-trang-C59",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C32": {
+    "code": "C32",
+    "name": "Trường Cao Đẳng Sư Phạm Quảng Trị",
+    "slug": "cao-dang-su-pham-quang-tri-C32",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C40": {
+    "code": "C40",
+    "name": "Trường Cao Đẳng Sư Phạm Đăk Lăk",
+    "slug": "cao-dang-su-pham-dak-lak-C40",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CCB": {
+    "code": "CCB",
+    "name": "Trường Cao Đẳng Công Nghiệp Thái Nguyên",
+    "slug": "cao-dang-cong-nghiep-thai-nguyen-CCB",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CLA": {
+    "code": "CLA",
+    "name": "Trường Cao Đẳng Cộng Đồng Lào Cai",
+    "slug": "cao-dang-cong-dong-lao-cai-CLA",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CSB": {
+    "code": "CSB",
+    "name": "Trường Cao Đẳng Kinh Tế, Kỹ Thuật Và Thủy Sản",
+    "slug": "cao-dang-thuy-san-CSB",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CYX": {
+    "code": "CYX",
+    "name": "Trường Cao Đẳng Bình Thuận",
+    "slug": "cao-dang-y-te-binh-thuan-CYX",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "C62": {
+    "code": "C62",
+    "name": "Trường Cao Đẳng Sư Phạm Điện Biên",
+    "slug": "cao-dang-su-pham-dien-bien-C62",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CGD": {
+    "code": "CGD",
+    "name": "Trường Cao Đẳng Giao Thông Vận Tải II",
+    "slug": "cao-dang-giao-thong-van-tai-ii-CGD",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  },
+  "CLD": {
+    "code": "CLD",
+    "name": "Trường Cao Đẳng Điện Lực Miền Trung",
+    "slug": "cao-dang-dien-luc-mien-trung-CLD",
+    "type": "cao_dang",
+    "type_label": "Cao đẳng",
+    "listing_url": "https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang"
+  }
+}

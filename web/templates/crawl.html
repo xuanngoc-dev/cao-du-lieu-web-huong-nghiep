@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}② Cào dữ liệu{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">② Cào dữ liệu tuyển sinh</h1>
+<p class="text-muted mb-3">Dán danh sách mã trường đã copy từ bước 1. Hỗ trợ mỗi dòng 1 mã hoặc cách nhau bởi dấu phẩy.</p>
+
+<div class="card panel-card mb-3">
+  <div class="card-body">
+    <label class="form-label fw-semibold">Danh sách mã trường</label>
+    <textarea id="crawlCodes" class="form-control font-monospace" rows="8"
+      placeholder="BKA&#10;NEU&#10;FTU&#10;QHI"></textarea>
+    <div class="form-text" id="crawlParsedHint">Chưa nhận diện mã nào.</div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-md-7">
+        <label class="form-label">Năm tuyển sinh</label>
+        <div class="d-flex flex-wrap gap-3">
+          {% for y in [2021,2022,2023,2024,2025,2026] %}
+          <div class="form-check">
+            <input class="form-check-input year-check" type="checkbox" value="{{ y }}" id="y{{ y }}"
+              {% if y >= 2024 %}checked{% endif %}>
+            <label class="form-check-label" for="y{{ y }}">{{ y }}</label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label">Giới hạn số trường (0 = không giới hạn)</label>
+        <input type="number" class="form-control" id="crawlLimit" value="0" min="0" max="1000">
+      </div>
+    </div>
+
+    <button class="btn btn-teal mt-3" id="btnCrawl" type="button">
+      <i class="bi bi-play-fill"></i> Bắt đầu cào dữ liệu
+    </button>
+  </div>
+</div>
+
+<div id="crawlProgress" class="d-none mb-3">
+  <div class="progress" role="progressbar" style="height: 1.2rem;">
+    <div class="progress-bar progress-bar-striped progress-bar-animated bg-teal" style="width: 100%">Đang cào…</div>
+  </div>
+</div>
+
+<div id="crawlResult"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const codesEl = document.getElementById('crawlCodes');
+codesEl.value = window.App.loadCodes();
+
+function updateHint() {
+  const codes = window.App.parseCodes(codesEl.value);
+  document.getElementById('crawlParsedHint').textContent =
+    codes.length ? `Đã nhận diện ${codes.length} mã: ${codes.slice(0, 12).join(', ')}${codes.length > 12 ? '…' : ''}`
+                 : 'Chưa nhận diện mã nào.';
+}
+codesEl.addEventListener('input', () => {
+  window.App.saveCodes(codesEl.value);
+  updateHint();
+});
+updateHint();
+
+document.getElementById('btnCrawl').addEventListener('click', async () => {
+  const codes = codesEl.value;
+  const years = [...document.querySelectorAll('.year-check:checked')].map(x => Number(x.value));
+  const limit = Number(document.getElementById('crawlLimit').value || 0);
+  const box = document.getElementById('crawlResult');
+  const prog = document.getElementById('crawlProgress');
+  prog.classList.remove('d-none');
+  box.innerHTML = '';
+  try {
+    const res = await fetch('/api/crawl', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ codes, years, limit })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Lỗi cào dữ liệu');
+    box.innerHTML = `
+      <div class="card panel-card">
+        <div class="card-body">
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${data.schools}</div><div class="stat-lbl">Trường</div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${data.admissions}</div><div class="stat-lbl">Bản ghi ngành</div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${data.conversions}</div><div class="stat-lbl">Quy đổi CC (đề án)</div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-val">${data.regulations}</div><div class="stat-lbl">Quy chế</div></div></div>
+          </div>
+          <a class="btn btn-teal" href="${data.download_url}"><i class="bi bi-download"></i> Tải Excel ${data.filename}</a>
+          <pre class="log-box mt-3 mb-0">${(data.logs || []).join('\n')}</pre>
+        </div>
+      </div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+  } finally {
+    prog.classList.add('d-none');
+  }
+});
+</script>
+{% endblock %}
