@@ -30,6 +30,11 @@
           <input class="form-check-input" type="checkbox" id="schoolRefresh">
           <label class="form-check-label" for="schoolRefresh">Làm mới từ web</label>
         </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="schoolProfile" checked>
+          <label class="form-check-label" for="schoolProfile">Lấy hồ sơ giới thiệu trường</label>
+        </div>
+        <div class="form-text">Địa chỉ, website, lĩnh vực đào tạo, thành tựu (chậm hơn).</div>
       </div>
       <div class="col-md-2">
         <button id="btnFetchSchools" class="btn btn-teal w-100" type="button">
@@ -52,6 +57,8 @@
             <th>Mã</th>
             <th>Tên trường</th>
             <th>Loại hình</th>
+            <th>Website</th>
+            <th>Địa chỉ</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -87,13 +94,17 @@
 <script>
 document.getElementById('btnFetchSchools').addEventListener('click', async () => {
   const msg = document.getElementById('schoolMsg');
-  msg.innerHTML = '<div class="spinner-border spinner-border-sm text-teal"></div> Đang tải…';
+  const withProfile = document.getElementById('schoolProfile').checked;
+  msg.innerHTML = withProfile
+    ? '<div class="spinner-border spinner-border-sm text-teal"></div> Đang tải danh bạ + hồ sơ giới thiệu (có thể mất vài phút)…'
+    : '<div class="spinner-border spinner-border-sm text-teal"></div> Đang tải…';
   try {
     const res = await fetch('/api/schools/fetch', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         refresh: document.getElementById('schoolRefresh').checked,
+        include_profile: withProfile,
         filter: document.getElementById('schoolFilter').value,
         keyword: document.getElementById('schoolKeyword').value
       })
@@ -109,14 +120,21 @@ document.getElementById('btnFetchSchools').addEventListener('click', async () =>
         <td><code>${s.code}</code></td>
         <td>${s.name}</td>
         <td><span class="badge text-bg-light border">${s.type_label}</span></td>
+        <td class="small">${s.website ? `<a href="${s.website}" target="_blank" rel="noopener">${s.website}</a>` : '—'}</td>
+        <td class="small text-muted">${s.dia_chi || '—'}</td>
       </tr>`).join('');
     document.getElementById('schoolStats').innerHTML = Object.entries(data.stats || {})
       .map(([k, v]) => `<span class="badge rounded-pill text-bg-light border me-1 mb-1"><b>${v}</b> ${k}</span>`)
-      .join('') + ` <span class="badge rounded-pill text-bg-teal ms-1">${data.total} trường</span>`;
+      .join('') + ` <span class="badge rounded-pill text-bg-teal ms-1">${data.total} trường</span>`
+      + (data.with_profile != null
+        ? ` <span class="badge rounded-pill text-bg-light border ms-1">${data.with_profile} có hồ sơ</span>`
+        : '');
     const dl = document.getElementById('btnDlExcel');
     dl.href = data.excel_url;
     dl.classList.remove('d-none');
-    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đã tải ${data.total} trường.</div>`;
+    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đã tải ${data.total} trường`
+      + (data.with_profile != null ? ` (${data.with_profile} có hồ sơ giới thiệu)` : '')
+      + `. File Excel gồm đủ cột địa chỉ / website / lĩnh vực / thành tựu.</div>`;
   } catch (e) {
     msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${e.message}</div>`;
   }

@@ -94,7 +94,7 @@ python3 web/app.py
 
 Mở trình duyệt tại `http://127.0.0.1:8080` (không dùng cổng 5000 — trên macOS cổng này thường bị AirPlay chiếm):
 
-1. **① Danh sách mã trường** — Tải danh bạ ĐH/CĐ, lọc, **Copy mã** (hoặc chuyển sang bước 2/3).
+1. **① Danh sách mã trường** — Tải danh bạ ĐH/CĐ (kèm hồ sơ giới thiệu: địa chỉ, website, lĩnh vực đào tạo, thành tựu), lọc, **Copy mã** (hoặc chuyển sang bước 2/3).
 2. **② Cào dữ liệu** — Dán danh sách mã, chọn năm, cào điểm chuẩn / đề án, tải Excel.
 3. **③ Quy đổi điểm** — Cào bảng quy đổi phương thức từ trang
    [`/quy-doi-diem/`](https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html)
@@ -111,6 +111,8 @@ Hệ thống hỗ trợ 2 dạng đầu vào (có thể dùng riêng lẻ hoặc
 ### Dạng 0: Lấy danh sách mã trường ĐH / CĐ (khuyến nghị trước khi cào toàn bộ)
 ```bash
 python3 main.py --mode schools --refresh-schools
+# Nhanh hơn (chỉ mã/tên, không hồ sơ):
+python3 main.py --mode schools --refresh-schools --no-profile
 ```
 - Xuất `data/output/danh_sach_ma_truong.xlsx` và `.json`
 - Đồng thời ghi `config/schools_all.json` để dùng làm đầu vào cào

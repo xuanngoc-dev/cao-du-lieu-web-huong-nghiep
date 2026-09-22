@@ -8,7 +8,8 @@ từ cổng tuyensinh247, phục vụ làm đầu vào cho crawler điểm chu�
 import os
 import re
 import json
-from typing import Dict, List, Optional, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Optional, Any, Tuple
 
 import requests
 from bs4 import BeautifulSoup
@@ -26,6 +27,50 @@ TYPE_LABELS = {
     TYPE_CAO_DANG: "Cao đẳng",
     TYPE_HOC_VIEN: "Học viện",
 }
+
+# Khóa hồ sơ trường (từ mục Giới thiệu trên trang đề án)
+PROFILE_KEYS = [
+    "thong_tin_chung",
+    "dia_chi",
+    "website",
+    "hotline",
+    "fanpage",
+    "linh_vuc_chuong_trinh",
+    "vi_the_thanh_tuu",
+    "gioi_thieu_url",
+]
+
+_TRAINING_HINTS = (
+    "đào tạo", "dao tao", "lĩnh vực", "linh vuc", "chương trình", "chuong trinh",
+    "ngành", "nganh", "khối ngành", "chuyên ngành",
+)
+_ACHIEVE_HINTS = (
+    "sứ mạng", "su mang", "tầm nhìn", "tam nhin", "thành tựu", "thanh tuu",
+    "vị thế", "vi the", "xếp hạng", "hang đầu", "hàng đầu", "thành lập",
+    "giá trị cốt lõi", "triết lý", "phương châm", "lịch sử", "lich su",
+)
+
+
+def _split_label_value(text: str) -> Tuple[str, str]:
+    """Tách 'Địa chỉ : Số 1…' → ('địa chỉ', 'Số 1…')."""
+    t = clean_text(text or "")
+    if not t:
+        return "", ""
+    for sep in (":", "："):
+        if sep in t:
+            left, right = t.split(sep, 1)
+            return clean_text(left).lower(), clean_text(right)
+    return "", t
+
+
+def _is_training_para(text: str) -> bool:
+    low = (text or "").lower()
+    return any(k in low for k in _TRAINING_HINTS)
+
+
+def _is_achieve_para(text: str) -> bool:
+    low = (text or "").lower()
+    return any(k in low for k in _ACHIEVE_HINTS)
 
 
 def classify_school_type(name: str, page_hint: str = "") -> str:
@@ -90,9 +135,12 @@ class SchoolDirectory:
         force_refresh: bool = False,
         include_dai_hoc: bool = True,
         include_cao_dang: bool = True,
+        include_profile: bool = False,
+        profile_limit: int = 0,
     ) -> Dict[str, Dict[str, Any]]:
         """
         Nạp danh bạ từ cache hoặc cào mới từ web.
+        include_profile: bổ sung thông tin giới thiệu trường (chậm hơn).
         """
         if not force_refresh and os.path.exists(self.cache_file):
             try:
@@ -119,6 +167,14 @@ class SchoolDirectory:
                         self.schools = self._filter_types(
                             normalized, include_dai_hoc, include_cao_dang
                         )
+                        if include_profile:
+                            # Làm giàu trên bản full cache rồi filter lại
+                            full = dict(normalized)
+                            self.enrich_profiles(full, only_missing=True, limit=profile_limit)
+                            self._save_cache(full)
+                            self.schools = self._filter_types(
+                                full, include_dai_hoc, include_cao_dang
+                            )
                         return self.schools
             except Exception:
                 pass
@@ -127,6 +183,8 @@ class SchoolDirectory:
             include_dai_hoc=include_dai_hoc,
             include_cao_dang=include_cao_dang,
         )
+        if include_profile:
+            self.enrich_profiles(fetched, only_missing=False, limit=profile_limit)
         self.schools = fetched
         self._save_cache(fetched)
         return self.schools
@@ -203,6 +261,162 @@ class SchoolDirectory:
         print(f"[DANH_BA] Hoàn tất: {len(directory)} trường (ĐH/HV/CĐ).")
         return directory
 
+    def fetch_school_profile(self, slug: str, code: str = "") -> Dict[str, str]:
+        """
+        Lấy hồ sơ giới thiệu trường từ trang đề án (#gioi-thieu):
+        - Thông tin chung & địa chỉ cơ sở (website, hotline, fanpage)
+        - Lĩnh vực / chương trình đào tạo
+        - Vị thế / thành tựu nổi bật
+        """
+        empty = {k: "" for k in PROFILE_KEYS}
+        if not slug:
+            return empty
+
+        url = f"{self.BASE_URL}/de-an-tuyen-sinh/{slug}.html"
+        empty["gioi_thieu_url"] = url + "#gioi-thieu"
+        try:
+            res = requests.get(url, headers=self.HEADERS, timeout=18)
+            if res.status_code != 200:
+                return empty
+            soup = BeautifulSoup(res.text, "html.parser")
+            section = soup.find(id="gioi-thieu")
+            if not section:
+                # Fallback: trang gioi-thieu-truong-{slug}
+                alt = f"{self.BASE_URL}/gioi-thieu-truong-{slug}.html"
+                res2 = requests.get(alt, headers=self.HEADERS, timeout=15)
+                if res2.status_code == 200:
+                    soup = BeautifulSoup(res2.text, "html.parser")
+                    section = soup.find(id="gioi-thieu") or soup
+                    empty["gioi_thieu_url"] = alt
+            if not section:
+                return empty
+
+            info_box = section.select_one(".basic-info__info") or section
+            achieve_box = section.select_one(".basic-info__achievement")
+
+            info_lines: List[str] = []
+            dia_chi_parts: List[str] = []
+            website = hotline = fanpage = ""
+
+            for li in info_box.find_all("li"):
+                raw = clean_text(li.get_text(" ", strip=True))
+                if not raw:
+                    continue
+                label, value = _split_label_value(raw)
+                info_lines.append(raw)
+                if not value:
+                    continue
+                if any(k in label for k in ("địa chỉ", "dia chi", "cơ sở", "co so", "campus")):
+                    dia_chi_parts.append(value if ":" not in raw else value)
+                elif "website" in label or "web site" in label:
+                    website = value
+                elif any(k in label for k in ("hotline", "điện thoại", "dien thoai", "tel", "phone")):
+                    hotline = value
+                elif any(k in label for k in ("fanpage", "facebook", "fb")):
+                    fanpage = value
+
+            # Hotline đôi khi nằm trong cùng dòng địa chỉ / mô tả
+            if not hotline:
+                blob = " ".join(info_lines)
+                m = re.search(
+                    r"(?:hotline|điện thoại|tel)\s*[:\-]?\s*([0-9.\s\-–+/]{8,})",
+                    blob,
+                    re.IGNORECASE,
+                )
+                if m:
+                    hotline = clean_text(m.group(1))
+
+            training_parts: List[str] = []
+            achieve_parts: List[str] = []
+            if achieve_box:
+                paras = []
+                for tag in achieve_box.find_all(["p", "li"]):
+                    t = clean_text(tag.get_text(" ", strip=True))
+                    if t and len(t) > 15:
+                        paras.append(t)
+                if not paras:
+                    t = clean_text(achieve_box.get_text("\n", strip=True))
+                    paras = [p.strip() for p in t.split("\n") if len(p.strip()) > 15]
+
+                for p in paras:
+                    if _is_training_para(p) and not _is_achieve_para(p):
+                        training_parts.append(p)
+                    elif _is_achieve_para(p):
+                        achieve_parts.append(p)
+                    elif _is_training_para(p):
+                        training_parts.append(p)
+                    else:
+                        # Đoạn lịch sử / giới thiệu chung → vị thế & thành tựu
+                        achieve_parts.append(p)
+
+            # Nếu không tách được, đổ toàn bộ achievement vào vị thế
+            if achieve_box and not training_parts and not achieve_parts:
+                achieve_parts.append(clean_text(achieve_box.get_text(" ", strip=True))[:4000])
+
+            return {
+                "thong_tin_chung": "\n".join(info_lines),
+                "dia_chi": "\n".join(dict.fromkeys(dia_chi_parts)),
+                "website": website,
+                "hotline": hotline,
+                "fanpage": fanpage,
+                "linh_vuc_chuong_trinh": "\n\n".join(training_parts)[:5000],
+                "vi_the_thanh_tuu": "\n\n".join(achieve_parts)[:5000],
+                "gioi_thieu_url": empty["gioi_thieu_url"],
+            }
+        except Exception as e:
+            print(f"[CẢNH BÁO] Không lấy được hồ sơ {code or slug}: {e}")
+            return empty
+
+    def enrich_profiles(
+        self,
+        schools: Optional[Dict[str, Dict[str, Any]]] = None,
+        only_missing: bool = True,
+        max_workers: int = 6,
+        limit: int = 0,
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Bổ sung hồ sơ giới thiệu cho danh bạ (song song, có cache từng trường).
+        """
+        target = schools if schools is not None else self.schools
+        if not target:
+            return target
+
+        items = list(target.items())
+        if only_missing:
+            items = [
+                (c, inf) for c, inf in items
+                if not (inf.get("thong_tin_chung") or inf.get("website") or inf.get("vi_the_thanh_tuu"))
+            ]
+        if limit and limit > 0:
+            items = items[:limit]
+
+        if not items:
+            print("[DANH_BA] Hồ sơ giới thiệu đã có sẵn — bỏ qua bước bổ sung.")
+            return target
+
+        print(f"[DANH_BA] Đang lấy hồ sơ giới thiệu cho {len(items)} trường…")
+        done = 0
+
+        def _job(code_info):
+            code, info = code_info
+            profile = self.fetch_school_profile(info.get("slug") or "", code=code)
+            return code, profile
+
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = [pool.submit(_job, it) for it in items]
+            for fut in as_completed(futures):
+                code, profile = fut.result()
+                if code in target:
+                    target[code].update(profile)
+                # Đồng bộ vào self.schools nếu đang enrich bản sao / tập con
+                if code in self.schools:
+                    self.schools[code].update(profile)
+                done += 1
+                if done % 25 == 0 or done == len(items):
+                    print(f"[DANH_BA] Hồ sơ: {done}/{len(items)}")
+
+        return target
+
     def _filter_types(
         self,
         data: Dict[str, Dict[str, Any]],
@@ -257,6 +471,14 @@ class SchoolDirectory:
                 "slug": info.get("slug", ""),
                 "type": t,
                 "type_label": info.get("type_label") or TYPE_LABELS.get(t, t),
+                "thong_tin_chung": info.get("thong_tin_chung", ""),
+                "dia_chi": info.get("dia_chi", ""),
+                "website": info.get("website", ""),
+                "hotline": info.get("hotline", ""),
+                "fanpage": info.get("fanpage", ""),
+                "linh_vuc_chuong_trinh": info.get("linh_vuc_chuong_trinh", ""),
+                "vi_the_thanh_tuu": info.get("vi_the_thanh_tuu", ""),
+                "gioi_thieu_url": info.get("gioi_thieu_url", ""),
             })
 
         rows.sort(key=lambda x: (x["type_label"], x["code"]))
@@ -290,6 +512,14 @@ class SchoolDirectory:
                     "online_slug": r["slug"],
                     "type": r["type"],
                     "type_label": r["type_label"],
+                    "thong_tin_chung": r.get("thong_tin_chung", ""),
+                    "dia_chi": r.get("dia_chi", ""),
+                    "website": r.get("website", ""),
+                    "hotline": r.get("hotline", ""),
+                    "fanpage": r.get("fanpage", ""),
+                    "linh_vuc_chuong_trinh": r.get("linh_vuc_chuong_trinh", ""),
+                    "vi_the_thanh_tuu": r.get("vi_the_thanh_tuu", ""),
+                    "gioi_thieu_url": r.get("gioi_thieu_url", ""),
                 }
                 for r in rows
             ],
@@ -325,7 +555,22 @@ class SchoolDirectory:
         ws = wb.active
         ws.title = "Danh_Sach_Ma_Truong"
 
-        headers = ["STT", "Mã trường", "Tên trường", "Loại hình", "Slug (URL)", "Link điểm chuẩn"]
+        headers = [
+            "STT",
+            "Mã trường",
+            "Tên trường",
+            "Loại hình",
+            "Slug (URL)",
+            "Link điểm chuẩn",
+            "Thông tin chung",
+            "Địa chỉ các cơ sở",
+            "Website",
+            "Hotline",
+            "Fanpage",
+            "Lĩnh vực & Chương trình đào tạo",
+            "Vị thế & Thành tựu nổi bật",
+            "Link giới thiệu",
+        ]
         header_fill = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
         header_font = Font(name="Arial", size=10, bold=True, color="FFFFFF")
         data_font = Font(name="Arial", size=10)
@@ -345,20 +590,43 @@ class SchoolDirectory:
             cell = ws.cell(row=1, column=col, value=title)
             cell.fill = header_fill
             cell.font = header_font
-            cell.alignment = Alignment(horizontal="center", vertical="center")
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+        ws.row_dimensions[1].height = 32
 
         for idx, r in enumerate(rows, start=1):
             link = f"{self.BASE_URL}/diem-chuan/{r['slug']}.html" if r.get("slug") else ""
-            vals = [idx, r["code"], r["name"], r["type_label"], r["slug"], link]
+            vals = [
+                idx,
+                r["code"],
+                r["name"],
+                r["type_label"],
+                r["slug"],
+                link,
+                r.get("thong_tin_chung") or "",
+                r.get("dia_chi") or "",
+                r.get("website") or "",
+                r.get("hotline") or "",
+                r.get("fanpage") or "",
+                r.get("linh_vuc_chuong_trinh") or "",
+                r.get("vi_the_thanh_tuu") or "",
+                r.get("gioi_thieu_url") or "",
+            ]
             fill = type_fills.get(r["type"])
             for c, val in enumerate(vals, start=1):
                 cell = ws.cell(row=idx + 1, column=c, value=val)
                 cell.font = data_font
                 cell.border = thin
-                if fill:
+                cell.alignment = Alignment(
+                    horizontal="center" if c in (1, 2, 4) else "left",
+                    vertical="top",
+                    wrap_text=c >= 7,
+                )
+                if fill and c <= 4:
                     cell.fill = fill
-                if c in (1, 2, 4):
-                    cell.alignment = Alignment(horizontal="center", vertical="center")
+            # Hàng cao hơn nếu có nội dung dài
+            if any(vals[i] for i in (6, 11, 12)):
+                ws.row_dimensions[idx + 1].height = 60
 
         # Sheet thống kê
         ws2 = wb.create_sheet("Thong_Ke")
@@ -378,12 +646,16 @@ class SchoolDirectory:
             row_i += 1
         ws2.cell(row=row_i, column=1, value="TỔNG").font = Font(name="Arial", bold=True)
         ws2.cell(row=row_i, column=2, value=len(rows)).font = Font(name="Arial", bold=True)
-        ws2.column_dimensions["A"].width = 20
+        with_profile = sum(1 for r in rows if r.get("thong_tin_chung") or r.get("website"))
+        ws2.cell(row=row_i + 2, column=1, value="Có hồ sơ giới thiệu").font = data_font
+        ws2.cell(row=row_i + 2, column=2, value=with_profile).font = data_font
+        ws2.column_dimensions["A"].width = 28
         ws2.column_dimensions["B"].width = 12
 
         ws.freeze_panes = "A2"
-        ws.auto_filter.ref = f"A1:F{len(rows) + 1}"
-        widths = [8, 14, 55, 14, 55, 70]
+        last_col = get_column_letter(len(headers))
+        ws.auto_filter.ref = f"A1:{last_col}{len(rows) + 1}"
+        widths = [6, 12, 40, 12, 40, 45, 40, 28, 28, 16, 28, 45, 45, 40]
         for i, w in enumerate(widths, start=1):
             ws.column_dimensions[get_column_letter(i)].width = w
 

@@ -479,5 +479,20 @@
     "Quản lý nhà nước (Cơ sở Đắk Lắk)": "73125DL",
     "Quản trị nhân lực (Cơ sở Đắk Lắk)": "73444DL",
     "Luật (Cơ sở Đắk Lắk)": "73811DL"
+  },
+  "039": {
+    "Công nghệ ô tô": "1",
+    "Nuôi trồng thủy sản": "10",
+    "Chế biến thực phẩm": "11",
+    "Công nghệ thông tin (Ứng dụng phần mềm)": "12",
+    "Quản trị dịch vụ và lữ hành": "13",
+    "Công nghệ kỹ thuật cơ khí": "2",
+    "Điện công nghiệp": "3",
+    "Kỹ thuật máy lạnh và điều hòa không khí": "4",
+    "Tự động hóa công nghiệp": "5",
+    "Thú y": "6",
+    "Kế toán": "7",
+    "Kỹ thuật sửa chữa, lắp ráp máy tính": "8",
+    "Chế biến và bảo quản thủy sản": "9"
   }
 }

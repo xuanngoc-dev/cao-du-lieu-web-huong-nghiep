@@ -105,6 +105,7 @@ def process_list_schools(
     school_filter: str = "all",
     output_excel: str = "data/output/danh_sach_ma_truong.xlsx",
     output_json: str = "data/output/danh_sach_ma_truong.json",
+    include_profile: bool = True,
 ) -> List[str]:
     """
     Chức năng lấy danh sách mã trường ĐH/CĐ và xuất file.
@@ -115,6 +116,7 @@ def process_list_schools(
         force_refresh=refresh,
         include_dai_hoc=True,
         include_cao_dang=True,
+        include_profile=include_profile,
     )
 
     type_map = {
@@ -393,6 +395,11 @@ def main():
         help="Bỏ cache, lấy lại danh bạ mã trường từ web",
     )
     parser.add_argument(
+        "--no-profile",
+        action="store_true",
+        help="Khi --mode schools: bỏ qua hồ sơ giới thiệu (nhanh hơn)",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=0,
@@ -480,6 +487,7 @@ def main():
         process_list_schools(
             refresh=args.refresh_schools,
             school_filter=args.school_filter,
+            include_profile=not args.no_profile,
         )
         return
 

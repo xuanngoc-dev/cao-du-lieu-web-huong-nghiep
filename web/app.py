@@ -82,11 +82,17 @@ def create_app() -> Flask:
     def api_schools_fetch():
         data = request.get_json(silent=True) or {}
         refresh = bool(data.get("refresh", False))
+        include_profile = bool(data.get("include_profile", True))
         school_filter = data.get("filter", "all")  # all | dai_hoc | cao_dang | hoc_vien | dai_hoc_hoc_vien
         keyword = (data.get("keyword") or "").strip()
 
         directory = SchoolDirectory()
-        directory.load(force_refresh=refresh, include_dai_hoc=True, include_cao_dang=True)
+        directory.load(
+            force_refresh=refresh,
+            include_dai_hoc=True,
+            include_cao_dang=True,
+            include_profile=include_profile,
+        )
 
         type_map = {
             "all": None,
@@ -112,11 +118,16 @@ def create_app() -> Flask:
         for r in rows:
             lb = r.get("type_label") or "?"
             stats[lb] = stats.get(lb, 0) + 1
+        with_profile = sum(
+            1 for r in rows
+            if r.get("thong_tin_chung") or r.get("website") or r.get("vi_the_thanh_tuu")
+        )
 
         return jsonify({
             "ok": True,
             "total": len(rows),
             "stats": stats,
+            "with_profile": with_profile,
             "schools": rows,
             "codes_text": format_codes_for_copy(codes, one_per_line=True),
             "excel_url": url_for("download_file", name="danh_sach_ma_truong.xlsx"),
@@ -164,7 +175,7 @@ def create_app() -> Flask:
                 bundle.regulations.extend(part.regulations)
                 logs.append(
                     f"✓ [{i}/{len(codes)}] {code}: "
-                    f"{len(part.admissions)} ngành, {len(part.conversions)} quy đổi CC, "
+                    f"{len(part.admissions)} ngành, {len(part.conversions)} quy đổi chứng chỉ, "
                     f"{len(part.regulations)} quy chế"
                 )
             except Exception as e:
