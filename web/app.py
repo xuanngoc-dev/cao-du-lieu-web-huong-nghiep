@@ -7,6 +7,7 @@ Chạy:
   hoặc: python3 web/app.py
 """
 
+import json
 import os
 import sys
 from datetime import datetime
@@ -14,12 +15,14 @@ from typing import List
 
 from flask import (
     Flask,
+    Response,
     render_template,
     request,
     jsonify,
     send_file,
     redirect,
     url_for,
+    stream_with_context,
 )
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -39,6 +42,14 @@ from core.conversion_calculator import (
     merge_method_lists,
     METHOD_LABELS,
 )
+from core.admission_chance import (
+    analyze_chance,
+    build_trend_series,
+    enrich_with_ai,
+    list_admission_methods,
+    list_school_majors,
+)
+from core.aggregator import METHOD_COLUMN_LABELS
 
 
 def _enrich_methods_for_school(code: str, quy_doi_methods: List) -> List:
@@ -168,9 +179,7 @@ def create_app() -> Flask:
             f.write(codes if "\n" in codes else codes.replace(",", "\n"))
         return send_file(path, as_attachment=True, download_name="ma_truong.txt")
 
-    # ---------- API: Cào điểm chuẩn ----------
-    @app.post("/api/crawl")
-    def api_crawl():
+    def _parse_crawl_request():
         data = request.get_json(silent=True) or {}
         codes = parse_school_codes_text(data.get("codes") or "")
         years = data.get("years") or [2024, 2025, 2026]
@@ -178,7 +187,24 @@ def create_app() -> Flask:
         limit = int(data.get("limit") or 0)
         if limit > 0:
             codes = codes[:limit]
+        return codes, years, data
 
+    def _store_last_crawl(bundle: CrawlBundle, years: List[int], codes: List[str], meta: dict):
+        admissions = [r.to_dict() for r in bundle.admissions]
+        app.config["LAST_CRAWL"] = {
+            "admissions": admissions,
+            "conversions": [c.to_dict() for c in bundle.conversions],
+            "regulations": [r.to_dict() for r in bundle.regulations],
+            "years": years,
+            "codes": codes,
+            **meta,
+        }
+        return admissions
+
+    # ---------- API: Cào điểm chuẩn ----------
+    @app.post("/api/crawl")
+    def api_crawl():
+        codes, years, _ = _parse_crawl_request()
         if not codes:
             return jsonify({"ok": False, "error": "Chưa có mã trường hợp lệ."}), 400
         if not years:
@@ -211,6 +237,12 @@ def create_app() -> Flask:
             conversions=bundle.conversions,
             regulations=bundle.regulations,
         )
+        download_url = url_for("download_file", name=out_name)
+        admissions = _store_last_crawl(
+            bundle, years, codes,
+            {"download_url": download_url, "filename": out_name, "logs": logs},
+        )
+        trends = build_trend_series(admissions)
 
         return jsonify({
             "ok": True,
@@ -219,9 +251,223 @@ def create_app() -> Flask:
             "conversions": len(bundle.conversions),
             "regulations": len(bundle.regulations),
             "logs": logs,
-            "download_url": url_for("download_file", name=out_name),
+            "download_url": download_url,
             "filename": out_name,
+            "preview": admissions[:80],
+            "trends": trends,
         })
+
+    @app.post("/api/crawl/stream")
+    def api_crawl_stream():
+        """NDJSON stream: mỗi trường xong → 1 dòng JSON (hiển thị realtime trên modal)."""
+        codes, years, _ = _parse_crawl_request()
+        if not codes:
+            return jsonify({"ok": False, "error": "Chưa có mã trường hợp lệ."}), 400
+        if not years:
+            return jsonify({"ok": False, "error": "Chọn ít nhất 1 năm."}), 400
+
+        @stream_with_context
+        def generate():
+            crawler = OnlineAdmissionCrawler()
+            bundle = CrawlBundle()
+            logs: List[str] = []
+            yield json.dumps({
+                "type": "start",
+                "total": len(codes),
+                "years": years,
+                "codes": codes,
+            }, ensure_ascii=False) + "\n"
+
+            for i, code in enumerate(codes, start=1):
+                try:
+                    part = crawler.crawl_school_bundle(code, years=years, delay=0.25)
+                    bundle.admissions.extend(part.admissions)
+                    bundle.conversions.extend(part.conversions)
+                    bundle.regulations.extend(part.regulations)
+                    preview = [r.to_dict() for r in part.admissions[:40]]
+                    msg = (
+                        f"✓ [{i}/{len(codes)}] {code}: "
+                        f"{len(part.admissions)} ngành, {len(part.conversions)} quy đổi, "
+                        f"{len(part.regulations)} quy chế"
+                    )
+                    logs.append(msg)
+                    yield json.dumps({
+                        "type": "school",
+                        "index": i,
+                        "total": len(codes),
+                        "code": code,
+                        "ok": True,
+                        "admission_count": len(part.admissions),
+                        "conversion_count": len(part.conversions),
+                        "regulation_count": len(part.regulations),
+                        "preview": preview,
+                        "log": msg,
+                        "totals": {
+                            "admissions": len(bundle.admissions),
+                            "conversions": len(bundle.conversions),
+                            "regulations": len(bundle.regulations),
+                        },
+                    }, ensure_ascii=False) + "\n"
+                except Exception as e:
+                    msg = f"✗ [{i}/{len(codes)}] {code}: {e}"
+                    logs.append(msg)
+                    yield json.dumps({
+                        "type": "school",
+                        "index": i,
+                        "total": len(codes),
+                        "code": code,
+                        "ok": False,
+                        "error": str(e),
+                        "preview": [],
+                        "log": msg,
+                        "totals": {
+                            "admissions": len(bundle.admissions),
+                            "conversions": len(bundle.conversions),
+                            "regulations": len(bundle.regulations),
+                        },
+                    }, ensure_ascii=False) + "\n"
+
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            out_name = f"tong_hop_tuyen_sinh_{ts}.xlsx"
+            out_path = os.path.join(app.config["OUTPUT_DIR"], out_name)
+            ExcelAdmissionExporter(years=sorted(years)).export(
+                bundle.admissions,
+                output_path=out_path,
+                conversions=bundle.conversions,
+                regulations=bundle.regulations,
+            )
+            download_url = url_for("download_file", name=out_name)
+            admissions = _store_last_crawl(
+                bundle, years, codes,
+                {"download_url": download_url, "filename": out_name, "logs": logs},
+            )
+            trends = build_trend_series(admissions)
+            yield json.dumps({
+                "type": "done",
+                "ok": True,
+                "schools": len(codes),
+                "admissions": len(bundle.admissions),
+                "conversions": len(bundle.conversions),
+                "regulations": len(bundle.regulations),
+                "logs": logs,
+                "download_url": download_url,
+                "filename": out_name,
+                "preview": admissions[:120],
+                "trends": trends,
+            }, ensure_ascii=False) + "\n"
+
+        return Response(
+            generate(),
+            mimetype="application/x-ndjson",
+            headers={
+                "Cache-Control": "no-cache, no-store",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+    @app.get("/api/crawl/trends")
+    def api_crawl_trends():
+        cached = app.config.get("LAST_CRAWL") or {}
+        admissions = cached.get("admissions") or []
+        if not admissions:
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu cào. Hãy chạy bước 2 trước."}), 400
+        school = (request.args.get("school") or "").strip().upper() or None
+        method = (request.args.get("method") or "").strip().upper() or None
+        trends = build_trend_series(admissions, school_code=school, method=method)
+        return jsonify({"ok": True, "trends": trends})
+
+    @app.get("/api/crawl/majors")
+    def api_crawl_majors():
+        """Danh sách ngành tuyển sinh theo trường (từ dữ liệu đã cào)."""
+        cached = app.config.get("LAST_CRAWL") or {}
+        admissions = cached.get("admissions") or []
+        if not admissions:
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu cào. Hãy chạy bước 2 trước."}), 400
+        school = (request.args.get("school") or "").strip().upper() or None
+        schools_raw = request.args.get("schools") or ""
+        school_codes = [c.strip().upper() for c in schools_raw.split(",") if c.strip()]
+        majors = list_school_majors(
+            admissions,
+            school_code=school if not school_codes else None,
+            school_codes=school_codes or None,
+        )
+        return jsonify({
+            "ok": True,
+            "school": school or "",
+            "schools": school_codes,
+            "majors": majors,
+            "total": len(majors),
+        })
+
+    @app.get("/api/crawl/methods")
+    def api_crawl_methods():
+        """Danh sách phương thức xét tuyển có trong dữ liệu đã cào."""
+        cached = app.config.get("LAST_CRAWL") or {}
+        admissions = cached.get("admissions") or []
+        if not admissions:
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu cào. Hãy chạy bước 2 trước."}), 400
+        school = (request.args.get("school") or "").strip().upper() or None
+        schools_raw = request.args.get("schools") or ""
+        school_codes = [c.strip().upper() for c in schools_raw.split(",") if c.strip()]
+        methods = list_admission_methods(
+            admissions,
+            school_code=school if not school_codes else None,
+            school_codes=school_codes or None,
+        )
+        return jsonify({
+            "ok": True,
+            "school": school or "",
+            "schools": school_codes,
+            "methods": methods,
+            "total": len(methods),
+        })
+
+    @app.post("/api/crawl/danh-gia")
+    def api_crawl_danh_gia():
+        """Đánh giá cơ hội trúng tuyển (thống kê + AI miễn phí)."""
+        data = request.get_json(silent=True) or {}
+        cached = app.config.get("LAST_CRAWL") or {}
+        admissions = cached.get("admissions") or []
+        if not admissions:
+            return jsonify({"ok": False, "error": "Chưa có dữ liệu cào. Hãy chạy bước 2 trước."}), 400
+        try:
+            score = float(str(data.get("score")).replace(",", "."))
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "Điểm nhập không hợp lệ."}), 400
+
+        method = (data.get("method") or "THPT").upper().replace("VACT", "V-ACT")
+        school = (data.get("school_code") or data.get("code") or "").strip().upper() or None
+        schools_raw = data.get("school_codes") or data.get("schools") or []
+        school_codes: List[str] = []
+        if isinstance(schools_raw, list):
+            school_codes = [str(c).strip().upper() for c in schools_raw if str(c).strip()]
+        elif isinstance(schools_raw, str) and schools_raw.strip():
+            school_codes = [c.strip().upper() for c in schools_raw.split(",") if c.strip()]
+        if school and not school_codes:
+            school_codes = [school]
+
+        majors_raw = data.get("majors")
+        majors: List[str] = []
+        if isinstance(majors_raw, list):
+            majors = [str(m).strip() for m in majors_raw if str(m).strip()]
+        elif isinstance(majors_raw, str) and majors_raw.strip():
+            majors = [majors_raw.strip()]
+        major_kw = (data.get("major") or data.get("major_keyword") or "").strip() or None
+        if majors:
+            major_kw = None
+        use_ai = bool(data.get("use_ai", True))
+
+        analysis = analyze_chance(
+            admissions,
+            score=score,
+            method=method,
+            school_codes=school_codes or None,
+            major_keyword=major_kw,
+            majors=majors or None,
+        )
+        result = enrich_with_ai(analysis, use_ai=use_ai)
+        result["method_labels"] = METHOD_COLUMN_LABELS
+        return jsonify({"ok": True, "result": result})
 
     # ---------- API: Quy đổi điểm phương thức ----------
     @app.post("/api/quy-doi")

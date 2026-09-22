@@ -70,5 +70,79 @@ window.App = {
     }
     el.querySelector('.toast-body').textContent = message;
     bootstrap.Toast.getOrCreateInstance(el, { delay: 2200 }).show();
-  }
+  },
+
+  /** Select2 helpers (cần jQuery + Select2 đã load) */
+  select2Ready() {
+    return typeof window.jQuery !== 'undefined' && typeof window.jQuery.fn.select2 === 'function';
+  },
+
+  destroySelect2(el) {
+    if (!this.select2Ready() || !el) return;
+    const $el = window.jQuery(el);
+    if ($el.hasClass('select2-hidden-accessible')) {
+      try { $el.select2('destroy'); } catch (e) {}
+    }
+  },
+
+  initSelect2(el, opts) {
+    if (!this.select2Ready() || !el) return;
+    // Multi-select dùng widget CodingNepal, không Select2
+    if (el.multiple && el.classList.contains('js-multi-select')) {
+      this.initMultiSelect(el, opts);
+      return;
+    }
+    const $el = window.jQuery(el);
+    this.destroySelect2(el);
+    const defaults = {
+      theme: 'bootstrap-5',
+      width: '100%',
+      allowClear: !!el.multiple || el.querySelector('option[value=""]') != null,
+      placeholder: el.getAttribute('data-placeholder') || (el.multiple ? 'Chọn…' : 'Chọn…'),
+      language: {
+        noResults: () => 'Không có kết quả',
+        searching: () => 'Đang tìm…',
+        removeAllItems: () => 'Xóa tất cả',
+      },
+    };
+    $el.select2(Object.assign(defaults, opts || {}));
+  },
+
+  /**
+   * Gán lại options cho <select> rồi (re)init Select2 / MultiSelect.
+   * value: string | string[] | null — giữ / đặt giá trị sau khi đổ.
+   */
+  setSelectOptions(el, html, value, opts) {
+    if (!el) return;
+    const keep = value !== undefined
+      ? value
+      : (el.multiple
+        ? [...el.selectedOptions].map(o => o.value)
+        : el.value);
+    // Destroy widgets trước khi đổi HTML
+    if (el.multiple && (el.classList.contains('js-multi-select') || this.getMultiSelect?.(el))) {
+      const ms = this.getMultiSelect?.(el);
+      if (ms) ms.destroy();
+    } else {
+      this.destroySelect2(el);
+    }
+    el.innerHTML = html || '';
+    if (el.multiple) {
+      const set = new Set(Array.isArray(keep) ? keep : (keep ? [keep] : []));
+      [...el.options].forEach(o => { o.selected = set.has(o.value); });
+    } else if (keep != null && keep !== '' && [...el.options].some(o => o.value === String(keep))) {
+      el.value = keep;
+    }
+    if (el.multiple && el.classList.contains('js-multi-select')) {
+      this.initMultiSelect(el, opts);
+    } else {
+      this.initSelect2(el, opts);
+    }
+  },
+
+  getSelectValues(el) {
+    if (!el) return [];
+    if (el.multiple) return [...el.selectedOptions].map(o => o.value).filter(Boolean);
+    return el.value ? [el.value] : [];
+  },
 };
