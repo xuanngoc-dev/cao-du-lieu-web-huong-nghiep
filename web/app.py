@@ -51,6 +51,7 @@ from core.admission_chance import (
     list_school_majors,
 )
 from core.aggregator import METHOD_COLUMN_LABELS, build_grouped_score_view
+from core.bonus_policy import summarize_certificate_bonus
 from core import dataset_store
 
 
@@ -71,6 +72,7 @@ def create_app() -> Flask:
         static_folder=os.path.join(os.path.dirname(__file__), "static"),
     )
     app.config["SECRET_KEY"] = "huong-nghiep-tuyen-sinh"
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.config["OUTPUT_DIR"] = os.path.join(ROOT, "data", "output")
     app.config["DATASETS_DIR"] = os.path.join(ROOT, "data", "datasets")
     os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)
@@ -469,7 +471,7 @@ def create_app() -> Flask:
 
     @app.get("/api/crawl/methods")
     def api_crawl_methods():
-        """Danh sách phương thức xét tuyển có trong dữ liệu đã thu thập."""
+        """Danh sách phương thức xét tuyển có trong dữ liệu đã thu thập (+ quy đổi)."""
         cached = app.config.get("LAST_CRAWL") or {}
         admissions = cached.get("admissions") or []
         if not admissions:
@@ -477,10 +479,12 @@ def create_app() -> Flask:
         school = (request.args.get("school") or "").strip().upper() or None
         schools_raw = request.args.get("schools") or ""
         school_codes = [c.strip().upper() for c in schools_raw.split(",") if c.strip()]
+        qd = app.config.get("LAST_QUY_DOI") or {}
         methods = list_admission_methods(
             admissions,
             school_code=school if not school_codes else None,
             school_codes=school_codes or None,
+            methods_by_school=qd.get("methods_by_school") or {},
         )
         return jsonify({
             "ok": True,
@@ -489,6 +493,29 @@ def create_app() -> Flask:
             "methods": methods,
             "total": len(methods),
         })
+
+    @app.get("/api/crawl/bonus")
+    def api_crawl_bonus():
+        """Quy chế cộng điểm theo loại chứng chỉ và phương thức xét tuyển."""
+        cached = app.config.get("LAST_CRAWL") or {}
+        conversions = cached.get("conversions") or []
+        regulations = cached.get("regulations") or []
+        admissions = cached.get("admissions") or []
+        if not admissions and not conversions and not regulations:
+            return jsonify({
+                "ok": False,
+                "error": "Chưa có dữ liệu đã tổng hợp. Hãy chạy bước 2 trước.",
+            }), 400
+        schools_raw = request.args.get("schools") or ""
+        school_codes = [c.strip().upper() for c in schools_raw.split(",") if c.strip()]
+        payload = summarize_certificate_bonus(
+            conversions,
+            regulations,
+            school_codes=school_codes or None,
+            admissions=admissions,
+        )
+        payload["ok"] = True
+        return jsonify(payload)
 
     @app.post("/api/crawl/danh-gia")
     def api_crawl_danh_gia():

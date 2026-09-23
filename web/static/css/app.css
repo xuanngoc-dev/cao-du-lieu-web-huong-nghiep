@@ -742,6 +742,17 @@ select.cn-multi-native {
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;
 }
+.bonus-levels {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.bonus-levels li + li {
+  margin-top: 0.15rem;
+}
+.bonus-snippet {
+  color: var(--muted, #667085);
+  font-size: 0.82rem;
+}
 
 #crawlModal .modal-content {
   border: 1px solid var(--line);

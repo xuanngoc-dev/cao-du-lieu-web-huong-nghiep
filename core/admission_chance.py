@@ -333,6 +333,10 @@ _METHOD_ALIASES: Dict[str, Tuple[str, ...]] = {
     "ACT": ("ACT", "CCQT"),
     "IELTS": ("IELTS", "CCQT"),
     "CCQT": ("CCQT", "SAT", "ACT", "IELTS"),
+    # Điểm chuẩn thường chỉ ghi "Xét tuyển tài năng"; quy đổi tách Diện 1.2 / 1.3
+    "XTTN": ("XTTN", "XTTN_1.2", "XTTN_1.3"),
+    "XTTN_1.2": ("XTTN_1.2", "XTTN"),
+    "XTTN_1.3": ("XTTN_1.3", "XTTN"),
 }
 
 
@@ -369,6 +373,9 @@ def _score_compatible(method_id: str, rec_method: str, score: float, rec_score: 
     # HSA/V-ACT/TSA ↔ DGNL: không lọc thang (đã gần nhau hơn)
     if mid in ("HSA", "V-ACT", "TSA", "DGNL") and rid in ("HSA", "V-ACT", "TSA", "DGNL"):
         return True
+    # XTTN ↔ Diện 1.2 / 1.3
+    if mid in ("XTTN", "XTTN_1.2", "XTTN_1.3") and rid in ("XTTN", "XTTN_1.2", "XTTN_1.3"):
+        return True
     return mid == rid
 
 
@@ -376,16 +383,21 @@ def list_admission_methods(
     admissions: List[Dict[str, Any]],
     school_code: Optional[str] = None,
     school_codes: Optional[List[str]] = None,
+    methods_by_school: Optional[Dict[str, List[Dict[str, Any]]]] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Danh sách phương thức xét tuyển có trong dữ liệu đã thu thập
-    (theo 1 trường, nhiều trường, hoặc toàn bộ).
+    Danh sách phương thức xét tuyển = hợp (union) các phương thức
+    có trong điểm chuẩn (+ bảng quy đổi nếu có) của các trường thuộc phạm vi.
+
+    Ví dụ: A có THPT, B có HSA+TSA → THPT, HSA, TSA.
+    BKA có XTTN Diện 1.2 & 1.3 trên bảng quy đổi → hiện cả hai diện đó.
     """
     codes = _parse_school_scope(school_code, school_codes)
     code_set = set(codes) if codes else None
     counts: Dict[str, int] = defaultdict(int)
     labels: Dict[str, str] = {}
     schools_by_method: Dict[str, set] = defaultdict(set)
+    sources: Dict[str, set] = defaultdict(set)
 
     for rec in admissions:
         scode = (rec.get("ma_truong") or "").upper()
@@ -396,10 +408,52 @@ def list_admission_methods(
         mid = method_column_key(rec.get("phuong_thuc") or "") or "OTHER"
         counts[mid] += 1
         schools_by_method[mid].add(scode)
+        sources[mid].add("diem-chuan")
         if mid not in labels:
             labels[mid] = METHOD_COLUMN_LABELS.get(
                 mid, (rec.get("phuong_thuc") or mid)
             )
+
+    # Bổ sung phương thức chi tiết từ bảng quy đổi (vd. XTTN_1.2 / XTTN_1.3)
+    mbs = methods_by_school or {}
+    if mbs:
+        school_iter = codes if codes else sorted(mbs.keys())
+        for scode in school_iter:
+            for item in mbs.get(str(scode).upper()) or mbs.get(str(scode)) or []:
+                if not isinstance(item, dict):
+                    continue
+                raw_id = str(item.get("id") or item.get("column") or "").strip()
+                if not raw_id:
+                    continue
+                mid = method_column_key(raw_id) or _normalize_method_id(raw_id)
+                if not mid or mid == "OTHER":
+                    mid = raw_id.upper().replace(" ", "_")
+                schools_by_method[mid].add(str(scode).upper())
+                sources[mid].add(str(item.get("source") or "quy-doi"))
+                if mid not in counts:
+                    counts[mid] = 0
+                if mid not in labels:
+                    labels[mid] = (
+                        item.get("label")
+                        or METHOD_COLUMN_LABELS.get(mid)
+                        or raw_id
+                    )
+
+    # Nếu đã có diện cụ thể (1.2/1.3) thì bỏ mã XTTN chung cho cùng phạm vi
+    # để dropdown không trùng "Xét tuyển tài năng" + "XTTN Diện …"
+    has_xttn_dien = any(m.startswith("XTTN_") for m in counts)
+    if has_xttn_dien and "XTTN" in counts:
+        # Chỉ ẩn XTTN chung khi mọi trường có XTTN đều đã có ít nhất một diện
+        schools_generic = set(schools_by_method.get("XTTN") or ())
+        schools_dien = set()
+        for m, scs in schools_by_method.items():
+            if m.startswith("XTTN_"):
+                schools_dien |= set(scs)
+        if schools_generic and schools_generic.issubset(schools_dien):
+            counts.pop("XTTN", None)
+            schools_by_method.pop("XTTN", None)
+            labels.pop("XTTN", None)
+            sources.pop("XTTN", None)
 
     order = list(METHOD_COLUMN_LABELS.keys())
     methods = sorted(
@@ -413,6 +467,7 @@ def list_admission_methods(
             "count": counts[m],
             "schools": sorted(schools_by_method[m]),
             "school_count": len(schools_by_method[m]),
+            "sources": sorted(sources.get(m) or []),
         }
         for m in methods
     ]

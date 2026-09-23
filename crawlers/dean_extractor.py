@@ -126,6 +126,11 @@ def method_to_calc_id(method_name: str) -> str:
     if "chung chi" in t or "ccqt" in t:
         return "CCQT"
     if "xttn" in t or "tai nang" in t:
+        # Giữ tách diện khi tên có 1.2 / 1.3 (vd. XTTN Diện 1.2)
+        if "1.2" in t or "dien 1.2" in t:
+            return "XTTN_1.2"
+        if "1.3" in t or "dien 1.3" in t:
+            return "XTTN_1.3"
         return "XTTN"
     return ""
 
