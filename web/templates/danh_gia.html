@@ -56,7 +56,7 @@
   <div class="card-header dg-collapse-header">
     <button class="dg-collapse-btn" type="button"
       data-bs-toggle="collapse" data-bs-target="#bonusCollapse"
-      aria-expanded="true" aria-controls="bonusCollapse">
+      aria-expanded="false" aria-controls="bonusCollapse">
       <span class="dg-collapse-title">
         <i class="bi bi-patch-plus me-1"></i> Quy chế cộng điểm theo chứng chỉ
       </span>
@@ -66,7 +66,7 @@
       </span>
     </button>
   </div>
-  <div id="bonusCollapse" class="collapse show">
+  <div id="bonusCollapse" class="collapse">
   <div class="card-body pt-2">
     <p class="small text-muted mb-3">
       Trường nào được cộng điểm theo loại chứng chỉ và phương thức xét tuyển.
@@ -74,20 +74,17 @@
       đoạn quy chế cho biết phương thức được áp dụng.
     </p>
     <div class="row g-3 align-items-end mb-3">
-      <div class="col-md-4">
+      <div class="col-md-6">
         <label class="form-label" for="bonusCert">Loại chứng chỉ</label>
-        <select id="bonusCert" class="form-select">
+        <select id="bonusCert" class="form-select js-multi-select" data-placeholder="Tất cả chứng chỉ">
           <option value="">Tất cả</option>
         </select>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-6">
         <label class="form-label" for="bonusMethod">Phương thức tuyển sinh</label>
-        <select id="bonusMethod" class="form-select">
+        <select id="bonusMethod" class="form-select js-multi-select" data-placeholder="Tất cả phương thức">
           <option value="">Tất cả</option>
         </select>
-      </div>
-      <div class="col-md-4">
-        <p class="small text-muted mb-0" id="bonusFilterHint"></p>
       </div>
     </div>
     <div id="bonusBody">
@@ -309,8 +306,10 @@
     <p class="small text-muted mb-3">
       Phương thức lấy theo hợp của các trường đã chọn (gồm cả diện chi tiết từ bảng quy đổi, vd. XTTN Diện 1.2).
       Mặc định một dòng — bấm <b>+</b> để thêm điểm theo phương thức khác.
+      Chứng chỉ dùng để cộng điểm theo bảng của từng trường (nhiều chứng chỉ thì lấy mức cao nhất, không cộng dồn).
     </p>
-    <div id="chanceScoreRows" class="chance-score-rows mb-3"></div>
+    <div id="chanceScoreRows" class="chance-score-rows mb-2"></div>
+    <div id="chanceCertRows" class="chance-score-rows mb-3"></div>
     <div class="row g-3 align-items-end">
       <div class="col-md-5">
         <label class="form-label" for="chanceSchool">Trường</label>
@@ -432,6 +431,11 @@ function fillSchoolSelects(trends, keepChart, keepChance) {
 
 let chanceMethodOptions = []; // [{id, label, count}]
 let chanceScoreRowSeq = 0;
+let chanceCertRowSeq = 0;
+const CHANCE_CERT_TYPES = [
+  'IELTS', 'TOEFL', 'TOEIC', 'VSTEP', 'Cambridge', 'SAT', 'ACT',
+  'A-Level', 'JLPT', 'HSK', 'DELF', 'APTIS', 'TRKI',
+];
 
 function preferMethodId(ids, prefer) {
   if (prefer && ids.includes(prefer)) return prefer;
@@ -546,6 +550,83 @@ function refreshChanceMethodSelects(preferMethod) {
   });
 }
 
+function certTypeOptionsHtml(selected) {
+  const cur = selected || '';
+  const head = `<option value="">Không dùng chứng chỉ</option>`;
+  return head + CHANCE_CERT_TYPES.map(c =>
+    `<option value="${esc(c)}"${c === cur ? ' selected' : ''}>${esc(c)}</option>`
+  ).join('');
+}
+
+function syncChanceCertRowActions() {
+  const rows = document.querySelectorAll('#chanceCertRows .chance-cert-row');
+  const onlyOne = rows.length <= 1;
+  rows.forEach((row, idx) => {
+    const isLast = idx === rows.length - 1;
+    const addBtn = row.querySelector('.chance-cert-add');
+    const removeBtn = row.querySelector('.chance-cert-remove');
+    if (addBtn) addBtn.classList.toggle('d-none', !isLast);
+    if (removeBtn) {
+      removeBtn.classList.toggle('d-none', onlyOne);
+      removeBtn.disabled = onlyOne;
+    }
+  });
+}
+
+function addChanceCertRow(preset) {
+  const wrap = document.getElementById('chanceCertRows');
+  if (!wrap) return;
+  const id = ++chanceCertRowSeq;
+  const cert = (preset && preset.type) || '';
+  const score = preset && preset.score != null ? preset.score : '';
+  const row = document.createElement('div');
+  row.className = 'chance-score-row chance-cert-row row g-2 align-items-end';
+  row.dataset.rowId = String(id);
+  row.innerHTML = `
+    <div class="col-md-5">
+      <label class="form-label">Chứng chỉ</label>
+      <select class="form-select chance-cert-type">${certTypeOptionsHtml(cert)}</select>
+    </div>
+    <div class="col-md-5">
+      <label class="form-label">Điểm chứng chỉ</label>
+      <input type="number" step="0.1" class="form-control chance-cert-score" placeholder="VD: 8.0" value="${esc(score)}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label d-none d-md-block">&nbsp;</label>
+      <div class="chance-score-actions">
+        <button type="button" class="btn btn-outline-secondary chance-cert-remove" title="Xoá chứng chỉ">
+          <i class="bi bi-trash"></i>
+        </button>
+        <button type="button" class="btn btn-outline-teal chance-cert-add d-none" title="Thêm chứng chỉ">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
+    </div>`;
+  wrap.appendChild(row);
+  row.querySelector('.chance-cert-remove').addEventListener('click', () => {
+    if (wrap.querySelectorAll('.chance-cert-row').length <= 1) {
+      row.querySelector('.chance-cert-type').value = '';
+      row.querySelector('.chance-cert-score').value = '';
+      return;
+    }
+    row.remove();
+    syncChanceCertRowActions();
+  });
+  row.querySelector('.chance-cert-add').addEventListener('click', () => addChanceCertRow());
+  syncChanceCertRowActions();
+}
+
+function getChanceCertificates() {
+  const items = [];
+  document.querySelectorAll('#chanceCertRows .chance-cert-row').forEach(row => {
+    const type = row.querySelector('.chance-cert-type')?.value || '';
+    const score = row.querySelector('.chance-cert-score')?.value;
+    if (!type || score === '' || score == null) return;
+    items.push({ type, score });
+  });
+  return items;
+}
+
 function getChanceScoreEntries() {
   const entries = [];
   document.querySelectorAll('#chanceScoreRows .chance-score-row').forEach(row => {
@@ -617,6 +698,10 @@ async function loadChanceMethods(schoolCodes, keepValue) {
     addChanceScoreRow({ method: keepValue || '' });
   } else {
     refreshChanceMethodSelects(keepValue);
+  }
+  const certWrap = document.getElementById('chanceCertRows');
+  if (certWrap && !certWrap.querySelector('.chance-cert-row')) {
+    addChanceCertRow();
   }
 }
 
@@ -823,21 +908,24 @@ function fillBonusFilters(data) {
   const methodKeep = methodSel.value;
   const certs = data.certificates || [];
   const methods = data.methods || [];
-  certSel.innerHTML = '<option value="">Tất cả</option>' + certs.map(c =>
+  const certHtml = '<option value="">Tất cả</option>' + certs.map(c =>
     `<option value="${esc(c)}">${esc(c)}</option>`
   ).join('');
-  methodSel.innerHTML = '<option value="">Tất cả</option>' + methods.map(m =>
+  const methodHtml = '<option value="">Tất cả</option>' + methods.map(m =>
     `<option value="${esc(m)}">${esc(m)}</option>`
   ).join('');
-  if (certs.includes(certKeep)) certSel.value = certKeep;
-  if (methods.includes(methodKeep)) methodSel.value = methodKeep;
+  window.App.setSelectOptions(certSel, certHtml, certs.includes(certKeep) ? certKeep : '', {
+    placeholder: 'Tất cả chứng chỉ',
+  });
+  window.App.setSelectOptions(methodSel, methodHtml, methods.includes(methodKeep) ? methodKeep : '', {
+    placeholder: 'Tất cả phương thức',
+  });
 }
 
 function renderBonus(data) {
   lastBonus = data || { schools: [], missing: [] };
   const badge = document.getElementById('bonusCountBadge');
   const body = document.getElementById('bonusBody');
-  const hint = document.getElementById('bonusFilterHint');
   const schools = lastBonus.schools || [];
   const missing = lastBonus.missing || [];
   const withCount = lastBonus.with_count != null ? lastBonus.with_count : schools.length;
@@ -851,7 +939,6 @@ function renderBonus(data) {
   const cert = document.getElementById('bonusCert').value;
   const method = document.getElementById('bonusMethod').value;
   const blocks = [];
-  let shownRows = 0;
   schools.forEach(school => {
     const rows = (school.rows || []).filter(row => {
       if (cert && !(row.certificates || []).includes(cert)) return false;
@@ -859,7 +946,6 @@ function renderBonus(data) {
       return true;
     });
     if (!rows.length) return;
-    shownRows += rows.length;
     const bodyRows = rows.map(row => {
       const certs = (row.certificates || []).map(c =>
         `<span class="badge text-bg-light border fw-normal me-1">${esc(c)}</span>`
@@ -901,11 +987,6 @@ function renderBonus(data) {
         </div>
       </div>`);
   });
-  if (hint) {
-    hint.textContent = shownRows
-      ? `Đang hiện ${shownRows} dòng`
-      : (schools.length ? 'Không có dòng khớp bộ lọc.' : '');
-  }
   if (!schools.length) {
     body.innerHTML = `<div class="alert alert-light border py-2 mb-0 small">
       Chưa thấy quy chế cộng điểm theo chứng chỉ cho các trường đã chọn.
@@ -1493,6 +1574,12 @@ function renderChanceSummaryTable(summary) {
     </div>`;
 }
 
+function formatChanceScoreCell(s) {
+  const shown = s.user_score != null ? esc(s.user_score) : '';
+  if (!s.bonus) return shown;
+  return `${shown}<div class="text-muted">${esc(s.base_score)} + ${esc(s.bonus)}</div>`;
+}
+
 function renderChancePanel(result) {
   const summary = result.school_summary || [];
   const summaryHtml = renderChanceSummaryTable(summary);
@@ -1516,6 +1603,9 @@ function renderChancePanel(result) {
       <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
         ${levelBadge(result.level, result.level_label)}
         ${profileBadges}
+        ${(st.certificates || []).map(c =>
+          `<span class="badge text-bg-light border">${esc(c.type)}: <strong>${esc(c.score)}</strong></span>`
+        ).join('')}
         <span class="small text-muted ms-auto">Năm ${esc(st.latest_year)} · ${esc(st.n_pass)}/${esc(st.n_latest)} ngành đạt ngưỡng</span>
       </div>
       <div class="row g-2 mb-3">
@@ -1545,7 +1635,7 @@ function renderChancePanel(result) {
                 <td><code>${esc(s.ma_truong)}</code>${schoolLink}</td>
                 <td class="small">${esc(s.ten_nganh)}</td>
                 <td class="small">${esc(s.user_method_label || s.phuong_thuc || '')}</td>
-                <td>${esc(s.user_score != null ? s.user_score : '')}</td>
+                <td>${formatChanceScoreCell(s)}</td>
                 <td>${esc(s.diem_chuan)}</td>
                 <td>${s.chenh_lech > 0 ? '+' : ''}${esc(s.chenh_lech)}</td>
                 <td class="small">${esc(s.co_hoi)}</td>
@@ -1837,6 +1927,7 @@ document.getElementById('btnChance').addEventListener('click', async () => {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         scores,
+        certificates: getChanceCertificates(),
         school_codes: schoolCodes,
         majors: window.App.getSelectValues(document.getElementById('chanceMajor')),
         use_ai: true

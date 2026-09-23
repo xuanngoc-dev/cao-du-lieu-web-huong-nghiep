@@ -541,6 +541,22 @@ def create_app() -> Flask:
                     continue
                 scores_payload.append({"method": mid, "score": sc})
 
+        certificates: List[Dict[str, Any]] = []
+        raw_certs = data.get("certificates")
+        if isinstance(raw_certs, list):
+            for item in raw_certs:
+                if not isinstance(item, dict):
+                    continue
+                cert_type = (item.get("type") or item.get("certificate") or "").strip()
+                if not cert_type:
+                    continue
+                try:
+                    cert_score = float(str(item.get("score")).replace(",", "."))
+                except (TypeError, ValueError):
+                    continue
+                certificates.append({"type": cert_type, "score": cert_score})
+        conversions = cached.get("conversions") or []
+
         score = None
         method = (data.get("method") or "THPT").upper().replace("VACT", "V-ACT")
         if not scores_payload:
@@ -584,6 +600,8 @@ def create_app() -> Flask:
                     school_codes=school_codes or None,
                     major_keyword=major_kw,
                     majors=majors or None,
+                    certificates=certificates or None,
+                    conversions=conversions,
                 )
                 # Khi multi: gọi AI theo từng phương thức nếu user bật checkbox
                 one = enrich_with_ai(analysis, use_ai=use_ai)
@@ -612,6 +630,8 @@ def create_app() -> Flask:
             major_keyword=major_kw,
             majors=majors or None,
             scores=scores_payload or None,
+            certificates=certificates or None,
+            conversions=conversions,
         )
         result = enrich_with_ai(analysis, use_ai=use_ai)
         result["method_labels"] = METHOD_COLUMN_LABELS

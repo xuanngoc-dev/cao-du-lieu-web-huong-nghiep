@@ -11,6 +11,8 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from crawlers.dean_extractor import method_to_calc_id
+
 _VACT_RE = re.compile(r"v-act|vact", re.I)
 _PRIZE_RE = re.compile(
     r"giải|học sinh giỏi|olympic|khoa học kỹ thuật|đội tuyển",
@@ -469,3 +471,174 @@ def summarize_certificate_bonus(
         "certificates": cert_options,
         "methods": method_options,
     }
+
+
+# Phương thức thang ~30 điểm: bảng cộng điểm không ghi phương thức chỉ cộng vào các thang này.
+_ADDITIVE_METHODS = {"THPT", "HOC_BA", "KET_HOP", "XTTN", "XTTN_1.2", "XTTN_1.3"}
+_CERT_ALIASES = {
+    "A-LEVEL": "A-Level",
+    "ALEVEL": "A-Level",
+    "TOEFL-IBT": "TOEFL",
+    "TOEFL IBT": "TOEFL",
+}
+_BAND_RANGE_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*-\s*(\d+(?:[.,]\d+)?)")
+_BAND_UP_RE = re.compile(
+    r"(?:≥|>=|từ)\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s*(?:trở lên|\+)",
+    re.I,
+)
+_BAND_NUM_RE = re.compile(r"\d+(?:[.,]\d+)?")
+
+
+def _canon_cert(name: str) -> str:
+    raw = re.sub(r"\s+", " ", (name or "").strip())
+    key = raw.upper().replace("_", " ")
+    if key in _CERT_ALIASES:
+        return _CERT_ALIASES[key]
+    for label, _pat in _CERT_PATTERNS:
+        if label.upper() == raw.upper() or label.upper() == key:
+            return label
+    return raw.upper()
+
+
+def _amount_number(amount: str) -> Optional[float]:
+    match = re.search(r"\d+(?:[.,]\d+)?", amount or "")
+    if not match:
+        return None
+    return _parse_vn_number(match.group(0))
+
+
+def _score_bands(text: str) -> List[Tuple[float, float]]:
+    """Khoảng điểm đóng trong nhãn chứng chỉ. 'trở lên' → không giới hạn trên."""
+    raw = (text or "").replace("–", "-").replace("—", "-").replace("−", "-")
+    bands: List[Tuple[float, float]] = []
+    for match in _BAND_RANGE_RE.finditer(raw):
+        lo = _parse_vn_number(match.group(1))
+        hi = _parse_vn_number(match.group(2))
+        if lo is None or hi is None:
+            continue
+        if lo > hi:
+            lo, hi = hi, lo
+        bands.append((lo, hi))
+    if bands:
+        return bands
+    up = _BAND_UP_RE.search(raw)
+    if up:
+        lo = _parse_vn_number(up.group(1) or up.group(2))
+        if lo is not None:
+            return [(lo, float("inf"))]
+    nums = [n for n in (_parse_vn_number(x) for x in _BAND_NUM_RE.findall(raw)) if n is not None]
+    if len(nums) == 1:
+        return [(nums[0], nums[0])]
+    return []
+
+
+def _in_band(score: float, lo: float, hi: float) -> bool:
+    if hi == float("inf"):
+        return score + 1e-9 >= lo
+    return (lo - 1e-9) <= score <= (hi + 1e-9)
+
+
+def _method_allows_bonus(row_method: str, user_method: str) -> bool:
+    if not row_method:
+        return (user_method or "THPT") in _ADDITIVE_METHODS
+    return row_method == (user_method or "")
+
+
+def index_certificate_bonus_bands(
+    conversions: Sequence[Dict[str, Any]],
+) -> Dict[str, List[dict]]:
+    """
+    Bảng cộng điểm theo trường: mỗi mức là một khoảng chứng chỉ → số điểm cộng.
+    """
+    index: Dict[str, List[dict]] = {}
+    for row in conversions or []:
+        code = str(row.get("ma_truong") or "").strip().upper()
+        if not code:
+            continue
+        hang = str(row.get("hang_muc") or "").strip()
+        loai = str(row.get("loai_bang") or "").strip()
+        diem = str(row.get("diem_quy_doi") or "").strip()
+        detail = str(row.get("chi_tiet_hang") or "").strip()
+        if _PRIZE_RE.search(hang) and not _certs_in(hang):
+            continue
+        if _HEADER_HANG_RE.search(hang) and not _certs_in(hang):
+            continue
+        amount = _bonus_amount(diem, detail)
+        bonus = _amount_number(amount)
+        if bonus is None or bonus <= 0:
+            continue
+        method = method_to_calc_id(str(row.get("phuong_thuc") or ""))
+        primary_certs = _certs_in(" ".join([loai, hang]))
+        if not primary_certs:
+            continue
+        bands = _score_bands(hang)
+        targets: List[Tuple[List[str], float, float, str]] = []
+        if bands:
+            hang_certs = _certs_in(hang) or primary_certs
+            for lo, hi in bands:
+                targets.append((hang_certs, lo, hi, hang))
+        for piece in detail.split(";"):
+            piece_certs = _certs_in(piece)
+            if not piece_certs:
+                continue
+            for lo, hi in _score_bands(piece):
+                targets.append((piece_certs, lo, hi, piece.replace("=", ": ")))
+        bucket = index.setdefault(code, [])
+        for certs, lo, hi, label in targets:
+            bucket.append({
+                "certs": certs,
+                "method": method,
+                "lo": lo,
+                "hi": hi,
+                "bonus": bonus,
+                "muc": re.sub(r"\s+", " ", label).strip()[:120],
+                "diem": amount,
+            })
+    return index
+
+
+def best_certificate_bonus(
+    index: Dict[str, List[dict]],
+    school_code: str,
+    certificates: Sequence[Dict[str, Any]],
+    method_id: str = "THPT",
+) -> Optional[dict]:
+    """
+    Mức cộng cao nhất của trường cho các chứng chỉ đã nhập.
+    Nhiều chứng chỉ không cộng dồn.
+    """
+    bands = (index or {}).get((school_code or "").upper()) or []
+    if not bands or not certificates:
+        return None
+    best: Optional[Tuple[Tuple[float, float], dict]] = None
+    for item in certificates:
+        if not isinstance(item, dict):
+            continue
+        try:
+            score = float(str(item.get("score")).replace(",", "."))
+        except (TypeError, ValueError):
+            continue
+        cert = _canon_cert(str(item.get("type") or item.get("certificate") or ""))
+        if not cert:
+            continue
+        for band in bands:
+            if cert not in (band.get("certs") or []):
+                continue
+            if not _method_allows_bonus(band.get("method") or "", method_id):
+                continue
+            if not _in_band(score, float(band["lo"]), float(band["hi"])):
+                continue
+            hi = float(band["hi"])
+            width = 1e12 if hi == float("inf") else hi - float(band["lo"])
+            payload = {
+                "bonus": float(band["bonus"]),
+                "certificate": cert,
+                "certificate_score": score,
+                "muc": band.get("muc") or "",
+                "diem": band.get("diem") or "",
+                "method": band.get("method") or "",
+            }
+            rank = (width, -payload["bonus"])
+            if best is None or rank < best[0]:
+                best = (rank, payload)
+    return best[1] if best else None

@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 
 from core.aggregator import METHOD_COLUMN_LABELS, method_column_key
+from core.bonus_policy import best_certificate_bonus, index_certificate_bonus_bands
 from core.normalizer import get_school_display_name
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -534,6 +535,29 @@ def _normalize_score_profiles(
     return profiles
 
 
+def _cert_score(item: Dict[str, Any]) -> Optional[float]:
+    try:
+        return float(str(item.get("score")).replace(",", "."))
+    except (TypeError, ValueError):
+        return None
+
+
+def _canon_cert_label(item: Dict[str, Any]) -> str:
+    return str(item.get("type") or item.get("certificate") or "").strip()
+
+
+def _bonus_note(hit: Optional[Dict[str, Any]]) -> str:
+    if not hit or not hit.get("bonus"):
+        return ""
+    score = hit.get("certificate_score")
+    score_txt = f"{score:g}" if isinstance(score, float) else str(score or "")
+    muc = hit.get("muc") or hit.get("diem") or ""
+    note = f"{hit.get('certificate') or ''} {score_txt} → +{float(hit['bonus']):g}"
+    if muc:
+        note += f" ({muc})"
+    return note.strip()
+
+
 def _pick_profile_for_record(
     profiles: List[Dict[str, Any]],
     rec_mid: str,
@@ -567,6 +591,8 @@ def analyze_chance(
     major_keyword: Optional[str] = None,
     majors: Optional[List[str]] = None,
     scores: Optional[List[Dict[str, Any]]] = None,
+    certificates: Optional[List[Dict[str, Any]]] = None,
+    conversions: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """
     So sánh điểm thí sinh với điểm chuẩn theo một hoặc nhiều phương thức.
@@ -632,6 +658,11 @@ def analyze_chance(
 
     matched: List[Dict[str, Any]] = []
     schools_with_method: set = set()
+    cert_items = [
+        item for item in (certificates or [])
+        if isinstance(item, dict) and item.get("type") and item.get("score") is not None
+    ]
+    bonus_index = index_certificate_bonus_bands(conversions or []) if cert_items else {}
 
     for rec in admissions:
         sc = (rec.get("ma_truong") or "").upper()
@@ -646,12 +677,20 @@ def analyze_chance(
         prof = _pick_profile_for_record(profiles, mid, sc_score)
         if not prof:
             continue
-        user_score = float(prof["score"])
+        base_score = float(prof["score"])
+        bonus_hit = best_certificate_bonus(
+            bonus_index, sc, cert_items, prof["method_id"],
+        ) if cert_items else None
+        bonus = float(bonus_hit["bonus"]) if bonus_hit else 0.0
+        user_score = round(base_score + bonus, 2)
         schools_with_method.add(sc)
         matched.append({
             **rec,
             "_score": sc_score,
             "_method": mid,
+            "_base_score": base_score,
+            "_bonus": bonus,
+            "_bonus_hit": bonus_hit,
             "_user_score": user_score,
             "_user_method": prof["method_id"],
             "_user_method_label": prof["method_label"],
@@ -844,6 +883,9 @@ def analyze_chance(
             "user_method": r.get("_user_method"),
             "user_method_label": r.get("_user_method_label"),
             "user_score": r.get("_user_score"),
+            "base_score": r.get("_base_score"),
+            "bonus": r.get("_bonus") or 0,
+            "bonus_note": _bonus_note(r.get("_bonus_hit")),
             "diem_chuan": r["_score"],
             "chenh_lech": r["_gap"],
             "co_hoi": "đạt ngưỡng" if r["_user_score"] >= r["_score"] else "dưới ngưỡng",
@@ -882,13 +924,17 @@ def analyze_chance(
         avg_sc = None
         if rows_sc and not multi:
             avg_sc = round(sum(r["_score"] for r in rows_sc) / len(rows_sc), 2)
+        bonus_hit = next((r.get("_bonus_hit") for r in rows_sc if r.get("_bonus")), None)
         school_summary.append({
             "ma_truong": sc,
             "ten_truong": name,
             "ok": True,
             "mark": "✓",
             "reason": "ok",
-            "message": "",
+            "message": _bonus_note(bonus_hit),
+            "bonus": float(bonus_hit["bonus"]) if bonus_hit else 0,
+            "base_score": rows_sc[0].get("_base_score") if rows_sc else None,
+            "effective_score": rows_sc[0].get("_user_score") if rows_sc and bonus_hit else None,
             "n_nganh": len(rows_sc),
             "n_pass": n_pass,
             "avg_cutoff": avg_sc,
@@ -935,6 +981,35 @@ def analyze_chance(
         msg += f" TB điểm chuẩn {avg_cutoff}, chênh lệch TB {avg_gap:+}."
     if major_ids:
         msg += f" Đã lọc {len(major_ids)} ngành đã chọn."
+    bonus_schools = []
+    seen_bonus = set()
+    for r in latest_rows:
+        hit = r.get("_bonus_hit")
+        code = (r.get("ma_truong") or "").upper()
+        if not hit or not hit.get("bonus") or code in seen_bonus:
+            continue
+        seen_bonus.add(code)
+        bonus_schools.append({
+            "ma_truong": code,
+            "ten_truong": r.get("ten_truong") or code,
+            "bonus": hit["bonus"],
+            "base_score": r.get("_base_score"),
+            "effective_score": r.get("_user_score"),
+            "note": _bonus_note(hit),
+        })
+    if bonus_schools:
+        brief = "; ".join(
+            f"{b['ma_truong']} +{b['bonus']:g} → {b['effective_score']:g}"
+            for b in bonus_schools[:8]
+        )
+        extra = f" (+{len(bonus_schools) - 8} trường)" if len(bonus_schools) > 8 else ""
+        msg += f" Đã cộng điểm chứng chỉ: {brief}{extra}."
+    stats["certificates"] = [
+        {"type": _canon_cert_label(item), "score": _cert_score(item)}
+        for item in cert_items
+        if _cert_score(item) is not None
+    ]
+    stats["bonus_by_school"] = bonus_schools
     if schools_no_method:
         msg += (
             f" {len(schools_no_method)} trường không có phương thức "
@@ -1226,6 +1301,8 @@ def enrich_with_ai(analysis: Dict[str, Any], use_ai: bool = True) -> Dict[str, A
                         "n_pass",
                         "n_latest",
                         "trend_delta",
+                        "certificates",
+                        "bonus_by_school",
                     )
                 },
                 "samples": samples_for_ai,
