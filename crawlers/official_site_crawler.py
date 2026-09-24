@@ -45,6 +45,7 @@ _SKIP_EXT_RE = re.compile(
 )
 _YEAR_RE = re.compile(r"\b(201[6-9]|202[0-9])\b")
 _MAJOR_CODE_RE = re.compile(r"^[A-Z]{2,4}\d{2,8}$")
+_NUM_MAJOR_RE = re.compile(r"\d{6,8}")
 
 # Điểm càng cao càng ưu tiên trang / tệp tuyển sinh đại học chính quy.
 _POS_HINTS = (
@@ -900,6 +901,11 @@ class OfficialSiteCrawler:
                             image_path, school_code, school_name, year, source
                         )
                     )
+                    records.extend(
+                        self._cutoff_rows_from_image(
+                            image_path, school_code, school_name, year, source
+                        )
+                    )
                 except Exception as exc:
                     print(f"[CẢNH BÁO] Không đọc trang scan: {exc}")
                 finally:
@@ -961,6 +967,69 @@ class OfficialSiteCrawler:
                 ):
                     found[-1].ten_nganh = clean_text(f"{tail} {name}")
         found = [rec for rec in found if _quota_name_ok(rec.ten_nganh)]
+        if len(found) < 3:
+            return []
+        return found
+
+    def _cutoff_rows_from_image(
+        self,
+        image_path: str,
+        school_code: str,
+        school_name: str,
+        year: int,
+        source: str,
+    ) -> List[AdmissionRecord]:
+        """Đọc bảng điểm chuẩn scan: mã ngành số, tên ngành, điểm bên phải."""
+        from core.normalizer import normalize_score
+
+        tokens = ocr_tokens(image_path)
+        if len(tokens) < 8:
+            return []
+        page_text = strip_accents(" ".join(text for _, _, text in tokens))
+        if "thpt" in page_text or "tot nghiep" in page_text:
+            method = "Điểm thi THPT"
+        elif "diem chuan" in page_text or "trung tuyen" in page_text:
+            method = "Điểm chuẩn"
+        else:
+            method = "Điểm chuẩn"
+        rows = _cluster_rows(tokens, gap=0.012)
+        found: List[AdmissionRecord] = []
+        for row in rows:
+            code = ""
+            code_x = 0.0
+            score = None
+            score_x = 1.0
+            name_parts: List[str] = []
+            for x, text in row:
+                match = _NUM_MAJOR_RE.search(text)
+                if not code and match and 0.08 <= x <= 0.45:
+                    code = match.group(0)
+                    code_x = x
+                value = normalize_score(text.replace(" ", ""))
+                if value is not None and x >= 0.55 and (score is None or x > score_x):
+                    score = value
+                    score_x = x
+            if not code or score is None:
+                continue
+            for x, text in row:
+                if code_x < x < score_x and re.search(r"[A-Za-zÀ-ỹ]", text):
+                    name_parts.append(text)
+            name = clean_text(" ".join(name_parts))
+            if len(name) < 3 or "nganh" in strip_accents(name) and "chuong trinh" in strip_accents(name):
+                continue
+            found.append(
+                AdmissionRecord(
+                    ma_truong=school_code,
+                    ten_truong=school_name,
+                    ma_nganh=code,
+                    ten_nganh=name,
+                    nam=year,
+                    diem_chuan=score,
+                    thang_diem=40.0 if score > 30 else 30.0,
+                    phuong_thuc=method,
+                    nguon=source,
+                )
+            )
         if len(found) < 3:
             return []
         return found

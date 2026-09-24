@@ -48,6 +48,11 @@ class ExcelAdmissionParser(BaseParser):
             if match_code:
                 inferred_school_code = match_code.group(1)
 
+        if os.path.splitext(file_path)[1].lower() == ".csv":
+            return self._parse_csv(
+                file_path, inferred_school_code, default_school_name, inferred_year, filename
+            )
+
         try:
             excel_file = pd.ExcelFile(file_path)
         except Exception as e:
@@ -82,13 +87,83 @@ class ExcelAdmissionParser(BaseParser):
 
         return records
 
+    def _parse_csv(
+        self,
+        file_path: str,
+        school_code: str,
+        school_name: str,
+        year: int,
+        filename: str,
+    ) -> List[AdmissionRecord]:
+        """Đọc CSV (dấu phẩy, chấm phẩy hoặc tab; UTF-8 hoặc Windows tiếng Việt)."""
+        last_error: Optional[Exception] = None
+        for encoding in ("utf-8-sig", "utf-8", "cp1258", "latin-1"):
+            try:
+                preview = self._read_csv_table(file_path, header=None, nrows=20, encoding=encoding)
+                header_row_idx = self._detect_header_row(preview)
+                if header_row_idx is None:
+                    header_row_idx = 0
+                df = self._read_csv_table(
+                    file_path, header=header_row_idx, encoding=encoding
+                )
+                df = df.dropna(how="all")
+                return self._parse_dataframe(
+                    df=df,
+                    school_code=school_code,
+                    school_name=school_name or school_code,
+                    base_year=year,
+                    source_name=filename,
+                    source_kind="CSV",
+                )
+            except Exception as exc:
+                last_error = exc
+        print(f"[CẢNH BÁO] Không thể mở file CSV {file_path}: {last_error}")
+        return []
+
+    def _read_csv_table(
+        self,
+        file_path: str,
+        header,
+        encoding: str,
+        nrows: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """Thử dấu phân cách tự động, rồi dấu phẩy, chấm phẩy và tab."""
+        last_error: Optional[Exception] = None
+        for sep in (None, ",", ";", "\t"):
+            try:
+                frame = pd.read_csv(
+                    file_path,
+                    header=header,
+                    nrows=nrows,
+                    encoding=encoding,
+                    sep=sep,
+                    engine="python",
+                )
+            except Exception as exc:
+                last_error = exc
+                continue
+            if sep is None and self._csv_collapsed(frame):
+                continue
+            return frame
+        raise last_error or ValueError("không đọc được CSV")
+
+    @staticmethod
+    def _csv_collapsed(frame: pd.DataFrame) -> bool:
+        if frame.shape[1] != 1:
+            return False
+        sample = " ".join(str(value) for value in frame.iloc[:5, 0].tolist())
+        return any(mark in sample for mark in (",", ";", "\t"))
+
     def _detect_header_row(self, df: pd.DataFrame) -> Optional[int]:
         """Dò tìm chỉ số dòng chứa tiêu đề bảng."""
         for r_idx in range(len(df)):
             row_values = [str(val) for val in df.iloc[r_idx].values if pd.notna(val)]
             joined_text = " ".join(row_values).lower()
             # Nếu dòng có chứa cả từ khóa mã ngành / tên ngành hoặc điểm chuẩn
-            if ("mã ngành" in joined_text or "mã xét tuyển" in joined_text or "tên ngành" in joined_text) and \
+            has_code = any(token in joined_text for token in ("mã ngành", "mã xét tuyển", "tên ngành")) or (
+                re.search(r"(^|[^a-zà-ỹ])mã([^a-zà-ỹ]|$)", joined_text) and "ngành" in joined_text
+            )
+            if has_code and \
                ("điểm" in joined_text or "chỉ tiêu" in joined_text or "tổ hợp" in joined_text or "ngành" in joined_text):
                 return r_idx
         return 0  # Mặc định dòng đầu tiên nếu không tìm thấy dòng rõ ràng
@@ -99,7 +174,8 @@ class ExcelAdmissionParser(BaseParser):
         school_code: str,
         school_name: str,
         base_year: int,
-        source_name: str
+        source_name: str,
+        source_kind: str = "Excel",
     ) -> List[AdmissionRecord]:
         records: List[AdmissionRecord] = []
         columns = [str(c).strip() for c in df.columns]
@@ -203,7 +279,7 @@ class ExcelAdmissionParser(BaseParser):
                         quy_che=quy_che,
                         diem_quy_doi=diem_quy_doi,
                         ghi_chu=ghi_chu,
-                        nguon=f"Excel: {source_name}"
+                        nguon=f"{source_kind}: {source_name}"
                     )
                     records.append(rec)
 

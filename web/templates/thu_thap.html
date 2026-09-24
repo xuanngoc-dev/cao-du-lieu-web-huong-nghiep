@@ -44,7 +44,7 @@
         <select id="crawlYears" class="form-select form-select-sm js-multi-select" multiple
           data-placeholder="Chọn năm học">
           {% for year in range(2021, 2027) %}
-          <option value="{{ year }}" {% if year >= 2024 %}selected{% endif %}>{{ year }}</option>
+          <option value="{{ year }}" {% if year >= 2021 %}selected{% endif %}>{{ year }}</option>
           {% endfor %}
         </select>
       </div>
@@ -103,6 +103,12 @@
         <label class="form-label small mb-1" for="resultMethod">Phương thức</label>
         <select id="resultMethod" class="form-select form-select-sm js-multi-select" multiple
           data-placeholder="Tất cả phương thức"></select>
+      </div>
+      <div class="col-12">
+        <div class="form-check mb-0">
+          <input class="form-check-input" type="checkbox" id="resultMissingScore">
+          <label class="form-check-label small" for="resultMissingScore">Chỉ hiện bản ghi không có điểm chuẩn ở mọi năm</label>
+        </div>
       </div>
     </div>
   </div>
@@ -223,6 +229,64 @@
       <div class="modal-body">
         <p class="small text-muted mb-2" id="resultSourceCaption"></p>
         <ol class="mb-0" id="resultSourceList"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="scoreUploadModal" tabindex="-1" aria-labelledby="scoreUploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title h5 mb-1" id="scoreUploadModalLabel">Tải tài liệu tính điểm chuẩn</h2>
+          <div class="small text-muted" id="scoreUploadSchool"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">Ảnh, Excel, CSV, PDF, Word hoặc link tài liệu được đọc thành điểm chuẩn theo ngành và phương thức của trường này.</p>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="scoreUploadYear">Năm tuyển sinh</label>
+            <select class="form-select" id="scoreUploadYear">
+              <option value="2026" selected>2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+              <option value="2021">2021</option>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label" for="scoreUploadMethod">Phương thức xét tuyển</label>
+            <select class="form-select" id="scoreUploadMethod"></select>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="scoreUploadFiles">Tài liệu</label>
+            <input class="form-control" type="file" id="scoreUploadFiles" multiple accept=".xlsx,.xls,.csv,.pdf,.docx,.jpg,.jpeg,.png,.webp,.html,.htm">
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="form-label" for="scoreUploadUrls">Link tài liệu</label>
+          <textarea class="form-control" id="scoreUploadUrls" rows="3" placeholder="Mỗi dòng một link http hoặc https"></textarea>
+        </div>
+        <div class="d-none mt-3" id="scoreUploadProgress">
+          <div class="d-flex justify-content-between small mb-1">
+            <span id="scoreUploadStatus">Đang xử lý…</span>
+            <span id="scoreUploadPct">0%</span>
+          </div>
+          <div class="progress" style="height:1rem">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-teal" id="scoreUploadBar" style="width:0%">0%</div>
+          </div>
+        </div>
+        <div class="alert d-none mt-3 mb-0" id="scoreUploadResult"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="scoreUploadClose">Đóng</button>
+        <button type="button" class="btn btn-primary" id="scoreUploadStart">
+          <i class="bi bi-upload"></i> Phân tích và cập nhật điểm
+        </button>
       </div>
     </div>
   </div>
@@ -454,7 +518,14 @@ function renderResults(rows, downloadUrl, years) {
     if (row.nguon && !group.sources.includes(row.nguon)) group.sources.push(row.nguon);
   });
 
-  const list = [...groups.values()];
+  const missingOnly = document.getElementById('resultMissingScore').checked;
+  const list = [...groups.values()].filter(group => {
+    if (!missingOnly) return true;
+    return !yearList.some(year => {
+      const score = (group.byYear[year] || {}).diem;
+      return score != null && score !== '';
+    });
+  });
   resultGroups = list;
   const alive = new Set(list.map(resultKey));
   [...selectedResultKeys].forEach(key => {
@@ -478,7 +549,10 @@ function renderResults(rows, downloadUrl, years) {
           : '—'}
       </td>
       <td class="text-nowrap">${escapeHtml(formatCollectedAt(group.thu_thap_luc))}</td>
-      <td>
+      <td class="text-nowrap">
+        <button type="button" class="btn btn-outline-primary btn-sm" data-upload-school="${escapeHtml(group.ma_truong)}" data-upload-name="${escapeHtml(group.ten_truong)}" data-upload-method="${escapeHtml(group.phuong_thuc)}" title="Tải tài liệu và tính điểm chuẩn">
+          <i class="bi bi-upload"></i>
+        </button>
         <button type="button" class="btn btn-outline-danger btn-sm" data-delete-result="${escapeHtml(key)}" title="Xoá dòng này">
           <i class="bi bi-trash3"></i>
         </button>
@@ -585,6 +659,7 @@ function renderSectorFilters() {
 ['resultSchool', 'resultMajor', 'resultMethod'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => renderResults());
 });
+document.getElementById('resultMissingScore').addEventListener('change', () => renderResults());
 
 ['filterType', 'filterSector', 'filterRegion'].forEach(id => {
   document.getElementById(id).addEventListener('change', renderSchoolPick);
@@ -1083,6 +1158,11 @@ document.getElementById('convertTable').addEventListener('click', (event) => {
 });
 
 document.getElementById('resultTable').addEventListener('click', (event) => {
+  const uploadBtn = event.target.closest('[data-upload-school]');
+  if (uploadBtn) {
+    openScoreUpload(uploadBtn.dataset.uploadSchool || '', uploadBtn.dataset.uploadName || '', uploadBtn.dataset.uploadMethod || '');
+    return;
+  }
   const sourceBtn = event.target.closest('[data-source-result]');
   if (sourceBtn) {
     openSourceModal(sourceBtn.dataset.sourceResult || '');
@@ -1095,6 +1175,120 @@ document.getElementById('resultTable').addEventListener('click', (event) => {
 
 document.getElementById('btnDeleteResults').addEventListener('click', () => {
   deleteResultKeys([...selectedResultKeys]);
+});
+
+let scoreUploadCode = '';
+
+const SCORE_UPLOAD_METHODS = [
+  'Điểm thi THPT',
+  'Xét học bạ THPT',
+  'Xét học bạ kết hợp',
+  'ĐGNL HSA',
+  'ĐGNL V-ACT',
+  'ĐGTD TSA',
+  'Đánh giá năng lực (ĐGNL)',
+  'ĐGNL ĐHQGHN',
+  'Xét tuyển kết hợp',
+  'Xét tuyển tài năng',
+  'Chứng chỉ quốc tế',
+  'Điểm chuẩn',
+];
+
+function fillScoreUploadMethods(preferred) {
+  const seen = new Set(SCORE_UPLOAD_METHODS);
+  (resultRows || []).forEach(row => {
+    const method = String(row.phuong_thuc || '').trim();
+    if (method && /[A-Za-zÀ-ỹ]/.test(method)) seen.add(method);
+  });
+  const select = document.getElementById('scoreUploadMethod');
+  const methods = [...seen].sort((a, b) => a.localeCompare(b, 'vi'));
+  select.innerHTML = methods.map(method => `<option value="${escapeHtml(method)}">${escapeHtml(method)}</option>`).join('');
+  select.value = seen.has(preferred) ? preferred : 'Điểm thi THPT';
+}
+
+function openScoreUpload(code, name, method) {
+  scoreUploadCode = code || '';
+  document.getElementById('scoreUploadSchool').textContent = codeName(code, name);
+  document.getElementById('scoreUploadFiles').value = '';
+  document.getElementById('scoreUploadUrls').value = '';
+  document.getElementById('scoreUploadProgress').classList.add('d-none');
+  const result = document.getElementById('scoreUploadResult');
+  result.className = 'alert d-none mt-3 mb-0';
+  result.innerHTML = '';
+  const yearSelect = document.getElementById('scoreUploadYear');
+  const preferred = resultYears.includes(2026) ? '2026' : String(resultYears[resultYears.length - 1] || 2026);
+  if ([...yearSelect.options].some(option => option.value === preferred)) yearSelect.value = preferred;
+  fillScoreUploadMethods(method || 'Điểm thi THPT');
+  document.getElementById('scoreUploadStart').disabled = false;
+  document.getElementById('scoreUploadClose').disabled = false;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('scoreUploadModal')).show();
+}
+
+function setScoreUploadProgress(pct, status) {
+  const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
+  document.getElementById('scoreUploadProgress').classList.remove('d-none');
+  document.getElementById('scoreUploadStatus').textContent = status || '';
+  document.getElementById('scoreUploadPct').textContent = `${p}%`;
+  const bar = document.getElementById('scoreUploadBar');
+  bar.style.width = `${p}%`;
+  bar.textContent = `${p}%`;
+}
+
+document.getElementById('scoreUploadStart').addEventListener('click', async () => {
+  const files = [...document.getElementById('scoreUploadFiles').files];
+  const urls = document.getElementById('scoreUploadUrls').value
+    .split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+  const result = document.getElementById('scoreUploadResult');
+  if (!scoreUploadCode || (!files.length && !urls.length)) {
+    result.className = 'alert alert-warning mt-3 mb-0';
+    result.textContent = 'Hãy chọn file hoặc nhập ít nhất một link.';
+    return;
+  }
+  const invalidUrl = urls.find(value => !/^https?:\/\//i.test(value));
+  if (invalidUrl) {
+    result.className = 'alert alert-warning mt-3 mb-0';
+    result.textContent = `Link không hợp lệ: ${invalidUrl}`;
+    return;
+  }
+  const tooLarge = files.find(file => file.size > 20 * 1024 * 1024);
+  if (tooLarge) {
+    result.className = 'alert alert-warning mt-3 mb-0';
+    result.textContent = `${tooLarge.name} vượt quá 20 MB.`;
+    return;
+  }
+  const form = new FormData();
+  form.append('code', scoreUploadCode);
+  form.append('year', document.getElementById('scoreUploadYear').value);
+  form.append('method', document.getElementById('scoreUploadMethod').value);
+  form.append('urls', urls.join('\n'));
+  files.forEach(file => form.append('files', file));
+  document.getElementById('scoreUploadStart').disabled = true;
+  document.getElementById('scoreUploadClose').disabled = true;
+  result.className = 'alert d-none mt-3 mb-0';
+  setScoreUploadProgress(8, 'Đang gửi tài liệu…');
+  try {
+    const res = await fetch('/api/schools/upload-documents', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Không phân tích được tài liệu');
+    setScoreUploadProgress(80, 'Đang cập nhật điểm chuẩn…');
+    const saved = await fetch('/api/crawl/records');
+    const table = await saved.json();
+    if (table.ok) {
+      renderResults(table.rows || [], table.download_url || resultDownloadUrl, table.years || resultYears);
+    }
+    setScoreUploadProgress(100, 'Đã cập nhật điểm chuẩn');
+    const warning = (data.errors || []).length
+      ? `<div class="mt-1">${escapeHtml(data.errors.join('; '))}</div>` : '';
+    result.className = 'alert alert-success mt-3 mb-0';
+    result.innerHTML = `Đã đọc <b>${data.files || 0}</b> tài liệu, thêm <b>${data.admissions || 0}</b> dòng điểm theo ngành và phương thức.${warning}`;
+  } catch (e) {
+    setScoreUploadProgress(100, 'Không phân tích được');
+    result.className = 'alert alert-danger mt-3 mb-0';
+    result.textContent = e.message;
+  } finally {
+    document.getElementById('scoreUploadStart').disabled = false;
+    document.getElementById('scoreUploadClose').disabled = false;
+  }
 });
 
 function updatePickSelect(pickClass, allId, buttonId, selected) {

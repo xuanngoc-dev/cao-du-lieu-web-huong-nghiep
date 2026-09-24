@@ -1659,6 +1659,9 @@ def create_app() -> Flask:
             return jsonify({"ok": False, "error": "Năm tuyển sinh không hợp lệ."}), 400
         if not code or year < 2000 or year > 2100:
             return jsonify({"ok": False, "error": "Thiếu mã trường hoặc năm không hợp lệ."}), 400
+        method = (request.form.get("method") or "").strip()
+        if len(method) > 120:
+            return jsonify({"ok": False, "error": "Tên phương thức quá dài."}), 400
         files = [f for f in request.files.getlist("files") if f and f.filename]
         remote_urls = [
             line.strip()
@@ -1673,7 +1676,7 @@ def create_app() -> Flask:
                 "error": "Chỉ được bổ sung tối đa 20 file/link mỗi lần.",
             }), 400
 
-        allowed = {".xlsx", ".xls", ".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"}
+        allowed = {".xlsx", ".xls", ".csv", ".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp", ".html", ".htm"}
         schools_data = dataset_store.load_schools(ROOT) or {}
         school = next(
             (
@@ -1704,7 +1707,7 @@ def create_app() -> Flask:
         ):
             try:
                 crawl_part, method_part = parse_uploaded_document(
-                    path, original_name, code, school_name, year, source_url
+                    path, original_name, code, school_name, year, source_url, method
                 )
             except Exception as exc:
                 errors.append(f"{original_name}: không đọc được ({exc})")
@@ -1794,11 +1797,33 @@ def create_app() -> Flask:
         admissions = list(crawl.get("admissions") or [])
         conversions = list(crawl.get("conversions") or [])
         regulations = list(crawl.get("regulations") or [])
-        append_unique(
-            admissions,
-            [r.to_dict() for r in combined.admissions],
-            ("ma_truong", "ma_nganh", "ten_nganh", "nam", "phuong_thuc", "to_hop", "diem_chuan"),
-        )
+        def admission_identity(row):
+            return tuple(str(row.get(field) or "") for field in (
+                "ma_truong", "ma_nganh", "ten_nganh", "nam", "phuong_thuc", "to_hop",
+            ))
+
+        incoming = [r.to_dict() for r in combined.admissions]
+        existing_index = {}
+        for index, row in enumerate(admissions):
+            existing_index.setdefault(admission_identity(row), index)
+        for row in incoming:
+            key = admission_identity(row)
+            previous = existing_index.get(key)
+            if previous is None:
+                existing_index[key] = len(admissions)
+                admissions.append(row)
+                continue
+            current = admissions[previous]
+            if row.get("diem_chuan") is not None:
+                current["diem_chuan"] = row["diem_chuan"]
+            if row.get("diem_chuan_ptxt") is not None:
+                current["diem_chuan_ptxt"] = row["diem_chuan_ptxt"]
+            if row.get("chi_tieu") is not None:
+                current["chi_tieu"] = row["chi_tieu"]
+            if row.get("thang_diem") is not None:
+                current["thang_diem"] = row["thang_diem"]
+            if row.get("nguon"):
+                current["nguon"] = row["nguon"]
         append_unique(
             conversions,
             [r.to_dict() for r in combined.conversions],

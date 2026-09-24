@@ -22,10 +22,13 @@ class BaseParser(ABC):
             r"mã\s*xt", r"ma\s*xt", r"mã\s*ctđt", r"ma\s*ctdt", 
             r"mã\s*chương\s*trình", r"ma\s*chuong\s*trinh", r"mã\s*nhóm\s*ngành",
             r"mã\s*tuyển\s*sinh", r"ma\s*tuyen\s*sinh",
+            r"^mã$", r"^ma$",
         ],
         "ten_nganh": [
             r"tên\s*ngành", r"ten\s*nganh", r"ngành\s*đào\s*tạo", r"nganh\s*dao\s*tao", 
             r"chuyên\s*ngành", r"chuyen\s*nganh", r"tên\s*chương\s*trình", r"ngành\s*học", r"nganh\s*hoc",
+            r"ngành\s*/\s*chương\s*trình", r"nganh\s*/\s*chuong\s*trinh",
+            r"^ngành$", r"^nganh$",
             r"chương\s*trình\s*đào\s*tạo", r"chuong\s*trinh\s*dao\s*tao",
             r"tên\s*mã\s*xét", r"ten\s*ma\s*xet",
         ],

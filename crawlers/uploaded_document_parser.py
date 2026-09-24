@@ -31,15 +31,19 @@ from parsers.pdf_parser import PdfAdmissionParser
 
 
 _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
-_ALLOWED_EXTS = {".xlsx", ".xls", ".pdf", ".docx", *_IMAGE_EXTS}
+_ALLOWED_EXTS = {".xlsx", ".xls", ".csv", ".pdf", ".docx", ".html", ".htm", *_IMAGE_EXTS}
 _CONTENT_EXTS = {
     "application/pdf": ".pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
     "application/vnd.ms-excel": ".xls",
+    "text/csv": ".csv",
+    "application/csv": ".csv",
+    "text/comma-separated-values": ".csv",
     "image/jpeg": ".jpg",
     "image/png": ".png",
     "image/webp": ".webp",
+    "text/html": ".html",
 }
 
 
@@ -70,6 +74,21 @@ def _validate_public_url(url: str) -> None:
             raise ValueError("không cho phép địa chỉ mạng nội bộ")
 
 
+def _cookie_challenge(body: bytes) -> Tuple[str, str]:
+    """Một số cổng (daotao.neu.edu.vn) trả script đặt cookie rồi mới cho tải file."""
+    head = body[:900].decode("utf-8", "replace")
+    if "document.cookie" not in head or "location.reload" not in head:
+        return "", ""
+    match = re.search(
+        r'document\.cookie\s*=\s*["\']([^="\'\s]+)=([^"\';]+)',
+        head,
+        re.I,
+    )
+    if not match:
+        return "", ""
+    return match.group(1), match.group(2)
+
+
 def download_remote_document(
     url: str,
     upload_dir: str,
@@ -79,25 +98,39 @@ def download_remote_document(
     """Tải tài liệu CDN an toàn, có kiểm tra redirect, định dạng và dung lượng."""
     current = (url or "").strip()
     response = None
+    session = requests.Session()
+    session.headers["User-Agent"] = "Mozilla/5.0 AdmissionDocumentImporter/1.0"
+    verify = True
     for _ in range(6):
         _validate_public_url(current)
-        response = requests.get(
-            current,
-            timeout=(8, 30),
-            allow_redirects=False,
-            stream=True,
-            headers={"User-Agent": "Mozilla/5.0 AdmissionDocumentImporter/1.0"},
-        )
+        try:
+            response = session.get(
+                current,
+                timeout=(8, 30),
+                allow_redirects=False,
+                verify=verify,
+            )
+        except requests.exceptions.SSLError:
+            verify = False
+            response = session.get(
+                current,
+                timeout=(8, 30),
+                allow_redirects=False,
+                verify=False,
+            )
         if response.status_code in {301, 302, 303, 307, 308}:
             target = response.headers.get("Location") or ""
-            response.close()
             if not target:
                 raise ValueError("link chuyển hướng không hợp lệ")
             current = urljoin(current, target)
             continue
         if response.status_code != 200:
-            response.close()
             raise ValueError(f"máy chủ CDN trả về HTTP {response.status_code}")
+        cookie_name, cookie_value = _cookie_challenge(response.content[:900])
+        if cookie_name:
+            host = urlparse(current).hostname or ""
+            session.cookies.set(cookie_name, cookie_value, domain=host, path="/")
+            continue
         break
     else:
         raise ValueError("link chuyển hướng quá nhiều lần")
@@ -126,22 +159,19 @@ def download_remote_document(
     original_name = f"{base}{ext}"
     stored_name = f"{prefix}_{original_name}"
     path = os.path.join(upload_dir, stored_name)
-    size = 0
+    body = response.content or b""
+    if len(body) > max_bytes:
+        raise ValueError("file vượt quá 20 MB")
+    if ext == ".pdf" and not body.startswith(b"%PDF"):
+        raise ValueError("link không trả về file PDF")
+    size = len(body)
     try:
         with open(path, "wb") as output:
-            for chunk in response.iter_content(chunk_size=64 * 1024):
-                if not chunk:
-                    continue
-                size += len(chunk)
-                if size > max_bytes:
-                    raise ValueError("file vượt quá 20 MB")
-                output.write(chunk)
+            output.write(body)
     except Exception:
         if os.path.exists(path):
             os.unlink(path)
         raise
-    finally:
-        response.close()
     return {
         "path": path,
         "filename": original_name,
@@ -215,6 +245,7 @@ def parse_uploaded_document(
     school_name: str,
     year: int,
     source_url: str,
+    admission_method: str = "",
 ) -> Tuple[CrawlBundle, MethodConversionBundle]:
     """Phân tích một file đã lưu; không truy cập website bên ngoài."""
     crawl = CrawlBundle()
@@ -222,10 +253,19 @@ def parse_uploaded_document(
     ext = os.path.splitext(filename)[1].lower()
     source = _source(filename, source_url)
 
-    if ext in {".xlsx", ".xls"}:
+    if ext in {".xlsx", ".xls", ".csv"}:
         crawl.admissions.extend(
             ExcelAdmissionParser().parse(path, school_code, school_name, year)
         )
+    elif ext in {".html", ".htm"}:
+        with open(path, "r", encoding="utf-8", errors="replace") as handle:
+            html = handle.read()
+        admissions, conversions, regulations = DeanAdmissionExtractor().extract(
+            html, school_code, school_name, source, year
+        )
+        crawl.admissions.extend(admissions)
+        crawl.conversions.extend(conversions)
+        crawl.regulations.extend(regulations)
     elif ext == ".pdf":
         crawl.admissions.extend(
             PdfAdmissionParser().parse(path, school_code, school_name, year, max_pages=50)
@@ -240,6 +280,13 @@ def parse_uploaded_document(
             crawl.regulations.extend(regulations)
         except Exception:
             pass
+        if not crawl.admissions:
+            from crawlers.official_site_crawler import OfficialSiteCrawler
+            crawl.admissions.extend(
+                OfficialSiteCrawler()._records_from_scanned_pdf(
+                    path, school_code, school_name, year, source
+                )
+            )
     elif ext == ".docx":
         crawl.admissions.extend(
             DocxAdmissionParser().parse(path, school_code, school_name, year)
@@ -296,10 +343,13 @@ def parse_uploaded_document(
             )
 
     crawl.admissions = _dedupe_admissions(crawl.admissions)
+    chosen_method = (admission_method or "").strip()
     for row in crawl.admissions:
         row.ma_truong = school_code
         row.ten_truong = school_name
         row.nguon = source
+        if chosen_method:
+            row.phuong_thuc = chosen_method
     for row in crawl.conversions:
         row.ma_truong = school_code
         row.ten_truong = school_name
