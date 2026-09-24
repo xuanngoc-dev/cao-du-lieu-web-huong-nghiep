@@ -229,9 +229,9 @@ function renderSchools(schools) {
       <td>${escapeHtml(s.name)}</td>
       <td><span class="badge text-bg-light border text-nowrap">${escapeHtml(s.type_label || '')}</span></td>
       <td class="small text-nowrap">${escapeHtml(s.loai_truong || '—')}</td>
-      <td class="small">${linkCell(s.website)}</td>
-      <td class="small">${linkCell(s.domain_diem_chuan)}</td>
-      <td class="small">${linkCell(s.link_quy_che, 'Thông báo')}</td>
+      <td class="small school-edit" data-code="${escapeHtml(code)}" data-field="website" title="Nhấp đúp để sửa">${linkCell(s.website)}</td>
+      <td class="small school-edit" data-code="${escapeHtml(code)}" data-field="domain_diem_chuan" title="Nhấp đúp để sửa">${linkCell(s.domain_diem_chuan)}</td>
+      <td class="small school-edit" data-code="${escapeHtml(code)}" data-field="link_quy_che" title="Nhấp đúp để sửa">${linkCell(s.link_quy_che, 'Thông báo')}</td>
       <td class="small text-muted">${escapeHtml(s.dia_chi || '—')}</td>
       <td class="small text-nowrap">${escapeHtml(regionLabel(s) || '—')}</td>
       <td class="text-nowrap">
@@ -265,6 +265,60 @@ function renderSchools(schools) {
   }
   return rows;
 }
+
+document.getElementById('schoolTable').addEventListener('dblclick', (event) => {
+  const td = event.target.closest('td.school-edit');
+  if (!td || td.querySelector('input')) return;
+  event.preventDefault();
+  const code = td.dataset.code || '';
+  const field = td.dataset.field || '';
+  const row = (allSchoolsCache || []).find(item => String(item.code || '').toUpperCase() === code);
+  const previous = row ? String(row[field] || '') : '';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'form-control form-control-sm';
+  input.value = previous;
+  td.textContent = '';
+  td.appendChild(input);
+  input.focus();
+  input.select();
+  let closed = false;
+  const close = async (save) => {
+    if (closed) return;
+    closed = true;
+    const next = input.value.trim();
+    if (!save || next === previous) {
+      renderSchools(allSchoolsCache);
+      return;
+    }
+    try {
+      const res = await fetch('/api/schools/update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ code, field, value: next }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Không lưu được.');
+      if (row && data.school) Object.assign(row, data.school);
+      renderSchools(allSchoolsCache);
+    } catch (e) {
+      renderSchools(allSchoolsCache);
+      document.getElementById('schoolMsg').innerHTML =
+        `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
+    }
+  };
+  input.addEventListener('keydown', (keyEvent) => {
+    if (keyEvent.key === 'Enter') {
+      keyEvent.preventDefault();
+      input.blur();
+    } else if (keyEvent.key === 'Escape') {
+      keyEvent.preventDefault();
+      input.value = previous;
+      input.blur();
+    }
+  });
+  input.addEventListener('blur', () => close(true));
+});
 
 function applyLocalFilter() {
   if (!allSchoolsCache || !allSchoolsCache.length) return;

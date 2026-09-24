@@ -43,6 +43,53 @@ def _atomic_write_json(path: str, data: Any) -> None:
     os.replace(tmp, path)
 
 
+def profile_path(root: str) -> str:
+    return os.path.join(datasets_dir(root), "ca_nhan.json")
+
+
+def load_profile(root: str) -> Dict[str, Any]:
+    data = load_json(profile_path(root))
+    if not isinstance(data, dict):
+        return {"ho_ten": "", "ngay_sinh": "", "gioi_tinh": "", "dia_chi": "", "chung_chi": {}}
+    certs = data.get("chung_chi") if isinstance(data.get("chung_chi"), dict) else {}
+    gender = str(data.get("gioi_tinh") or "").strip()
+    if gender not in {"Nam", "Nữ", "Khác"}:
+        gender = ""
+    return {
+        "ho_ten": str(data.get("ho_ten") or ""),
+        "ngay_sinh": str(data.get("ngay_sinh") or ""),
+        "gioi_tinh": gender,
+        "dia_chi": str(data.get("dia_chi") or ""),
+        "chung_chi": {str(k): str(v) for k, v in certs.items() if str(v).strip()},
+    }
+
+
+def save_profile(root: str, profile: Dict[str, Any]) -> Dict[str, Any]:
+    gender = str(profile.get("gioi_tinh") or "").strip()
+    cleaned = {
+        "ho_ten": str(profile.get("ho_ten") or "").strip()[:120],
+        "ngay_sinh": str(profile.get("ngay_sinh") or "").strip()[:10],
+        "gioi_tinh": gender if gender in {"Nam", "Nữ", "Khác"} else "",
+        "dia_chi": str(profile.get("dia_chi") or "").strip()[:300],
+        "chung_chi": {},
+    }
+    raw_certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+    for key, value in raw_certs.items():
+        name = re.sub(r"\s+", " ", str(key or "").strip())[:40]
+        score = str(value or "").strip().replace(",", ".")
+        if not name or not score:
+            continue
+        try:
+            number = float(score)
+        except ValueError:
+            continue
+        if number < 0 or number > 10000:
+            continue
+        cleaned["chung_chi"][name] = score
+    _atomic_write_json(profile_path(root), cleaned)
+    return cleaned
+
+
 def load_json(path: str) -> Optional[Any]:
     if not path or not os.path.isfile(path):
         return None

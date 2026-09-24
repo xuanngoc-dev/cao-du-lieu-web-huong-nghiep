@@ -296,6 +296,8 @@ class OnlineAdmissionCrawler:
         years: List[int] = None,
         delay: float = 0.5,
         source_urls: Optional[List[str]] = None,
+        website: Optional[str] = None,
+        trusted_urls: Optional[List[str]] = None,
     ) -> CrawlBundle:
         """
         Thu thập điểm chuẩn, mã ngành, phương thức và quy chế từ website chính thức
@@ -311,7 +313,7 @@ class OnlineAdmissionCrawler:
 
         school_code = school_info["code"]
         school_name = school_info["name"]
-        website = school_info.get("website") or ""
+        website = (website or "").strip() or school_info.get("website") or ""
         print(f"\n[CRAWLER] Bắt đầu thu thập từ website trường: {school_name} (Mã: {school_code})")
         return OfficialSiteCrawler().crawl(
             school_code=school_code,
@@ -320,6 +322,7 @@ class OnlineAdmissionCrawler:
             years=years,
             delay=delay,
             seed_urls=source_urls,
+            trusted_urls=trusted_urls,
         )
 
     def _school_for_official_crawl(self, school_code_or_name: str) -> Optional[Dict[str, str]]:

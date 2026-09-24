@@ -24,13 +24,16 @@
             <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">Tổng quan</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'schools_page' %}active{% endif %}" href="{{ url_for('schools_page') }}">Danh sách trường</a>
+            <a class="nav-link {% if request.endpoint == 'schools_page' %}active{% endif %}" href="{{ url_for('schools_page') }}">Trường</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'crawl_page' %}active{% endif %}" href="{{ url_for('crawl_page') }}">Thu thập dữ liệu</a>
+            <a class="nav-link {% if request.endpoint == 'crawl_page' %}active{% endif %}" href="{{ url_for('crawl_page') }}">Crawl data</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'kiem_chung_page' %}active{% endif %}" href="{{ url_for('kiem_chung_page') }}">Kiểm chứng dữ liệu</a>
+            <a class="nav-link {% if request.endpoint == 'kiem_chung_page' %}active{% endif %}" href="{{ url_for('kiem_chung_page') }}">Kiểm chứng</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'ca_nhan_page' %}active{% endif %}" href="{{ url_for('ca_nhan_page') }}">Cá nhân</a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'danh_gia_page' %}active{% endif %}" href="{{ url_for('danh_gia_page') }}">

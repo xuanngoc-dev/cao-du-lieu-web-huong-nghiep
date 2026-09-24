@@ -161,6 +161,22 @@ def create_app() -> Flask:
     def kiem_chung_page():
         return render_template("kiem_chung.html")
 
+    @app.route("/ca-nhan")
+    def ca_nhan_page():
+        return render_template("ca_nhan.html")
+
+    @app.get("/api/ca-nhan")
+    def api_ca_nhan_get():
+        return jsonify({"ok": True, "profile": dataset_store.load_profile(ROOT)})
+
+    @app.post("/api/ca-nhan")
+    def api_ca_nhan_save():
+        data = request.get_json(silent=True) or {}
+        if not isinstance(data, dict):
+            return jsonify({"ok": False, "error": "Dữ liệu không hợp lệ."}), 400
+        profile = dataset_store.save_profile(ROOT, data)
+        return jsonify({"ok": True, "profile": profile})
+
     @app.route("/quy-doi")
     def quy_doi_page():
         return render_template("quy_doi.html")
@@ -305,6 +321,32 @@ def create_app() -> Flask:
             "schools": rows,
             "excel_url": url_for("download_file", name="danh_sach_ma_truong.xlsx"),
         })
+
+    @app.post("/api/schools/update")
+    def api_schools_update():
+        """Sửa website, domain điểm chuẩn hoặc link quy chế của một trường đã lưu."""
+        data = request.get_json(silent=True) or {}
+        code = str(data.get("code") or "").strip().upper()
+        field = str(data.get("field") or "").strip()
+        allowed = {"website", "domain_diem_chuan", "link_quy_che"}
+        if not code or field not in allowed:
+            return jsonify({"ok": False, "error": "Ô cần sửa không hợp lệ."}), 400
+        value = str(data.get("value") or "").strip()[:500]
+        directory = _working_directory(refresh=False)
+        info = directory.schools.get(code)
+        if not info:
+            return jsonify({"ok": False, "error": "Không tìm thấy trường."}), 404
+        info[field] = value
+        excel_path = os.path.join(app.config["OUTPUT_DIR"], "danh_sach_ma_truong.xlsx")
+        json_path = os.path.join(app.config["OUTPUT_DIR"], "danh_sach_ma_truong.json")
+        try:
+            directory.export_excel(output_path=excel_path)
+            directory.export_json(output_path=json_path, also_update_config=False)
+            dataset_store.copy_schools_exports_stamp(ROOT)
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500
+        row = next((item for item in directory.list_schools() if item["code"] == code), None)
+        return jsonify({"ok": True, "school": row})
 
     @app.post("/api/schools/notices/stream")
     def api_schools_notices_stream():
@@ -458,6 +500,22 @@ def create_app() -> Flask:
             pass
         return payload["admissions"]
 
+    def _saved_crawl_targets(codes: List[str]):
+        """Website và domain điểm/quy chế đã lưu trong danh bạ."""
+        directory = _working_directory(refresh=False)
+        websites: Dict[str, str] = {}
+        trusted: Dict[str, List[str]] = {}
+        for code in codes:
+            info = directory.schools.get(code) or {}
+            websites[code] = str(info.get("website") or "").strip()
+            urls = []
+            for key in ("domain_diem_chuan", "link_quy_che"):
+                raw = str(info.get(key) or "").strip()
+                if raw and raw not in urls:
+                    urls.append(raw)
+            trusted[code] = urls
+        return websites, trusted
+
     def _source_urls_by_school(data: dict, codes: List[str]) -> Dict[str, List[str]]:
         raw = data.get("source_urls") or {}
         if isinstance(raw, list) and len(codes) == 1:
@@ -553,6 +611,7 @@ def create_app() -> Flask:
         crawler = OnlineAdmissionCrawler()
         bundle = CrawlBundle()
         logs: List[str] = []
+        saved_sites, saved_urls = _saved_crawl_targets(codes)
 
         for i, code in enumerate(codes, start=1):
             try:
@@ -561,6 +620,8 @@ def create_app() -> Flask:
                     years=years,
                     delay=0.3,
                     source_urls=source_urls.get(code),
+                    website=saved_sites.get(code) or None,
+                    trusted_urls=saved_urls.get(code),
                 )
                 bundle.admissions.extend(part.admissions)
                 bundle.conversions.extend(part.conversions)
@@ -624,6 +685,7 @@ def create_app() -> Flask:
         except ValueError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
         merge_existing = bool(data.get("merge", True))
+        saved_sites, saved_urls = _saved_crawl_targets(codes)
 
         @stream_with_context
         def generate():
@@ -644,6 +706,8 @@ def create_app() -> Flask:
                         years=years,
                         delay=0.25,
                         source_urls=source_urls.get(code),
+                        website=saved_sites.get(code) or None,
+                        trusted_urls=saved_urls.get(code),
                     )
                     bundle.admissions.extend(part.admissions)
                     bundle.conversions.extend(part.conversions)
@@ -882,6 +946,78 @@ def create_app() -> Flask:
         )
         payload["ok"] = True
         return jsonify(payload)
+
+    def _bonus_identity(item: dict) -> tuple:
+        return (
+            str(item.get("ma_truong") or "").strip().upper(),
+            str(item.get("nam") if item.get("nam") is not None else ""),
+            str(item.get("phuong_thuc") or "").strip(),
+            str(item.get("dieu_kien") or "").strip(),
+            str(item.get("diem_cong") or "").strip(),
+        )
+
+    def _row_matches_bonus(row: dict, kind: str, wanted: set) -> bool:
+        if kind == "conversion":
+            produced = list_bonus_records([row], [])
+        else:
+            produced = list_bonus_records([], [row])
+        return any(_bonus_identity(item) in wanted for item in produced)
+
+    @app.post("/api/crawl/bonus/delete")
+    def api_crawl_bonus_delete():
+        """Xoá mức điểm cộng đã chọn khỏi quy đổi và quy chế đã lưu."""
+        data = request.get_json(silent=True) or {}
+        raw_keys = data.get("keys") or []
+        if not isinstance(raw_keys, list) or not raw_keys:
+            return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
+        wanted = {_bonus_identity(item) for item in raw_keys if isinstance(item, dict)}
+        wanted.discard(("", "", "", "", ""))
+        if not wanted:
+            return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
+
+        crawl = dict(app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {})
+        quy_doi = dict(app.config.get("LAST_QUY_DOI") or dataset_store.load_quy_doi(ROOT) or {})
+        crawl["conversions"] = [
+            row for row in (crawl.get("conversions") or [])
+            if not _row_matches_bonus(row, "conversion", wanted)
+        ]
+        crawl["regulations"] = [
+            row for row in (crawl.get("regulations") or [])
+            if not _row_matches_bonus(row, "regulation", wanted)
+        ]
+        quy_doi["certificate_conversions"] = [
+            row for row in (quy_doi.get("certificate_conversions") or [])
+            if not _row_matches_bonus(row, "conversion", wanted)
+        ]
+        quy_doi["notes"] = [
+            row for row in (quy_doi.get("notes") or [])
+            if not _row_matches_bonus(row, "regulation", wanted)
+        ]
+        app.config["LAST_CRAWL"] = crawl
+        app.config["LAST_QUY_DOI"] = quy_doi
+        try:
+            if crawl.get("admissions") is not None or crawl.get("conversions") is not None:
+                dataset_store.save_admissions(ROOT, crawl)
+            if quy_doi:
+                dataset_store.save_quy_doi(ROOT, quy_doi)
+        except OSError:
+            pass
+        records = list_bonus_records(
+            list(crawl.get("conversions") or []) + list(quy_doi.get("certificate_conversions") or []),
+            list(crawl.get("regulations") or []) + [
+                {
+                    "ma_truong": note.get("ma_truong") or "",
+                    "ten_truong": note.get("ten_truong") or "",
+                    "tieu_de": note.get("tieu_de") or "",
+                    "noi_dung": note.get("noi_dung") or "",
+                    "phuong_thuc": note.get("phuong_thuc") or "",
+                    "nam": note.get("nam"),
+                    "nguon": note.get("url_nguon") or note.get("nguon") or "",
+                }
+                for note in (quy_doi.get("notes") or [])
+            ],
+        )
+        return jsonify({"ok": True, "removed": len(wanted), "records": records})
 
     @app.post("/api/crawl/danh-gia")
     def api_crawl_danh_gia():
@@ -1809,6 +1945,7 @@ def create_app() -> Flask:
     def api_crawl_records():
         """Bảng ngành / phương thức / điểm chuẩn / chỉ tiêu vừa thu thập."""
         cached = app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {}
+        collected = str(cached.get("_saved_at") or "")
         rows = []
         for item in cached.get("admissions") or []:
             rows.append({
@@ -1821,6 +1958,7 @@ def create_app() -> Flask:
                 "diem_chuan": item.get("diem_chuan_ptxt") if item.get("diem_chuan_ptxt") is not None else item.get("diem_chuan"),
                 "chi_tieu": item.get("chi_tieu"),
                 "nguon": item.get("nguon") or "",
+                "thu_thap_luc": item.get("thu_thap_luc") or collected,
             })
         years = sorted({
             int(row["nam"]) for row in rows
@@ -2106,6 +2244,86 @@ def create_app() -> Flask:
             "total": len(items),
             "rows": items,
             "calculators": calculators,
+            "download_url": cached.get("download_url") or "",
+        })
+
+    def _quy_doi_identity(ma_truong: Any, nam: Any, loai: Any, noi_dung: Any) -> tuple:
+        return (
+            str(ma_truong or "").strip().upper(),
+            str(nam if nam is not None else ""),
+            str(loai or "").strip(),
+            str(noi_dung or "").strip(),
+        )
+
+    def _certificate_content(cert: dict) -> str:
+        level = str(cert.get("hang_muc") or "").strip()
+        score = str(cert.get("diem_quy_doi") or "").strip()
+        content = " → ".join(part for part in (level, score) if part)
+        scale = str(cert.get("thang_diem") or "").strip()
+        if scale:
+            content = f"{content} (thang {scale})" if content else f"Thang {scale}"
+        if not content:
+            content = str(cert.get("chi_tiet_hang") or "").strip()
+        return content
+
+    @app.post("/api/quy-doi/records/delete")
+    def api_quy_doi_records_delete():
+        """Xoá dòng quy đổi hoặc quy chế đã chọn khỏi dữ liệu đã lưu."""
+        data = request.get_json(silent=True) or {}
+        raw_keys = data.get("keys") or []
+        if not isinstance(raw_keys, list) or not raw_keys:
+            return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
+        wanted = {
+            _quy_doi_identity(item.get("ma_truong"), item.get("nam"), item.get("loai"), item.get("noi_dung"))
+            for item in raw_keys if isinstance(item, dict)
+        }
+        wanted.discard(("", "", "", ""))
+        if not wanted:
+            return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
+
+        cached = dict(app.config.get("LAST_QUY_DOI") or dataset_store.load_quy_doi(ROOT) or {})
+        cached["certificate_conversions"] = [
+            cert for cert in (cached.get("certificate_conversions") or [])
+            if _quy_doi_identity(
+                cert.get("ma_truong"),
+                cert.get("nam"),
+                cert.get("loai_bang") or "Chứng chỉ",
+                _certificate_content(cert),
+            ) not in wanted
+        ]
+        cached["rows"] = [
+            row for row in (cached.get("rows") or [])
+            if _quy_doi_identity(
+                row.get("ma_truong"),
+                row.get("nam"),
+                row.get("tieu_de_bang") or "Quy đổi phương thức",
+                "; ".join(
+                    f"{key}: {value}"
+                    for key, value in (row.get("cot_gia_tri") or {}).items()
+                    if value
+                ),
+            ) not in wanted
+        ]
+        cached["notes"] = [
+            note for note in (cached.get("notes") or [])
+            if _quy_doi_identity(
+                note.get("ma_truong"),
+                note.get("nam"),
+                note.get("tieu_de") or "Quy chế",
+                note.get("noi_dung") or "",
+            ) not in wanted
+        ]
+        app.config["LAST_QUY_DOI"] = cached
+        try:
+            dataset_store.save_quy_doi(ROOT, cached)
+        except OSError:
+            pass
+        with app.test_request_context():
+            listed = api_quy_doi_records().get_json()
+        return jsonify({
+            "ok": True,
+            "removed": len(wanted),
+            "rows": (listed or {}).get("rows") or [],
             "download_url": cached.get("download_url") or "",
         })
 

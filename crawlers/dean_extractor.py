@@ -157,6 +157,38 @@ def _is_major_table(headers: List[str]) -> bool:
     return has_code and has_name
 
 
+_COMBO_RE = re.compile(
+    r"^(?:A00|A01|B00|C00|C01|D01|D04|D06|D07|D09|D10|D11|D14|D15|DD2|K00|K01)$",
+    re.I,
+)
+
+
+def _combo_token(text: str) -> str:
+    token = clean_text(text).upper().replace(" ", "")
+    return token if _COMBO_RE.fullmatch(token) else ""
+
+
+def _looks_like_combo_row(texts: List[str]) -> bool:
+    return sum(1 for text in texts if _combo_token(text)) >= 3
+
+
+def _cutoff_score_columns(headers: List[str]) -> List[Tuple[int, str, str]]:
+    """Cột điểm chuẩn: tổ hợp môn (A01, D01, ...) hoặc một phương thức (ĐGNL)."""
+    cols: List[Tuple[int, str, str]] = []
+    for idx, header in enumerate(headers):
+        tokens = header.split()
+        combo = _combo_token(tokens[-1]) if tokens else ""
+        folded = strip_accents(header)
+        method = detect_admission_method(header)
+        if combo:
+            cols.append((idx, method or "Điểm thi THPT", combo))
+        elif method and any(k in folded for k in ("thpt", "tot nghiep", "dgnl", "danh gia nang luc", "dgtd")):
+            cols.append((idx, method, ""))
+    if sum(1 for _, _, combo in cols if combo) < 3:
+        return []
+    return cols
+
+
 def _flatten_header_grid(rows: List[Tag], max_rows: int = 3) -> Tuple[List[str], int]:
     """Ghép tiêu đề có rowspan/colspan thành một nhãn cho mỗi cột dữ liệu."""
     occupied: Dict[Tuple[int, int], str] = {}
@@ -168,7 +200,7 @@ def _flatten_header_grid(rows: List[Tag], max_rows: int = 3) -> Tuple[List[str],
             texts = [clean_text(cell.get_text(" ", strip=True)) for cell in cells]
             nonempty = [text for text in texts if text]
             looks_like_methods = any(detect_admission_method(text) for text in nonempty)
-            if not looks_like_methods:
+            if not looks_like_methods and not _looks_like_combo_row(nonempty):
                 break
         for cell in cells:
             while (r_i, col) in occupied:
@@ -394,6 +426,68 @@ class DeanAdmissionExtractor:
         title = clean_text(soup.get_text(" ", strip=True)[:1500])
         return extract_year_from_text(title)
 
+    def _append_cutoff_grid_rows(
+        self,
+        records: List[AdmissionRecord],
+        seen: set,
+        data_rows: List[Tag],
+        headers: List[str],
+        score_cols: List[Tuple[int, str, str]],
+        school_code: str,
+        school_name: str,
+        year: int,
+        source: str,
+    ) -> None:
+        """Mỗi ô điểm trong bảng tổ hợp / phương thức thành một bản ghi."""
+        col_map = BaseParser.map_table_headers(headers)
+        for tr in data_rows:
+            cells = _row_cell_texts(tr)
+            if len(cells) < 3:
+                continue
+            extracted: Dict[str, str] = {}
+            for c_idx, field_name in col_map.items():
+                if c_idx < len(cells) and field_name not in {"phuong_thuc", "diem_chuan", "diem_chuan_ptxt"}:
+                    extracted[field_name] = cells[c_idx]
+            ma_nganh = normalize_major_code(extracted.get("ma_nganh", ""))
+            ten_nganh = clean_text(extracted.get("ten_nganh", ""))
+            if not ma_nganh and not ten_nganh:
+                continue
+            if "mã" in ten_nganh.lower() and "ngành" in ten_nganh.lower():
+                continue
+            ghi_chu = clean_text(extracted.get("ghi_chu", ""))
+            for idx, method, combo in score_cols:
+                if idx >= len(cells):
+                    continue
+                score = normalize_score(cells[idx])
+                if score is None:
+                    continue
+                folded = strip_accents(headers[idx] if idx < len(headers) else "")
+                if combo:
+                    label = f"Điểm thi THPT · {combo}"
+                elif "dhqgh" in folded or "q21" in folded:
+                    label = "ĐGNL ĐHQGHN"
+                else:
+                    label = method
+                key = (ma_nganh, ten_nganh.lower(), combo.lower(), label, year)
+                if key in seen:
+                    continue
+                seen.add(key)
+                records.append(
+                    AdmissionRecord(
+                        ma_truong=school_code,
+                        ten_truong=school_name,
+                        ma_nganh=ma_nganh,
+                        ten_nganh=ten_nganh or ma_nganh,
+                        nam=year,
+                        to_hop=combo,
+                        diem_chuan=score,
+                        thang_diem=30.0,
+                        phuong_thuc=label,
+                        ghi_chu=ghi_chu,
+                        nguon=source,
+                    )
+                )
+
     def _append_method_mark_rows(
         self,
         records: List[AdmissionRecord],
@@ -489,6 +583,21 @@ class DeanAdmissionExtractor:
                 headers_for_check = headers
                 header_depth = 1
             if not _is_major_table(headers_for_check):
+                continue
+
+            score_cols = _cutoff_score_columns(flat_headers if flat_headers else headers)
+            if score_cols:
+                self._append_cutoff_grid_rows(
+                    records,
+                    seen,
+                    rows[header_depth:],
+                    flat_headers or headers,
+                    score_cols,
+                    school_code,
+                    school_name,
+                    year or 2026,
+                    source,
+                )
                 continue
 
             method_cols = _method_mark_columns(flat_headers if flat_headers else headers)

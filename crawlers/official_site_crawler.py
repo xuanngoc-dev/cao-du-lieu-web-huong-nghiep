@@ -13,7 +13,7 @@ import time
 import tempfile
 from html import escape
 from typing import Dict, List, Optional, Set, Tuple
-from urllib.parse import quote, urljoin, urlparse
+from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -27,6 +27,7 @@ from core.models import (
 from core.normalizer import clean_text, strip_accents
 from crawlers.dean_extractor import DeanAdmissionExtractor
 from crawlers.cutoff_image_parser import records_from_cutoff_image
+from crawlers.table_image_parser import _cluster_rows, ocr_tokens
 from parsers.docx_parser import DocxAdmissionParser
 from parsers.excel_parser import ExcelAdmissionParser
 from parsers.pdf_parser import PdfAdmissionParser
@@ -43,10 +44,12 @@ _SKIP_EXT_RE = re.compile(
     re.IGNORECASE,
 )
 _YEAR_RE = re.compile(r"\b(201[6-9]|202[0-9])\b")
+_MAJOR_CODE_RE = re.compile(r"^[A-Z]{2,4}\d{2,8}$")
 
 # Điểm càng cao càng ưu tiên trang / tệp tuyển sinh đại học chính quy.
 _POS_HINTS = (
     ("diem chuan", 9),
+    ("diem trung tuyen", 9),
     ("de an tuyen sinh", 8),
     ("thong tin tuyen sinh", 8),
     ("phuong an tuyen sinh", 7),
@@ -141,12 +144,39 @@ def _registrable_host(host: str) -> str:
     return host
 
 
+def _rewrite_internal_file_href(href: str, page_url: str) -> str:
+    """Đổi link file trên máy chủ nội bộ (ajc-app:1002) sang đúng website trường."""
+    parsed = urlparse(href)
+    if parsed.scheme not in ("http", "https"):
+        return href
+    host = parsed.netloc.lower().split(":")[0]
+    if "." in host and not host.endswith(".local"):
+        return href
+    public = urlparse(page_url)
+    if not public.netloc:
+        return href
+    return urlunparse(parsed._replace(scheme=public.scheme or "https", netloc=public.netloc))
+
+
 def _same_org(url: str, base_host: str) -> bool:
+    """Cùng website trường, kể cả tên miền phụ của chính host đó.
+
+    ussh.vnu.edu.vn không nhận tuyensinh.vnu.edu.vn (cổng của ĐHQG, không phải trường).
+    """
     host = urlparse(url).netloc.lower().split(":")[0]
+    base = (base_host or "").lower().split(":")[0]
     if host.startswith("www."):
         host = host[4:]
-    org = _registrable_host(base_host)
-    return bool(org) and (host == org or host.endswith("." + org))
+    if base.startswith("www."):
+        base = base[4:]
+    if not host or not base:
+        return False
+    if host == base or host.endswith("." + base):
+        return True
+    org = _registrable_host(base)
+    if base == org and (host == org or host.endswith("." + org)):
+        return True
+    return False
 
 
 def filter_official_urls(website: str, urls: List[str]) -> Tuple[List[str], List[str]]:
@@ -201,13 +231,30 @@ def _host_bonus(url: str) -> int:
 
 
 def admission_portal_urls(site: str) -> List[str]:
-    org = _registrable_host(urlparse(site).netloc)
+    host = urlparse(site).netloc.lower().split(":")[0]
+    if host.startswith("www."):
+        host = host[4:]
+    org = host or _registrable_host(urlparse(site).netloc)
     if not org:
         return []
     return [
         f"https://{prefix}.{org}/"
         for prefix in ("ts", "tuyensinh", "tuyensinhdh", "admission", "daotao")
     ]
+
+
+def _quota_name_ok(name: str) -> bool:
+    """Bỏ dòng OCR lệch cột (mã K46. nằm trong tên ngành, mảnh tiêu đề bảng)."""
+    folded = strip_accents(name or "").lower().strip()
+    if not folded:
+        return False
+    if re.search(r"k\d{2}\.", folded):
+        return False
+    if "nhom nganh" in folded or folded.endswith("nhom"):
+        return False
+    if folded.startswith(("nganh ", "hinh", "cau,", "cau ")):
+        return False
+    return True
 
 
 def _score_text(text: str, years: List[int]) -> int:
@@ -255,9 +302,15 @@ class OfficialSiteCrawler:
         years: List[int],
         delay: float = 0.2,
         seed_urls: Optional[List[str]] = None,
+        trusted_urls: Optional[List[str]] = None,
     ) -> CrawlBundle:
         bundle = CrawlBundle()
         site = normalize_site_url(website)
+        if not site:
+            for raw in trusted_urls or []:
+                site = normalize_site_url(str(raw or "").strip())
+                if site:
+                    break
         if not site:
             bundle.source_note = "Không có website chính thức trong danh bạ"
             print(f"[CRAWLER] {school_code}: {bundle.source_note}")
@@ -270,6 +323,10 @@ class OfficialSiteCrawler:
         base = urlparse(site)
         org_host = base.netloc
         accepted_seeds, rejected_seeds = filter_official_urls(site, seed_urls or [])
+        for raw in trusted_urls or []:
+            url = normalize_site_url(str(raw or "").strip())
+            if url and url not in accepted_seeds:
+                accepted_seeds.append(url)
         print(f"[CRAWLER] Thu thập từ website trường {school_code}: {site}")
 
         pages_read = 0
@@ -283,6 +340,17 @@ class OfficialSiteCrawler:
         except Exception as e:
             home = None
             print(f"[CẢNH BÁO] Không mở được trang chủ {site}: {e}")
+        if home is None and urlparse(site).netloc.lower().startswith("www."):
+            bare = site.replace("://www.", "://", 1)
+            print(f"[CẢNH BÁO] {school_code}: thử lại không có www — {bare}")
+            try:
+                home = self._fetch(bare, timeout=12)
+            except Exception as e:
+                print(f"[CẢNH BÁO] Không mở được {bare}: {e}")
+            if home is not None:
+                site = home.url or bare
+                base = urlparse(site)
+                org_host = base.netloc
 
         queue: List[Tuple[int, str]] = []
         home_url = site
@@ -552,12 +620,27 @@ class OfficialSiteCrawler:
             soup = BeautifulSoup(res.text, "html.parser")
         except Exception:
             return
+        page_title = ""
+        if soup.title:
+            page_title = soup.title.get_text(" ", strip=True)
+        # Tệp đính kèm thường chỉ có tên mã (vd. 1772450163719_document_1.pdf).
+        # Lấy điểm của trang chứa tệp để vẫn đọc phương án tuyển sinh.
+        page_score = _score_text(_blob(page_url, page_title), years)
         for anchor in soup.find_all("a", href=True):
             href = (anchor.get("href") or "").strip()
             if not href or href.startswith(("#", "mailto:", "tel:", "javascript:")):
                 continue
+            href = _rewrite_internal_file_href(href, page_url)
             absolute = urljoin(page_url, href)
             parsed = urlparse(absolute)
+            page_parsed = urlparse(page_url)
+            if (
+                parsed.scheme == "http"
+                and page_parsed.scheme == "https"
+                and _same_org(absolute, page_parsed.netloc)
+            ):
+                absolute = urlunparse(parsed._replace(scheme="https"))
+                parsed = urlparse(absolute)
             if parsed.scheme not in ("http", "https"):
                 continue
             if not _same_org(absolute, org_host):
@@ -567,8 +650,16 @@ class OfficialSiteCrawler:
             label = clean_text(anchor.get_text(" ", strip=True))
             text = _blob(label, absolute)
             score = _score_text(text, years) + _host_bonus(absolute)
+            if _DOC_RE.search(absolute) and page_score >= 4:
+                score = max(score, page_score)
+                text = _blob(label, absolute, page_url, page_title)
             mentioned = _years_in(absolute, label)
-            if "diem chuan" in text and "du bao" not in text:
+            path = (parsed.path or "").lower().rstrip("/")
+            if re.search(r"/news/(?:dao-tao|tuyen-sinh|thong-bao)$", path):
+                score = max(score, 25)
+            if re.search(r"/news/.*/page-([2-4])$", path):
+                score = max(score, 24)
+            if ("diem chuan" in text or "diem trung tuyen" in text) and "du bao" not in text:
                 if not mentioned or any(y in years for y in mentioned):
                     score += 60
             if re.search(r"(?:[?&]page=|/page/)\d+", absolute) and "diem chuan" not in text:
@@ -745,6 +836,14 @@ class OfficialSiteCrawler:
                     default_year=year,
                     max_pages=self.MAX_PDF_PAGES,
                 )
+                if not records:
+                    records = self._records_from_scanned_pdf(
+                        tmp_path,
+                        school_code,
+                        school_name,
+                        year,
+                        source,
+                    )
             elif parser == "docx":
                 records = DocxAdmissionParser().parse(
                     tmp_path,
@@ -772,6 +871,99 @@ class OfficialSiteCrawler:
         before = len(bundle.admissions)
         self._merge(bundle, records, [], [], years, source)
         return len(bundle.admissions) - before
+
+    def _records_from_scanned_pdf(
+        self,
+        path: str,
+        school_code: str,
+        school_name: str,
+        year: int,
+        source: str,
+    ) -> List[AdmissionRecord]:
+        """Đọc bảng chỉ tiêu trong PDF scan (mỗi trang là một ảnh)."""
+        records: List[AdmissionRecord] = []
+        try:
+            pdf = __import__("pdfplumber").open(path)
+        except Exception as exc:
+            print(f"[CẢNH BÁO] Không mở được PDF scan {path}: {exc}")
+            return []
+        try:
+            pages = pdf.pages[: self.MAX_PDF_PAGES]
+            for page in pages:
+                image_path = ""
+                try:
+                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                        image_path = tmp.name
+                    page.to_image(resolution=150).save(image_path)
+                    records.extend(
+                        self._quota_rows_from_image(
+                            image_path, school_code, school_name, year, source
+                        )
+                    )
+                except Exception as exc:
+                    print(f"[CẢNH BÁO] Không đọc trang scan: {exc}")
+                finally:
+                    if image_path and os.path.exists(image_path):
+                        os.unlink(image_path)
+        finally:
+            pdf.close()
+        return records
+
+    def _quota_rows_from_image(
+        self,
+        image_path: str,
+        school_code: str,
+        school_name: str,
+        year: int,
+        source: str,
+    ) -> List[AdmissionRecord]:
+        tokens = ocr_tokens(image_path)
+        if len(tokens) < 8:
+            return []
+        rows = _cluster_rows(tokens, gap=0.018)
+        found: List[AdmissionRecord] = []
+        for row in rows:
+            code = ""
+            quota: Optional[int] = None
+            name_parts: List[str] = []
+            for x, text in row:
+                compact = re.sub(r"\s+", "", text).upper()
+                if not code and 0.16 <= x <= 0.30 and _MAJOR_CODE_RE.match(compact):
+                    code = compact
+                    continue
+                if x >= 0.65 and re.fullmatch(r"\d{2,4}", compact):
+                    value = int(compact)
+                    if 10 <= value <= 2000:
+                        quota = value
+                    continue
+                if 0.28 <= x < 0.68 and re.search(r"[A-Za-zÀ-ỹ]", text):
+                    name_parts.append(text)
+            name = clean_text(" ".join(name_parts))
+            if code and quota and len(name) >= 3:
+                found.append(
+                    AdmissionRecord(
+                        ma_truong=school_code,
+                        ten_truong=school_name,
+                        ma_nganh=code,
+                        ten_nganh=name,
+                        nam=year,
+                        chi_tieu=quota,
+                        phuong_thuc="Chỉ tiêu dự kiến",
+                        ghi_chu="Chỉ tiêu dự kiến trong phương án tuyển sinh, chưa có điểm chuẩn.",
+                        nguon=source,
+                    )
+                )
+                continue
+            if found and not code and quota is None and len(name) >= 3:
+                tail = found[-1].ten_nganh.rstrip()
+                if re.search(r"(?:-|–|\bvà|\bChí|\bViệt|\bchính)$", tail, re.I) or re.match(
+                    r"và\b", name, re.I
+                ):
+                    found[-1].ten_nganh = clean_text(f"{tail} {name}")
+        found = [rec for rec in found if _quota_name_ok(rec.ten_nganh)]
+        if len(found) < 3:
+            return []
+        return found
 
     def _merge(
         self,

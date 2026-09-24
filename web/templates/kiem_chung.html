@@ -188,6 +188,7 @@ let scoreRows = [];
 let convertRows = [];
 let convertCalcs = [];
 let bonusRows = [];
+let personalProfile = { chung_chi: {} };
 let shownBonus = [];
 let shownConvert = [];
 let shownScoreGroups = [];
@@ -779,6 +780,13 @@ function bonusKindsFor(rows) {
   return kinds;
 }
 
+function profileScore(kind) {
+  const certs = personalProfile.chung_chi || {};
+  if (certs[kind]) return String(certs[kind]);
+  if (kind === 'TOEFL' && certs['TOEFL iBT']) return String(certs['TOEFL iBT']);
+  return '';
+}
+
 function fillBonusInputs(code) {
   const box = document.getElementById('bonusInputs');
   const calcWrap = document.getElementById('bonusCalcWrap');
@@ -787,14 +795,18 @@ function fillBonusInputs(code) {
   const kinds = bonusKindsFor(pack.rows);
   const sample = { IELTS: 'VD: 7.6', 'TOEFL iBT': 'VD: 94', 'TOEFL ITP': 'VD: 627', TOEFL: 'VD: 94' };
   box.replaceChildren();
+  const filled = [];
   kinds.forEach((kind, index) => {
+    const saved = profileScore(kind);
     const col = document.createElement('div');
     col.className = 'col-6 col-md-3';
     col.innerHTML = `
       <label class="form-label small mb-1" for="bonusScore-${index}">${escapeHtml(kind)}</label>
       <input type="number" step="0.01" class="form-control form-control-sm" id="bonusScore-${index}"
-        data-bonus-kind="${escapeHtml(kind)}" placeholder="${escapeHtml(sample[kind] || 'Nhập điểm')}">`;
+        data-bonus-kind="${escapeHtml(kind)}" placeholder="${escapeHtml(sample[kind] || 'Nhập điểm')}"
+        value="${saved ? escapeHtml(saved) : ''}">`;
     box.appendChild(col);
+    if (saved) filled.push(kind);
   });
   calcWrap.classList.toggle('d-none', !kinds.length);
   if (code && kinds.length) {
@@ -802,7 +814,10 @@ function fillBonusInputs(code) {
     note.textContent = (pack.narrowed && pack.year
       ? `Quy chế khác giữa các năm — dùng bảng năm ${pack.year} (năm gần nhất). `
       : (pack.year ? `Bảng điểm cộng năm ${pack.year}. ` : ''))
-      + 'Nhập điểm từng điều kiện. Nhiều điều kiện không cộng dồn — lấy mức cao nhất.';
+      + (filled.length
+        ? `Đã điền ${filled.join(', ')} từ thông tin cá nhân. `
+        : 'Nhập điểm từng điều kiện. ')
+      + 'Nhiều điều kiện không cộng dồn — lấy mức cao nhất.';
   } else if (code) {
     note.classList.remove('d-none');
     note.textContent = 'Trường này chưa có điều kiện nhập điểm.';
@@ -1022,6 +1037,13 @@ document.getElementById('verifyConvertTable').addEventListener('click', (event) 
   window.App.setSelectOptions(document.getElementById('bonusSchool'), schoolOptions(bonusRows), '', {
     placeholder: 'Chọn một trường',
   });
+  try {
+    const res = await fetch('/api/ca-nhan');
+    const data = await res.json();
+    personalProfile = (data && data.ok && data.profile) || { chung_chi: {} };
+  } catch (_) {
+    personalProfile = { chung_chi: {} };
+  }
 })();
 </script>
 {% endblock %}
