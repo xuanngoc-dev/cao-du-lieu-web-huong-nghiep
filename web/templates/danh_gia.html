@@ -1537,9 +1537,22 @@ function schoolNameCell(s) {
 
 function renderChanceSummaryTable(summary) {
   if (!summary || !summary.length) return '';
+  const failCount = summary.filter(s => !s.ok).length;
+  const toggleId = `chanceShowNoPtxt_${Math.random().toString(36).slice(2, 8)}`;
+  const toggle = failCount
+    ? `<div class="form-check form-switch mb-2">
+        <input class="form-check-input chance-show-noptxt" type="checkbox" checked
+          id="${toggleId}" role="switch">
+        <label class="form-check-label small" for="${toggleId}">
+          Hiện trường không có phương thức tuyển sinh (✗) · ${failCount} trường
+        </label>
+      </div>`
+    : '';
   return `
-    <div class="table-responsive mt-3">
-      <table class="table table-sm table-bordered align-middle mb-0">
+    <div class="chance-summary-block">
+    ${toggle}
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered align-middle mb-0 chance-summary-table">
         <thead class="table-light">
           <tr>
             <th style="width:3rem" class="text-center">PTXT</th>
@@ -1557,7 +1570,7 @@ function renderChanceSummaryTable(summary) {
             const mark = s.ok
               ? '<span class="text-success fw-bold" title="Có phương thức">✓</span>'
               : '<span class="text-danger fw-bold" title="Không có phương thức phù hợp">✗</span>';
-            const rowClass = s.ok ? '' : 'table-danger';
+            const rowClass = s.ok ? '' : 'table-danger chance-summary-fail';
             return `<tr class="${rowClass}">
               <td class="text-center fs-5">${mark}</td>
               <td><code>${esc(s.ma_truong)}</code></td>
@@ -1571,13 +1584,24 @@ function renderChanceSummaryTable(summary) {
           }).join('')}
         </tbody>
       </table>
+    </div>
+    <p class="small text-muted mt-2 mb-0 d-none chance-summary-empty">Đã ẩn hết trường không có phương thức.</p>
     </div>`;
 }
 
-function formatChanceScoreCell(s) {
-  const shown = s.user_score != null ? esc(s.user_score) : '';
-  if (!s.bonus) return shown;
-  return `${shown}<div class="text-muted">${esc(s.base_score)} + ${esc(s.bonus)}</div>`;
+function formatEnteredScoreCell(s) {
+  const base = s.base_score != null ? s.base_score : s.user_score;
+  return base != null ? esc(base) : '—';
+}
+
+function formatAfterBonusCell(s) {
+  const after = s.user_score != null ? s.user_score : s.base_score;
+  if (after == null) return '—';
+  if (!s.bonus) return esc(after);
+  const note = s.bonus_note
+    ? esc(s.bonus_note)
+    : `+${esc(s.bonus)}`;
+  return `<b>${esc(after)}</b><div class="text-muted">${note}</div>`;
 }
 
 function renderChancePanel(result) {
@@ -1589,7 +1613,13 @@ function renderChancePanel(result) {
   }
 
   const st = result.stats || {};
-  const samples = result.samples || [];
+  const samples = [...(result.samples || [])].sort((a, b) => {
+    const ga = Number(a.chenh_lech);
+    const gb = Number(b.chenh_lech);
+    const va = Number.isFinite(ga) ? ga : -Infinity;
+    const vb = Number.isFinite(gb) ? gb : -Infinity;
+    return vb - va;
+  });
   const advice = formatAdviceHtml(result.ai_advice || '');
   const profiles = st.score_profiles || [];
   const profileBadges = profiles.length
@@ -1622,7 +1652,7 @@ function renderChancePanel(result) {
         <div class="table-responsive">
           <table class="table table-sm table-bordered align-middle mb-0">
             <thead class="table-light"><tr>
-              <th class="text-center">PTXT</th><th>Trường</th><th>Ngành</th><th>Phương thức</th><th>Điểm của bạn</th><th>Điểm chuẩn</th><th>Lệch</th><th></th>
+              <th class="text-center">PTXT</th><th>Trường</th><th>Ngành</th><th>Phương thức</th><th>Điểm của bạn</th><th>Điểm sau cộng</th><th>Điểm chuẩn</th><th>Lệch</th><th></th>
             </tr></thead>
             <tbody>
               ${samples.map(s => {
@@ -1635,7 +1665,8 @@ function renderChancePanel(result) {
                 <td><code>${esc(s.ma_truong)}</code>${schoolLink}</td>
                 <td class="small">${esc(s.ten_nganh)}</td>
                 <td class="small">${esc(s.user_method_label || s.phuong_thuc || '')}</td>
-                <td>${formatChanceScoreCell(s)}</td>
+                <td>${formatEnteredScoreCell(s)}</td>
+                <td>${formatAfterBonusCell(s)}</td>
                 <td>${esc(s.diem_chuan)}</td>
                 <td>${s.chenh_lech > 0 ? '+' : ''}${esc(s.chenh_lech)}</td>
                 <td class="small">${esc(s.co_hoi)}</td>
@@ -1714,6 +1745,9 @@ function buildMultiChanceSummary(methodResults) {
         ten_nganh: s.ten_nganh,
         method_label: s.user_method_label || methodLabel,
         user_score: s.user_score,
+        base_score: s.base_score,
+        bonus: s.bonus,
+        bonus_note: s.bonus_note,
         diem_chuan: s.diem_chuan,
         chenh_lech: s.chenh_lech,
         website: s.website || '',
@@ -1819,7 +1853,8 @@ function renderMultiChanceSummary(methodResults) {
       <td><code>${esc(m.ma_truong)}</code>${schoolLink}</td>
       <td class="small">${esc(m.ten_nganh)}</td>
       <td class="small">${esc(m.method_label)}</td>
-      <td>${esc(m.user_score)}</td>
+      <td>${formatEnteredScoreCell(m)}</td>
+      <td>${formatAfterBonusCell(m)}</td>
       <td>${esc(m.diem_chuan)}</td>
       <td>${m.chenh_lech > 0 ? '+' : ''}${esc(m.chenh_lech)}</td>
     </tr>`;
@@ -1844,7 +1879,7 @@ function renderMultiChanceSummary(methodResults) {
         <div class="table-responsive">
           <table class="table table-sm table-bordered align-middle mb-0">
             <thead class="table-light"><tr>
-              <th>Trường</th><th>Ngành</th><th>Phương thức</th><th>Điểm của bạn</th><th>Điểm chuẩn</th><th>Lệch</th>
+              <th>Trường</th><th>Ngành</th><th>Phương thức</th><th>Điểm của bạn</th><th>Điểm sau cộng</th><th>Điểm chuẩn</th><th>Lệch</th>
             </tr></thead>
             <tbody>${majorRows}</tbody>
           </table>
@@ -1910,6 +1945,20 @@ function renderChance(result) {
 
   box.innerHTML = `<div class="border rounded-3 p-3 bg-white chance-single-result">${renderChancePanel(result)}</div>`;
 }
+
+document.getElementById('chanceResult').addEventListener('change', (e) => {
+  const input = e.target;
+  if (!input.classList || !input.classList.contains('chance-show-noptxt')) return;
+  const block = input.closest('.chance-summary-block');
+  if (!block) return;
+  const show = input.checked;
+  block.querySelectorAll('tr.chance-summary-fail').forEach(row => {
+    row.classList.toggle('d-none', !show);
+  });
+  const visible = block.querySelectorAll('.chance-summary-table tbody tr:not(.d-none)').length;
+  const empty = block.querySelector('.chance-summary-empty');
+  if (empty) empty.classList.toggle('d-none', show || visible > 0);
+});
 
 document.getElementById('btnChance').addEventListener('click', async () => {
   const scores = getChanceScoreEntries();

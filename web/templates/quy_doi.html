@@ -3,10 +3,13 @@
 {% block content %}
 <h1 class="h3 mb-1">③ Quy đổi điểm giữa các phương thức</h1>
 <p class="text-muted mb-3">
-  thu thập bảng quy đổi từ tuyensinh247, rồi nhập điểm để tính điểm tương đương
-  (THPT ↔ HSA / TSA / V-ACT / SAT / học bạ…) ngay trên giao diện.
-  Ví dụ NEU:
-  <a href="https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html" target="_blank" rel="noopener">KHA</a>.
+  Lấy bảng quy đổi trên website nhà trường (kể cả bảng đăng dạng ảnh).
+  Nếu website trường chưa công bố hoặc crawler chưa nhận diện được, hệ thống báo thiếu dữ liệu và không lấy từ nguồn tổng hợp bên ngoài.
+  Cùng lúc lấy bảng quy đổi chứng chỉ (ngoại ngữ, hệ chữ A-Level/AP/IB) và phương thức áp dụng nếu trang tuyển sinh của trường có công bố.
+  Ví dụ Kinh tế Quốc dân:
+  <a href="https://daotao.neu.edu.vn/vi/tin-tuc-1689/dai-hoc-kinh-te-quoc-dan-cong-bo-bang-quy-doi-tuong-duong-diem-chuan-nam-2026" target="_blank" rel="noopener">daotao.neu.edu.vn</a>;
+  Bách khoa Hà Nội: thông cáo bảng phân vị 2026 trên
+  <a href="https://ts.hust.edu.vn/tin-tuc/thong-cao-bao-chi-ve-do-lech-giua-cac-to-hop-xet-tuyen-bang-quy-doi-diem-chuan-va-du-bao-muc-diem-trung-tuyen-vao-cac-nganh-cua-dai-hoc-bach-khoa-ha-noi-nam-2026" target="_blank" rel="noopener">ts.hust.edu.vn</a>.
 </p>
 
 <div class="card panel-card mb-3">
@@ -144,6 +147,9 @@
     <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabRows" type="button" role="tab">Bảng quy đổi</button>
   </li>
   <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabCerts" type="button" role="tab">Chứng chỉ</button>
+  </li>
+  <li class="nav-item" role="presentation">
     <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabNotes" type="button" role="tab">Ghi chú / công thức</button>
   </li>
   <li class="nav-item" role="presentation">
@@ -167,6 +173,20 @@
       </table>
     </div>
     <p class="small text-muted mt-2 mb-0" id="qdRowsEmpty">Chưa có dữ liệu — hãy lấy bảng quy đổi ở trên.</p>
+  </div>
+  <div class="tab-pane fade" id="tabCerts">
+    <div class="table-responsive table-scroll-x">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0" id="qdCertTable">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Loại chứng chỉ</th><th>Hạng mục</th><th>Điểm quy đổi</th>
+            <th>Thang</th><th>Phương thức áp dụng</th><th>Chi tiết</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="small text-muted mt-2 mb-0" id="qdCertEmpty">Chưa có bảng quy đổi chứng chỉ.</p>
   </div>
   <div class="tab-pane fade" id="tabNotes">
     <div id="qdNotesList" class="vstack gap-3"></div>
@@ -323,7 +343,8 @@ async function onCalcSchoolChange() {
       const s = data.summary || {};
       hint.innerHTML =
         `Đang xem dữ liệu trường <code>${esc(code)}</code> — `
-        + `${esc(s.rows || 0)} dòng · ${esc(s.notes || 0)} ghi chú · `
+        + `${esc(s.rows || 0)} dòng · ${esc(s.certificates || 0)} chứng chỉ · `
+        + `${esc(s.notes || 0)} ghi chú · `
         + `${esc(s.ranges || 0)} khoảng · ${esc(s.images || 0)} ảnh.`;
     }
     // Cập nhật methods nếu API trả về
@@ -350,6 +371,7 @@ function filterQuyDoiBySchool(data, code) {
     notes: (data.notes || []).filter(n => match(n.ma_truong)),
     images: (data.images || []).filter(i => match(i.ma_truong)),
     ranges: (data.ranges || []).filter(g => match(g.ma_truong)),
+    certificate_conversions: (data.certificate_conversions || []).filter(c => match(c.ma_truong)),
     school_results: (data.school_results || []).filter(s => match(s.code)),
     download_url: data.download_url,
     filename: data.filename,
@@ -427,7 +449,7 @@ function renderCalcResult(payload) {
   box.innerHTML = `${body}
     <p class="small text-muted mt-2 mb-0">
       Điểm ước tính được nội suy tuyến tính trong khoảng đã khớp (theo từng tổ hợp nếu trường có nhiều bảng BPV).
-      Tham chiếu bảng công bố trên tuyensinh247 — cần đối chiếu đề án chính thức của trường.
+      Nguồn tham chiếu là bảng công bố trên website chính thức của trường.
     </p>`;
 }
 
@@ -593,6 +615,7 @@ function renderQuyDoiTables(data, { schoolCode } = {}) {
   // Ẩn/hiện pills theo dữ liệu của trường
   const counts = {
     tabRows: rows.length,
+    tabCerts: (data.certificate_conversions || []).length,
     tabNotes: (data.notes || []).length,
     tabRanges: (data.ranges || []).length,
     tabImages: imgCount,
@@ -612,6 +635,20 @@ function renderQuyDoiTables(data, { schoolCode } = {}) {
     }
     badge.textContent = String(n);
   });
+
+  const certs = data.certificate_conversions || [];
+  document.querySelector('#qdCertTable tbody').innerHTML = certs.map(c => `
+    <tr>
+      <td><code>${esc(c.ma_truong)}</code></td>
+      <td>${esc(c.loai_bang)}</td>
+      <td>${esc(c.hang_muc)}</td>
+      <td>${esc(c.diem_quy_doi)}</td>
+      <td>${esc(c.thang_diem)}</td>
+      <td class="small">${esc(c.phuong_thuc)}</td>
+      <td class="small">${esc(c.chi_tiet_hang)}</td>
+    </tr>`).join('');
+  const certEmpty = document.getElementById('qdCertEmpty');
+  if (certEmpty) certEmpty.style.display = certs.length ? 'none' : 'block';
 
   document.getElementById('qdNotesList').innerHTML = (data.notes || []).map(n => `
     <div class="border rounded-3 p-3 bg-white">

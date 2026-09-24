@@ -5,6 +5,7 @@ Mô tả: Hợp nhất, khử trùng lặp và chuyển đổi ma trận dữ li
 cho phép ghép nối thông tin Chỉ tiêu, Số nguyện vọng và Điểm chuẩn theo từng ngành.
 """
 
+import re
 from typing import List, Dict, Any, Tuple, Optional
 import pandas as pd
 import numpy as np
@@ -13,6 +14,18 @@ from core.models import AdmissionRecord
 from core.normalizer import normalize_school_code, get_school_display_name
 from core.major_resolver import MajorCodeResolver
 from crawlers.dean_extractor import method_to_calc_id
+
+_SOURCE_URL_RE = re.compile(r"https?://[^\s;]+")
+
+
+def source_urls(text: str) -> List[str]:
+    """Tách các URL gốc trong chuỗi nguồn, giữ thứ tự và bỏ trùng."""
+    found: List[str] = []
+    for raw in _SOURCE_URL_RE.findall(text or ""):
+        url = raw.rstrip(".,)")
+        if url and url not in found:
+            found.append(url)
+    return found
 
 
 # Thứ tự cột điểm theo phương thức trên sheet tổng hợp
@@ -181,6 +194,7 @@ class AdmissionAggregator:
                     "ten_nganh": rec.ten_nganh,
                     "to_hop": rec.to_hop or "",
                     "phuong_thuc_co": set(),
+                    "nguon_urls": [],
                 }
                 for yr in self.years:
                     init_row[f"chi_tieu_{yr}"] = None
@@ -190,6 +204,9 @@ class AdmissionAggregator:
                 grouped_data[group_key] = init_row
 
             row_dict = grouped_data[group_key]
+            for url in source_urls(rec.nguon):
+                if url not in row_dict["nguon_urls"]:
+                    row_dict["nguon_urls"].append(url)
             mid = method_column_key(rec.phuong_thuc)
             row_dict["phuong_thuc_co"].add(METHOD_COLUMN_LABELS.get(mid, mid))
 
@@ -233,6 +250,7 @@ class AdmissionAggregator:
                 return METHOD_COLUMN_ORDER.index(key) if key in METHOD_COLUMN_ORDER else 99
 
             row["phuong_thuc"] = "; ".join(sorted(methods_set, key=_method_sort_key)) if methods_set else ""
+            row["nguon"] = "\n".join(row.pop("nguon_urls", []) or [])
 
             score_series_key = "THPT" if "THPT" in methods else (methods[0] if methods else None)
             scores = []
@@ -323,8 +341,12 @@ def build_grouped_score_view(
                 "ten_nganh": ten_nganh,
                 "to_hop": (rec.get("to_hop") or "").strip(),
                 "scores": {},
+                "nguon_urls": [],
             }
         row = grouped[key]
+        for url in source_urls(rec.get("nguon") or ""):
+            if url not in row["nguon_urls"]:
+                row["nguon_urls"].append(url)
         if not row["ma_nganh"] and rec.get("ma_nganh"):
             row["ma_nganh"] = str(rec.get("ma_nganh")).strip()
         to_hop = (rec.get("to_hop") or "").strip()
@@ -378,16 +400,21 @@ def build_grouped_score_view(
                 "ma_truong": code,
                 "ten_truong": school_names.get(code) or row["ten_truong"] or code,
                 "majors": [],
+                "nguon_urls": [],
             }
         scores_out: Dict[str, Dict[str, Any]] = {}
         for mid in methods:
             ymap = row["scores"].get(mid) or {}
             scores_out[mid] = {str(y): ymap.get(y) for y in year_list if y in ymap}
+        for url in row.get("nguon_urls") or []:
+            if url not in schools_map[code]["nguon_urls"]:
+                schools_map[code]["nguon_urls"].append(url)
         schools_map[code]["majors"].append({
             "ma_nganh": row["ma_nganh"],
             "ten_nganh": row["ten_nganh"],
             "to_hop": row["to_hop"],
             "scores": scores_out,
+            "nguon_urls": row.get("nguon_urls") or [],
         })
 
     schools = []

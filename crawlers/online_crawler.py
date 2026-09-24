@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Module: crawlers.online_crawler
-Mô tả: Tự động tìm kiếm và Thu thập dữ liệu điểm chuẩn tuyển sinh đại học từ các cổng trực tuyến
-qua các năm 2021 đến 2025 theo Mã trường hoặc Tên trường.
+Mô tả: Thu thập dữ liệu tuyển sinh chỉ từ website chính thức của nhà trường.
 """
 
 import os
@@ -34,6 +33,7 @@ from crawlers.dean_extractor import (
     detect_admission_method,
     method_to_calc_id,
 )
+from crawlers.official_site_crawler import OfficialSiteCrawler, lookup_local_school
 from crawlers.school_directory import SchoolDirectory
 
 
@@ -56,11 +56,9 @@ def _section_title_for_table(table) -> str:
 
 class OnlineAdmissionCrawler:
     """
-    Crawler thu thập điểm chuẩn trực tuyến từ cổng tuyển sinh công khai.
-    Có cơ chế tự động tìm kiếm đường dẫn trường dựa trên Mã trường (VD: BKA, NEU, QHI).
+    Thu thập điểm chuẩn, đề án và phương thức từ website chính thức của nhà trường.
     """
 
-    BASE_URL = "https://diemthi.tuyensinh247.com"
     HEADERS = {
         "User-Agent": (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -74,9 +72,10 @@ class OnlineAdmissionCrawler:
         self.major_resolver = MajorCodeResolver()
         self.dean_extractor = DeanAdmissionExtractor()
         self.directory = SchoolDirectory(cache_dir=cache_dir)
-        self.school_slugs: Dict[str, Dict[str, str]] = self.directory.load(
-            force_refresh=refresh_directory
-        )
+        self._refresh_directory = refresh_directory
+        self.school_slugs: Optional[Dict[str, Dict[str, str]]] = None
+        if refresh_directory:
+            self._ensure_school_slugs()
         # Cache phụ: quy chế & bảng quy đổi theo mã trường (trong phiên chạy)
         self._dean_cache: Dict[str, Tuple[List[AdmissionRecord], List[ScoreConversionRecord], List[AdmissionRegulation]]] = {}
 
@@ -85,12 +84,20 @@ class OnlineAdmissionCrawler:
         include_dai_hoc: bool = True,
         include_cao_dang: bool = True,
     ) -> Dict[str, Dict]:
-        """Làm mới danh bạ mã trường từ web."""
+        """Nạp lại danh bạ cục bộ chứa website chính thức của trường."""
         self.school_slugs = self.directory.load(
             force_refresh=True,
             include_dai_hoc=include_dai_hoc,
             include_cao_dang=include_cao_dang,
         )
+        return self.school_slugs
+
+    def _ensure_school_slugs(self) -> Dict[str, Dict[str, str]]:
+        """Nạp danh bạ online khi thực sự cần tra cứu mã/slug."""
+        if self.school_slugs is None:
+            self.school_slugs = self.directory.load(
+                force_refresh=self._refresh_directory
+            )
         return self.school_slugs
 
     def list_school_codes(
@@ -99,7 +106,7 @@ class OnlineAdmissionCrawler:
     ) -> List[str]:
         """Trả về danh sách mã trường (all / dai_hoc / cao_dang / hoc_vien / dai_hoc_hoc_vien)."""
         if not self.directory.schools:
-            self.directory.schools = self.school_slugs
+            self.directory.schools = self._ensure_school_slugs()
         return self.directory.get_codes(school_type=school_type)
 
     def _load_or_fetch_school_directory(self) -> Dict[str, Dict[str, str]]:
@@ -139,13 +146,14 @@ class OnlineAdmissionCrawler:
         if clean_key in self.COMMON_ALIASES:
             clean_key = self.COMMON_ALIASES[clean_key]
 
+        slugs = self._ensure_school_slugs()
         # Tìm chính xác theo mã trường
-        if clean_key in self.school_slugs:
-            return self.school_slugs[clean_key]
+        if clean_key in slugs:
+            return slugs[clean_key]
 
         # Tìm gần đúng theo tên
         lower_key = keyword_or_code.strip().lower()
-        for code, info in self.school_slugs.items():
+        for code, info in slugs.items():
             if lower_key in info["name"].lower() or lower_key in info["slug"].lower():
                 return info
 
@@ -157,27 +165,27 @@ class OnlineAdmissionCrawler:
         school_name: str,
         slug: str,
     ) -> Tuple[List[AdmissionRecord], List[ScoreConversionRecord], List[AdmissionRegulation]]:
-        """
-        thu thập trang Đề án tuyển sinh: mã ngành, phương thức, quy chế, bảng quy đổi chứng chỉ.
-        """
+        """Thu thập đề án, quy chế và bảng chứng chỉ từ website trường."""
         if school_code in self._dean_cache:
             return self._dean_cache[school_code]
 
         empty = ([], [], [])
-        url = f"{self.BASE_URL}/de-an-tuyen-sinh/{slug}.html"
+        info = lookup_local_school(school_code)
+        website = (info or {}).get("website") or ""
+        if not website:
+            self._dean_cache[school_code] = empty
+            return empty
         try:
-            print(f"[CRAWLER] Đang lấy Đề án tuyển sinh: {url}")
-            res = requests.get(url, headers=self.HEADERS, timeout=20)
-            if res.status_code != 200:
-                self._dean_cache[school_code] = empty
-                return empty
-
-            admissions, conversions, regulations = self.dean_extractor.extract(
-                html=res.text,
+            bundle = OfficialSiteCrawler().crawl(
                 school_code=school_code,
                 school_name=school_name,
-                source="Online: Đề án tuyển sinh",
+                website=website,
+                years=[2026],
+                delay=0,
             )
+            admissions = bundle.admissions
+            conversions = bundle.conversions
+            regulations = bundle.regulations
             print(
                 f"[CRAWLER] Đề án {school_code}: "
                 f"{len(admissions)} ngành/PTXT, "
@@ -192,48 +200,7 @@ class OnlineAdmissionCrawler:
             return empty
 
     def resolve_school_api_id(self, school_code: str, slug: str = "") -> Optional[int]:
-        """
-        Lấy school_id nội bộ tuyensinh247 (dùng cho API điểm chuẩn theo năm).
-        """
-        code = (school_code or "").strip().upper()
-        if not code:
-            return None
-        try:
-            url = f"{self.BASE_URL}/api/school/search"
-            res = requests.get(
-                url,
-                params={"q": code},
-                headers={**self.HEADERS, "Accept": "application/json"},
-                timeout=12,
-            )
-            if res.status_code == 200:
-                payload = res.json() if res.content else {}
-                for item in payload.get("data") or []:
-                    if str(item.get("code") or "").upper() == code:
-                        return int(item["id"])
-                # fallback: khớp alias/slug
-                slug_key = (slug or "").replace(".html", "").strip().lower()
-                for item in payload.get("data") or []:
-                    alias = str(item.get("alias") or "").lower()
-                    if slug_key and (alias == slug_key or slug_key.startswith(alias)):
-                        return int(item["id"])
-        except Exception as e:
-            print(f"[CẢNH BÁO] Không resolve school_id cho {code}: {e}")
-
-        # Fallback: đọc school_id từ HTML trang điểm chuẩn
-        if slug:
-            try:
-                page = requests.get(
-                    f"{self.BASE_URL}/diem-chuan/{slug}.html",
-                    headers=self.HEADERS,
-                    timeout=12,
-                )
-                if page.status_code == 200:
-                    m = re.search(r'school_id\\?":(\d+)', page.text)
-                    if m:
-                        return int(m.group(1))
-            except Exception:
-                pass
+        """API nguồn tổng hợp đã ngừng sử dụng."""
         return None
 
     def fetch_cutoff_scores_api(
@@ -242,26 +209,8 @@ class OnlineAdmissionCrawler:
         year: int,
         method_id: Optional[int] = None,
     ) -> List[Dict]:
-        """
-        Gọi API điểm chuẩn theo năm (+ optional method_id).
-        GET /api/common/cutoff-score?school_id=&year=&method_id=
-        """
-        params = {"school_id": school_id, "year": year}
-        if method_id is not None:
-            params["method_id"] = method_id
-        res = requests.get(
-            f"{self.BASE_URL}/api/common/cutoff-score",
-            params=params,
-            headers={**self.HEADERS, "Accept": "application/json"},
-            timeout=20,
-        )
-        if res.status_code != 200:
-            return []
-        payload = res.json() if res.content else {}
-        if not payload.get("success"):
-            return []
-        data = payload.get("data") or []
-        return data if isinstance(data, list) else []
+        """API nguồn tổng hợp đã ngừng sử dụng."""
+        return []
 
     def _append_cutoff_api_records(
         self,
@@ -346,261 +295,59 @@ class OnlineAdmissionCrawler:
         school_code_or_name: str,
         years: List[int] = None,
         delay: float = 0.5,
+        source_urls: Optional[List[str]] = None,
     ) -> CrawlBundle:
         """
-        thu thập đầy đủ: điểm chuẩn theo năm + đề án (mã ngành, PTXT, quy chế, điểm quy đổi).
-        Điểm chuẩn các năm lấy qua API /api/common/cutoff-score (HTML ?y= không đổi nội dung).
+        Thu thập điểm chuẩn, mã ngành, phương thức và quy chế từ website chính thức
+        của nhà trường (không lấy từ cổng tuyển sinh bên ngoài).
         """
         years = years or [2021, 2022, 2023, 2024, 2025, 2026]
-        bundle = CrawlBundle()
-        school_info = self.find_school(school_code_or_name)
-
+        school_info = self._school_for_official_crawl(school_code_or_name)
         if not school_info:
-            print(f"[CRAWLER] Không tìm thấy trường với từ khóa '{school_code_or_name}'.")
+            bundle = CrawlBundle()
+            bundle.source_note = f"Không tìm thấy trường '{school_code_or_name}' trong danh bạ"
+            print(f"[CRAWLER] {bundle.source_note}.")
             return bundle
 
         school_code = school_info["code"]
         school_name = school_info["name"]
-        slug = school_info["slug"]
-        print(f"\n[CRAWLER] Bắt đầu Thu thập dữ liệu: {school_name} (Mã: {school_code})")
-
-        # 1) Đề án: mã ngành, phương thức, quy chế, bảng quy đổi
-        dean_admissions, conversions, regulations = self.crawl_dean_data(
-            school_code, school_name, slug
+        website = school_info.get("website") or ""
+        print(f"\n[CRAWLER] Bắt đầu thu thập từ website trường: {school_name} (Mã: {school_code})")
+        return OfficialSiteCrawler().crawl(
+            school_code=school_code,
+            school_name=school_name,
+            website=website,
+            years=years,
+            delay=delay,
+            seed_urls=source_urls,
         )
-        bundle.conversions.extend(conversions)
-        bundle.regulations.extend(regulations)
 
-        # Nạp mapping mã ngành phục vụ resolve khi thu thập điểm chuẩn
-        self.major_resolver.fetch_school_online_majors(slug, school_code)
-
-        conversion_summary = ""
-        if conversions:
-            bits = []
-            for c in conversions[:10]:
-                if c.hang_muc and c.diem_quy_doi:
-                    bits.append(f"{c.loai_bang}: {c.hang_muc}→{c.diem_quy_doi}")
-            conversion_summary = "; ".join(bits)
-            if len(conversions) > 10:
-                conversion_summary += f" (+{len(conversions) - 10} dòng)"
-
-        regulation_by_method: Dict[str, str] = {}
-        regulation_all = ""
-        if regulations:
-            regulation_all = " | ".join(
-                f"[{r.tieu_de}] {r.noi_dung[:180]}..."
-                if len(r.noi_dung) > 180
-                else f"[{r.tieu_de}] {r.noi_dung}"
-                for r in regulations[:3]
-            )
-            for r in regulations:
-                if r.phuong_thuc and r.phuong_thuc not in regulation_by_method:
-                    regulation_by_method[r.phuong_thuc] = r.noi_dung[:500]
-
-        # Gắn tóm tắt vào bản ghi ngành từ đề án
-        for rec in dean_admissions:
-            if not rec.diem_quy_doi:
-                rec.diem_quy_doi = conversion_summary
-            if not rec.quy_che:
-                rec.quy_che = regulation_by_method.get(rec.phuong_thuc, regulation_all)
-            bundle.admissions.append(rec)
-
-        # 2) Điểm chuẩn theo từng năm / phương thức — ưu tiên API
-        school_api_id = self.resolve_school_api_id(school_code, slug)
-        if school_api_id:
-            print(f"[CRAWLER] school_id API = {school_api_id} — lấy điểm chuẩn theo năm qua API")
-            for yr in years:
-                try:
-                    overview = self.fetch_cutoff_scores_api(school_api_id, yr)
-                    mark_types = sorted(
-                        {
-                            int(r["mark_type"])
-                            for r in overview
-                            if r.get("mark_type") is not None
-                        }
-                    )
-                    if not mark_types:
-                        print(f"[CRAWLER] {school_code} năm {yr}: không có dữ liệu API")
-                        time.sleep(delay)
-                        continue
-
-                    year_added = 0
-                    for mt in mark_types:
-                        rows = self.fetch_cutoff_scores_api(
-                            school_api_id, yr, method_id=mt
-                        )
-                        if not rows:
-                            # fallback: lọc từ overview theo mark_type
-                            rows = [
-                                r for r in overview if r.get("mark_type") == mt
-                            ]
-                        year_added += self._append_cutoff_api_records(
-                            bundle,
-                            rows,
-                            school_code=school_code,
-                            school_name=school_name,
-                            slug=slug,
-                            year=yr,
-                            regulation_by_method=regulation_by_method,
-                            regulation_all=regulation_all,
-                            conversion_summary=conversion_summary,
-                        )
-                        time.sleep(max(0.05, delay / 3))
-
-                    print(
-                        f"[CRAWLER] {school_code} năm {yr}: "
-                        f"+{year_added} bản ghi ({len(mark_types)} phương thức)"
-                    )
-                    time.sleep(delay)
-                except Exception as e:
-                    print(f"[CẢNH BÁO] Lỗi API điểm chuẩn năm {yr} của {school_code}: {e}")
-        else:
-            print(
-                f"[CẢNH BÁO] Không có school_id API cho {school_code} — "
-                f"fallback HTML (thường chỉ có năm mới nhất)."
-            )
-            for yr in years:
-                url = f"{self.BASE_URL}/diem-chuan/{slug}.html?y={yr}"
-                try:
-                    res = requests.get(url, headers=self.HEADERS, timeout=12)
-                    if res.status_code != 200:
-                        continue
-
-                    soup = BeautifulSoup(res.text, "html.parser")
-                    tables = soup.find_all("table")
-
-                    for table in tables:
-                        section_title = _section_title_for_table(table)
-                        method = detect_admission_method(section_title) or "Điểm thi THPT"
-
-                        rows = table.find_all("tr")
-                        if len(rows) < 2:
-                            continue
-
-                        headers = [
-                            clean_text(td.get_text())
-                            for td in rows[0].find_all(["th", "td"])
-                        ]
-                        col_map = BaseParser.map_table_headers(headers)
-                        for h in headers:
-                            m_from_h = detect_admission_method(h)
-                            if m_from_h and m_from_h not in ("Điểm thi THPT",):
-                                method = m_from_h
-                                break
-
-                        for tr in rows[1:]:
-                            cells = [
-                                clean_text(td.get_text())
-                                for td in tr.find_all(["th", "td"])
-                            ]
-                            if not cells or len(cells) < 2:
-                                continue
-                            if any("tuyensinh247" in c.lower() for c in cells):
-                                continue
-
-                            extracted = {}
-                            for c_idx, f_name in col_map.items():
-                                if c_idx < len(cells):
-                                    extracted[f_name] = cells[c_idx]
-
-                            raw_ten = extracted.get("ten_nganh") or (
-                                cells[0] if cells else ""
-                            )
-                            raw_ma = extracted.get("ma_nganh") or ""
-                            raw_tohop = extracted.get("to_hop") or ""
-                            raw_diem = extracted.get("diem_chuan") or ""
-                            raw_diem_ptxt = extracted.get("diem_chuan_ptxt") or ""
-                            raw_ghichu = extracted.get("ghi_chu") or ""
-                            raw_method = extracted.get("phuong_thuc") or ""
-                            row_method = method
-                            if raw_method:
-                                row_method = (
-                                    detect_admission_method(raw_method) or row_method
-                                )
-
-                            if not raw_ma:
-                                raw_ma = self.major_resolver.resolve(
-                                    school_code=school_code,
-                                    major_name=raw_ten,
-                                    existing_code="",
-                                    school_slug=slug,
-                                )
-
-                            diem = normalize_score(raw_diem)
-                            diem_ptxt = (
-                                normalize_score_ptxt(raw_diem_ptxt)
-                                if raw_diem_ptxt
-                                else None
-                            )
-                            if raw_diem and diem is None:
-                                native = normalize_score_ptxt(raw_diem)
-                                if native is not None:
-                                    diem = native
-                                    if diem_ptxt is None:
-                                        diem_ptxt = native
-                            elif (
-                                raw_diem
-                                and diem is not None
-                                and not raw_diem_ptxt
-                                and diem_ptxt is None
-                                and row_method
-                                and row_method not in ("Điểm thi THPT",)
-                                and "học bạ" not in row_method.lower()
-                            ):
-                                diem_ptxt = diem
-
-                            chitieu = normalize_integer(extracted.get("chi_tieu"))
-                            so_nv = normalize_integer(extracted.get("so_nguyen_vong"))
-
-                            if raw_ten and (
-                                diem is not None
-                                or diem_ptxt is not None
-                                or chitieu is not None
-                            ):
-                                bundle.admissions.append(
-                                    AdmissionRecord(
-                                        ma_truong=school_code,
-                                        ten_truong=school_name,
-                                        ma_nganh=normalize_major_code(raw_ma),
-                                        ten_nganh=clean_text(raw_ten),
-                                        nam=yr,
-                                        to_hop=clean_text(raw_tohop),
-                                        chi_tieu=chitieu,
-                                        so_nguyen_vong=so_nv,
-                                        diem_chuan=diem,
-                                        diem_chuan_ptxt=diem_ptxt,
-                                        phuong_thuc=row_method,
-                                        quy_che=regulation_by_method.get(
-                                            row_method, regulation_all
-                                        ),
-                                        diem_quy_doi=conversion_summary,
-                                        ghi_chu=clean_text(raw_ghichu),
-                                        nguon="Online: Tuyensinh247",
-                                    )
-                                )
-
-                    time.sleep(delay)
-                except Exception as e:
-                    print(f"[CẢNH BÁO] Lỗi khi thu thập năm {yr} của {school_code}: {e}")
-
-        print(
-            f"[CRAWLER] Hoàn thành {school_code}: "
-            f"{len(bundle.admissions)} bản ghi ngành, "
-            f"{len(bundle.conversions)} dòng quy đổi, "
-            f"{len(bundle.regulations)} mục quy chế."
-        )
-        return bundle
+    def _school_for_official_crawl(self, school_code_or_name: str) -> Optional[Dict[str, str]]:
+        """Ưu tiên danh bạ cục bộ (đã có website). Chỉ tra danh bạ online khi thiếu."""
+        raw = (school_code_or_name or "").strip()
+        key = raw.upper()
+        if key in self.COMMON_ALIASES:
+            key = self.COMMON_ALIASES[key]
+        local = lookup_local_school(key)
+        if local and (local.get("website") or local.get("name")):
+            return local
+        info = self.find_school(raw)
+        if not info:
+            return None
+        if not info.get("website"):
+            extra = lookup_local_school(info.get("code") or "")
+            if extra and extra.get("website"):
+                info = dict(info)
+                info["website"] = extra["website"]
+        return info
 
     def list_admission_methods(self, school_code_or_name: str) -> List[Dict[str, str]]:
-        """
-        Lấy danh sách phương thức xét tuyển từ trang điểm chuẩn (nav + tiêu đề mục).
-        Dùng cho dropdown máy tính quy đổi (vd NTH: THPT, học bạ, HSA, V-ACT, TSA, kết hợp).
-        """
-        info = self.find_school(school_code_or_name)
-        if not info:
-            return []
-        slug = info.get("slug") or ""
-        url = f"{self.BASE_URL}/diem-chuan/{slug}.html"
+        """Lấy phương thức từ dữ liệu đã bóc trên website chính thức của trường."""
+        bundle = self.crawl_school_bundle(
+            school_code_or_name,
+            years=[2026],
+            delay=0,
+        )
         methods: Dict[str, Dict[str, str]] = {}
 
         def _add(label_text: str):
@@ -623,32 +370,10 @@ class OnlineAdmissionCrawler:
                 "id": mid,
                 "label": label_map.get(mid, method_vn),
                 "column": "",
-                "source": "diem-chuan",
+                "source": "website-truong",
             }
-
-        try:
-            res = requests.get(url, headers=self.HEADERS, timeout=15)
-            if res.status_code != 200:
-                return []
-            soup = BeautifulSoup(res.text, "html.parser")
-
-            # 1) Nav nhanh: #diem-thi-thpt, #diem-thi-dgnl-hn, ...
-            for a in soup.find_all("a", href=True):
-                href = (a.get("href") or "").strip()
-                if not href.startswith("#"):
-                    continue
-                text = clean_text(a.get_text(" ", strip=True)).lstrip("✯ ").strip()
-                if text:
-                    _add(text)
-
-            # 2) Tiêu đề mục bảng điểm chuẩn
-            for tag in soup.find_all(["h2", "h3", "h4"]):
-                text = clean_text(tag.get_text(" ", strip=True))
-                if "phương thức" in text.lower() or detect_admission_method(text):
-                    _add(text)
-        except Exception as e:
-            print(f"[CẢNH BÁO] Không lấy được PTXT từ điểm chuẩn {info.get('code')}: {e}")
-            return []
+        for rec in bundle.admissions:
+            _add(rec.phuong_thuc)
 
         order = ["THPT", "HOC_BA", "HSA", "V-ACT", "TSA", "KET_HOP", "DGNL", "SAT", "ACT", "XTTN"]
         out = list(methods.values())
@@ -660,9 +385,15 @@ class OnlineAdmissionCrawler:
         school_code_or_name: str,
         years: List[int] = None,
         delay: float = 0.5,
+        source_urls: Optional[List[str]] = None,
     ) -> List[AdmissionRecord]:
         """
         Thu thập dữ liệu điểm chuẩn (+ gắn mã ngành / PTXT / quy chế / quy đổi từ đề án).
         Giữ API cũ: trả về List[AdmissionRecord].
         """
-        return self.crawl_school_bundle(school_code_or_name, years=years, delay=delay).admissions
+        return self.crawl_school_bundle(
+            school_code_or_name,
+            years=years,
+            delay=delay,
+            source_urls=source_urls,
+        ).admissions

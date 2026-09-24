@@ -31,7 +31,8 @@ class PdfAdmissionParser(BaseParser):
         file_path: str,
         default_school_code: str = "",
         default_school_name: str = "",
-        default_year: Optional[int] = None
+        default_year: Optional[int] = None,
+        max_pages: Optional[int] = None,
     ) -> List[AdmissionRecord]:
         records: List[AdmissionRecord] = []
         filename = os.path.basename(file_path)
@@ -47,8 +48,11 @@ class PdfAdmissionParser(BaseParser):
             with pdfplumber.open(file_path) as pdf:
                 all_extracted_rows: List[List[str]] = []
                 current_col_map = None
+                pages = pdf.pages
+                if max_pages is not None and max_pages > 0:
+                    pages = pages[:max_pages]
 
-                for page_idx, page in enumerate(pdf.pages):
+                for page_idx, page in enumerate(pages):
                     tables = page.extract_tables()
                     if not tables:
                         continue

@@ -20,11 +20,14 @@ class BaseParser(ABC):
         "ma_nganh": [
             r"mã\s*ngành", r"ma\s*nganh", r"mã\s*xét\s*tuyển", r"ma\s*xet\s*tuyen", 
             r"mã\s*xt", r"ma\s*xt", r"mã\s*ctđt", r"ma\s*ctdt", 
-            r"mã\s*chương\s*trình", r"ma\s*chuong\s*trinh", r"mã\s*nhóm\s*ngành"
+            r"mã\s*chương\s*trình", r"ma\s*chuong\s*trinh", r"mã\s*nhóm\s*ngành",
+            r"mã\s*tuyển\s*sinh", r"ma\s*tuyen\s*sinh",
         ],
         "ten_nganh": [
             r"tên\s*ngành", r"ten\s*nganh", r"ngành\s*đào\s*tạo", r"nganh\s*dao\s*tao", 
-            r"chuyên\s*ngành", r"chuyen\s*nganh", r"tên\s*chương\s*trình", r"ngành\s*học", r"nganh\s*hoc"
+            r"chuyên\s*ngành", r"chuyen\s*nganh", r"tên\s*chương\s*trình", r"ngành\s*học", r"nganh\s*hoc",
+            r"chương\s*trình\s*đào\s*tạo", r"chuong\s*trinh\s*dao\s*tao",
+            r"tên\s*mã\s*xét", r"ten\s*ma\s*xet",
         ],
         "to_hop": [
             r"tổ\s*hợp", r"to\s*hop", r"tổ\s*hợp\s*môn", r"to\s*hop\s*mon", 

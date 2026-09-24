@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Module: crawlers.score_conversion_crawler
-Mô tả: thu thập trang Quy đổi điểm giữa các phương thức xét tuyển từ tuyensinh247.
-
-Ví dụ:
-  https://diemthi.tuyensinh247.com/quy-doi-diem/dai-hoc-kinh-te-quoc-dan-KHA.html
+Mô tả: thu thập bảng quy đổi từ website chính thức của từng trường.
 
 Thu thập:
   - Bảng tương đương THPT ↔ HSA ↔ TSA ↔ V-ACT ↔ SAT ↔ học bạ / kết hợp,...
@@ -38,9 +35,8 @@ from crawlers.school_directory import SchoolDirectory
 
 
 class ScoreConversionCrawler:
-    """Crawler trang /quy-doi-diem/{slug}.html."""
+    """Crawler bảng quy đổi trên website chính thức của trường."""
 
-    BASE_URL = "https://diemthi.tuyensinh247.com"
     HEADERS = {
         "User-Agent": (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -93,98 +89,62 @@ class ScoreConversionCrawler:
         code = info["code"]
         name = info.get("name") or code
         slug = info.get("slug") or ""
-        url = f"{self.BASE_URL}/quy-doi-diem/{slug}.html"
+        local = None
+        try:
+            from crawlers.official_site_crawler import lookup_local_school
+            local = lookup_local_school(code)
+        except Exception:
+            local = None
+        website = ((local or {}).get("website") or info.get("website") or "")
+        if not website:
+            meta = {
+                "ok": False,
+                "code": code,
+                "name": name,
+                "slug": slug,
+                "url": "",
+                "tables": 0,
+                "row_count": 0,
+                "notes": 0,
+                "images": 0,
+                "ranges": 0,
+                "certificates": 0,
+                "error": "Danh bạ chưa có website chính thức của trường.",
+                "source": "website trường",
+            }
+            bundle.school_results.append(meta)
+            return bundle, meta
+
+        from crawlers.official_conversion import OfficialConversionCollector
+        official = OfficialConversionCollector().collect(code, name, website)
+        bundle.rows.extend(official.rows)
+        bundle.notes.extend(official.notes)
+        bundle.images.extend(official.images)
+        bundle.ranges.extend(official.ranges)
+        bundle.conversions.extend(official.conversions)
+        source_url = next(
+            (row.url_nguon for row in official.rows if row.url_nguon),
+            website,
+        )
+        has_data = bool(
+            official.rows or official.notes or official.images
+            or official.ranges or official.conversions
+        )
         meta = {
-            "ok": False,
+            "ok": has_data,
             "code": code,
             "name": name,
             "slug": slug,
-            "url": url,
-            "tables": 0,
-            "notes": 0,
-            "images": 0,
-            "ranges": 0,
-            "error": "",
+            "url": source_url,
+            "tables": len({r.tieu_de_bang for r in official.rows}),
+            "row_count": len(official.rows),
+            "notes": len(official.notes),
+            "images": len(official.images),
+            "ranges": len(official.ranges),
+            "certificates": len(official.conversions),
+            "error": "" if has_data else "Không tìm thấy bảng quy đổi trên website trường.",
+            "source": "website trường",
         }
-
-        try:
-            res = requests.get(url, headers=self.HEADERS, timeout=20)
-            if res.status_code != 200:
-                meta["error"] = f"HTTP {res.status_code}"
-                return bundle, meta
-
-            soup = BeautifulSoup(res.text, "html.parser")
-            year = extract_year_from_text(soup.get_text(" ", strip=True)[:2000]) or 2026
-
-            rows = self._extract_tables(soup, code, name, year, url)
-            notes = self._extract_notes(soup, code, name, year, url)
-            images = self._extract_images(soup, code, name, year, url)
-            ranges = self._extract_method_ranges(soup, code, name, year, url)
-
-            # Fallback: nếu không có bảng HTML, thử bóc từ RSC payload
-            if not rows:
-                rows = self._extract_tables_from_rsc(res.text, code, name, year, url)
-
-            # Công cụ BPV (bảng phân vị) — nguồn chính để máy tính quy đổi (VD: BKA TSA↔THPT)
-            bpv_meta = self._extract_bpv_tool(res.text, code)
-            bpv_rows: List[MethodEquivalenceRow] = []
-            if bpv_meta:
-                bpv_rows = self._bpv_to_equivalence_rows(
-                    bpv_meta, code, name, year, url
-                )
-                if bpv_rows:
-                    # Ưu tiên BPV cho máy tính: đặt trước bảng HTML (nếu có)
-                    rows = bpv_rows + rows
-                # Bổ sung khoảng điểm công cụ từ BPV nếu chưa có
-                if not ranges:
-                    ranges = self._bpv_to_range_hints(bpv_meta, code, name, year, url)
-                meta["bpv"] = True
-                meta["bpv_bands"] = len(bpv_meta.get("bpv_data") or [])
-
-            # Fallback ảnh: chỉ khi DOM không có ảnh trong nội dung (tránh nhiễu RSC)
-            if not images:
-                images = self._extract_images_from_rsc(
-                    res.text, code, name, year, url, existing=images
-                )
-
-            # Trường chỉ có ảnh (VD: DTF): ghi chú ngắn — bỏ qua nếu đã có BPV/bảng
-            if images and not rows and not any(
-                "ảnh bảng" in (n.tieu_de or "").lower() or "chỉ đăng ảnh" in (n.noi_dung or "").lower()
-                for n in notes
-            ):
-                notes.append(
-                    MethodConversionNote(
-                        ma_truong=code,
-                        ten_truong=name,
-                        tieu_de="Trường công bố bảng quy đổi dạng ảnh",
-                        noi_dung=(
-                            f"{name} đăng bảng quy đổi dưới dạng ảnh "
-                            f"({len(images)} ảnh) trên trang quy đổi điểm — "
-                            "xem tab Ảnh bảng. Không có bảng số để tính quy đổi tự động."
-                        ),
-                        nam=year,
-                        url_nguon=url,
-                    )
-                )
-
-            bundle.rows.extend(rows)
-            bundle.notes.extend(notes)
-            bundle.images.extend(images)
-            bundle.ranges.extend(ranges)
-
-            has_data = bool(rows or notes or images or ranges)
-            meta.update({
-                "ok": has_data,
-                "tables": len({r.tieu_de_bang for r in rows}),
-                "row_count": len(rows),
-                "notes": len(notes),
-                "images": len(images),
-                "ranges": len(ranges),
-                "error": "" if has_data else "Trang không có bảng/ảnh/ghi chú quy đổi.",
-            })
-        except Exception as e:
-            meta["error"] = str(e)
-
         bundle.school_results.append(meta)
         return bundle, meta
 
@@ -197,6 +157,7 @@ class ScoreConversionCrawler:
             combined.notes.extend(part.notes)
             combined.images.extend(part.images)
             combined.ranges.extend(part.ranges)
+            combined.conversions.extend(part.conversions)
             combined.school_results.append(meta)
         return combined
 
@@ -242,8 +203,6 @@ class ScoreConversionCrawler:
             for tr in rows[1:]:
                 cells = [clean_text(td.get_text(" ", strip=True)) for td in tr.find_all(["th", "td"])]
                 if not cells or all(not c for c in cells):
-                    continue
-                if any("tuyensinh247" in c.lower() for c in cells):
                     continue
                 # Bỏ dòng header lặp
                 if strip_accents(cells[0]) in ["tt", "stt"] and len(cells) > 1 and "thpt" in strip_accents(cells[1]):
@@ -612,7 +571,7 @@ class ScoreConversionCrawler:
         if src.startswith("//"):
             return "https:" + src
         if src.startswith("/"):
-            return ScoreConversionCrawler.BASE_URL + src
+            return ""
         return src
 
     @staticmethod
@@ -634,15 +593,6 @@ class ScoreConversionCrawler:
         src_l = (src or "").lower()
         if not src_l:
             return False
-        # Ảnh bảng trên CDN / images domain (kể cả tên file kiểu nl1.jpg của DTF)
-        if any(
-            d in src_l
-            for d in (
-                "cdn.tuyensinh247.com/picture",
-                "images.tuyensinh247.com/picture",
-            )
-        ):
-            return True
         return bool(re.search(r"\.(jpe?g|png|webp|gif)(\?|$)", src_l))
 
     def _image_description(self, alt: str, name: str, year: Optional[int], index: int) -> str:
@@ -725,10 +675,7 @@ class ScoreConversionCrawler:
             src_l = src.lower()
             alt = clean_text(img.get("alt") or "")
             if not any(k in src_l or k in alt.lower() for k in keyword_keys):
-                if "cdn.tuyensinh247.com/picture" not in src_l and "images.tuyensinh247.com/picture" not in src_l:
-                    continue
-                if not any(k in src_l for k in keyword_keys + ["quy", "doi"]):
-                    continue
+                continue
             self._append_image(images, seen, src, alt, code, name, year, url)
 
         return images
@@ -782,7 +729,7 @@ class ScoreConversionCrawler:
             chunks = [window]
 
         src_re = re.compile(
-            r'(https?://(?:cdn|images)\.tuyensinh247\.com/picture/[^"\'\\\s>]+\.(?:jpe?g|png|webp))',
+            r'(https?://[^"\'\\\s>]+\.(?:jpe?g|png|webp)(?:\?[^"\'\\\s>]*)?)',
             flags=re.I,
         )
         for chunk in chunks:
@@ -951,7 +898,29 @@ class ScoreConversionCrawler:
                 cell.font = data_font
                 cell.border = thin
 
-        # Sheet 5: tóm tắt theo trường
+        # Sheet 5: quy đổi chứng chỉ (IELTS, hệ chữ A-Level/AP/IB, ...)
+        ws_cert = wb.create_sheet("Quy_Doi_Chung_Chi")
+        headers_cert = [
+            "Mã trường", "Tên trường", "Loại chứng chỉ", "Hạng mục",
+            "Điểm quy đổi", "Thang điểm", "Phương thức áp dụng", "Chi tiết", "Năm", "Nguồn",
+        ]
+        style_header(ws_cert, headers_cert)
+        for i, rec in enumerate(bundle.conversions, start=2):
+            vals = [
+                rec.ma_truong, rec.ten_truong, rec.loai_bang, rec.hang_muc,
+                rec.diem_quy_doi, rec.thang_diem, rec.phuong_thuc, rec.chi_tiet_hang,
+                rec.nam or "", rec.nguon,
+            ]
+            for c, v in enumerate(vals, start=1):
+                cell = ws_cert.cell(row=i, column=c, value=v)
+                cell.font = data_font
+                cell.border = thin
+                cell.alignment = Alignment(wrap_text=True, vertical="top")
+        ws_cert.column_dimensions["C"].width = 28
+        ws_cert.column_dimensions["G"].width = 42
+        ws_cert.column_dimensions["H"].width = 48
+
+        # Sheet 6: tóm tắt theo trường
         ws5 = wb.create_sheet("Tom_Tat_Theo_Truong")
         headers5 = ["Mã", "Tên", "OK", "Số dòng bảng", "Ghi chú", "Ảnh", "Khoảng điểm", "URL", "Lỗi"]
         style_header(ws5, headers5)
@@ -966,7 +935,7 @@ class ScoreConversionCrawler:
                 cell.font = data_font
                 cell.border = thin
 
-        for ws in [ws1, ws2, ws3, ws4, ws5]:
+        for ws in [ws1, ws2, ws3, ws4, ws_cert, ws5]:
             for col in range(1, ws.max_column + 1):
                 letter = get_column_letter(col)
                 if ws.column_dimensions[letter].width is None or ws.column_dimensions[letter].width < 12:
@@ -1169,6 +1138,7 @@ class ScoreConversionCrawler:
             "notes": [n.to_dict() for n in bundle.notes],
             "images": [i.to_dict() for i in bundle.images],
             "ranges": [g.to_dict() for g in bundle.ranges],
+            "certificate_conversions": [c.to_dict() for c in bundle.conversions],
             "school_results": bundle.school_results,
             "summary": {
                 "schools": len(bundle.school_results),
@@ -1176,5 +1146,6 @@ class ScoreConversionCrawler:
                 "notes": len(bundle.notes),
                 "images": len(bundle.images),
                 "ranges": len(bundle.ranges),
+                "certificates": len(bundle.conversions),
             },
         }

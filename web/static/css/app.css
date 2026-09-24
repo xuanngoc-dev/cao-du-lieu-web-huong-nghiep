@@ -791,6 +791,19 @@ select.cn-multi-native {
   border-top: none;
 }
 
+#crawlModalTable td.source-cell {
+  max-width: 18rem;
+}
+
+#crawlModalTable a.source-link {
+  display: inline-block;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
 #crawlModal .crawl-modal-table-wrap {
   max-height: min(62vh, 520px);
 }

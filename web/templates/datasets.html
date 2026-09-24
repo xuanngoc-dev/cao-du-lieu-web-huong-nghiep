@@ -72,11 +72,30 @@
             <a class="btn btn-sm btn-teal" href="{{ url_for('schools_page') }}">Mở bước 1</a>
           </div>
         </div>
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small mb-1" for="dsSchoolKeyword">Lọc theo mã hoặc tên trường</label>
+            <input type="search" class="form-control form-control-sm" id="dsSchoolKeyword"
+              placeholder="VD: NTH, Ngoại thương, Kinh tế Quốc dân…">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small mb-1" for="dsSchoolType">Loại trường</label>
+            <select class="form-select form-select-sm" id="dsSchoolType">
+              <option value="">Tất cả</option>
+              <option value="dai_hoc">Đại học</option>
+              <option value="hoc_vien">Học viện</option>
+              <option value="cao_dang">Cao đẳng</option>
+            </select>
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <div class="small text-muted pb-1" id="dsSchoolsFiltered">0 trường</div>
+          </div>
+        </div>
         <div class="table-responsive table-scroll-x" style="max-height: 480px;">
           <table class="table table-sm table-bordered table-hover align-middle mb-0 table-nowrap-head" id="dsSchoolsTable">
             <thead class="table-light sticky-top">
               <tr>
-                <th>#</th><th>Mã</th><th>Tên trường</th><th>Loại</th><th>Website</th><th>Địa chỉ</th>
+                <th>#</th><th>Mã</th><th>Tên trường</th><th>Loại</th><th>Website</th><th>Địa chỉ</th><th>Thao tác</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -104,7 +123,6 @@
             <button type="button" class="btn btn-sm btn-accent d-none" id="btnLoadCrawlLatest">
               <i class="bi bi-box-arrow-in-down"></i> Nạp bản mới nhất
             </button>
-            <a class="btn btn-sm btn-teal" href="{{ url_for('crawl_page') }}">Mở bước 2</a>
           </div>
         </div>
         <div id="dsCrawlSummary" class="mb-3"></div>
@@ -147,7 +165,6 @@
             <button type="button" class="btn btn-sm btn-accent d-none" id="btnLoadQuyDoiLatest">
               <i class="bi bi-box-arrow-in-down"></i> Nạp bản mới nhất
             </button>
-            <a class="btn btn-sm btn-teal" href="{{ url_for('quy_doi_page') }}">Mở bước 3</a>
           </div>
         </div>
         <div id="dsQuyDoiSummary" class="mb-3"></div>
@@ -169,6 +186,187 @@
             <tbody></tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Thu thập một trường -->
+<div class="modal fade" id="dsSchoolCrawlModal" tabindex="-1"
+  aria-labelledby="dsSchoolCrawlModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title h5 mb-1" id="dsSchoolCrawlModalLabel">
+            <i class="bi bi-cloud-download me-1"></i> Thu thập thông tin trường
+          </h2>
+          <div class="small text-muted" id="dsSchoolCrawlName"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-light border py-2 small">
+          Dữ liệu chỉ được lấy từ website chính thức của trường. Có thể để trống danh sách liên kết
+          để hệ thống tự tìm, hoặc nhập các trang cụ thể để ưu tiên thu thập.
+        </div>
+        <label class="form-label" for="dsSchoolSourceUrls">Danh sách liên kết cung cấp thông tin</label>
+        <textarea class="form-control font-monospace" id="dsSchoolSourceUrls" rows="7"
+          placeholder="Mỗi liên kết một dòng, ví dụ:&#10;https://tuyensinh.ftu.edu.vn/thong-tin-tuyen-sinh-2026&#10;https://tuyensinh.ftu.edu.vn/diem-chuan-2026"></textarea>
+        <div class="form-text" id="dsSchoolUrlHint">
+          Hỗ trợ tối đa 20 liên kết, mỗi dòng một URL. Liên kết phải thuộc tên miền chính thức của trường.
+        </div>
+
+        <fieldset class="mt-3">
+          <legend class="form-label mb-2">Năm cần thu thập</legend>
+          <div class="d-flex flex-wrap gap-3">
+            {% for year in range(2021, 2027) %}
+            <div class="form-check">
+              <input class="form-check-input ds-school-year" type="checkbox"
+                value="{{ year }}" id="dsSchoolYear{{ year }}" {% if year >= 2024 %}checked{% endif %}>
+              <label class="form-check-label" for="dsSchoolYear{{ year }}">{{ year }}</label>
+            </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div class="d-none mt-3" id="dsSchoolCrawlProgress">
+          <div class="d-flex justify-content-between gap-2 small mb-1">
+            <span id="dsSchoolCrawlStatus">Đang chuẩn bị…</span>
+            <span id="dsSchoolCrawlPct">0%</span>
+          </div>
+          <div class="progress" style="height:1rem;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent"
+              id="dsSchoolCrawlBar" style="width:0%">0%</div>
+          </div>
+          <pre class="small bg-light border rounded p-2 mt-2 mb-0"
+            id="dsSchoolCrawlLog" style="max-height:180px;overflow:auto;white-space:pre-wrap"></pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
+          id="dsSchoolCrawlClose">Đóng</button>
+        <button type="button" class="btn btn-accent" id="dsSchoolCrawlStart">
+          <i class="bi bi-cloud-download"></i> Bắt đầu thu thập
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tải tài liệu bổ sung cho một trường -->
+<div class="modal fade" id="dsSchoolUploadModal" tabindex="-1"
+  aria-labelledby="dsSchoolUploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title h5 mb-1" id="dsSchoolUploadModalLabel">
+            <i class="bi bi-file-earmark-arrow-up me-1"></i> Tải tài liệu bổ sung
+          </h2>
+          <div class="small text-muted" id="dsSchoolUploadName"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-light border small">
+          File hoặc link CDN được đọc trực tiếp và gộp vào dữ liệu đang có, không chạy crawler
+          và không xoá thông tin đã thu thập trước đó.
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="dsSchoolUploadYear">Năm tuyển sinh</label>
+            <select class="form-select" id="dsSchoolUploadYear">
+              {% for year in range(2021, 2027) %}
+              <option value="{{ year }}" {% if year == 2026 %}selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label" for="dsSchoolUploadFiles">Chọn tài liệu</label>
+            <input class="form-control" type="file" id="dsSchoolUploadFiles" multiple
+              accept=".xlsx,.xls,.pdf,.docx,.jpg,.jpeg,.png,.webp">
+            <div class="form-text">
+              Excel, PDF, Word hoặc hình ảnh; tối đa 20 MB mỗi tài liệu.
+            </div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="form-label" for="dsSchoolUploadUrls">Hoặc nhập link CDN</label>
+          <textarea class="form-control font-monospace" id="dsSchoolUploadUrls" rows="5"
+            placeholder="Mỗi dòng một link trực tiếp tới file, ví dụ:&#10;https://cdn.example.edu.vn/tuyen-sinh/diem-chuan-2026.xlsx&#10;https://cdn.example.edu.vn/tuyen-sinh/bang-quy-doi.png"></textarea>
+          <div class="form-text">
+            Có thể dùng đồng thời file và link; tổng cộng tối đa 20 tài liệu mỗi lần.
+          </div>
+        </div>
+        <div class="d-none mt-3" id="dsSchoolUploadProgress">
+          <div class="d-flex justify-content-between small mb-1">
+            <span id="dsSchoolUploadStatus">Đang xử lý…</span>
+            <span id="dsSchoolUploadPct">0%</span>
+          </div>
+          <div class="progress" style="height:1rem">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+              id="dsSchoolUploadBar" style="width:0%">0%</div>
+          </div>
+        </div>
+        <div class="alert d-none mt-3 mb-0" id="dsSchoolUploadResult"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
+          id="dsSchoolUploadClose">Đóng</button>
+        <button type="button" class="btn btn-outline-dark" id="dsSchoolUploadSummarize">
+          <i class="bi bi-layers"></i> Tổng hợp dữ liệu
+        </button>
+        <button type="button" class="btn btn-primary" id="dsSchoolUploadStart">
+          <i class="bi bi-upload"></i> Tải lên và bổ sung dữ liệu
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chi tiết dữ liệu một trường -->
+<div class="modal fade" id="dsSchoolDetailModal" tabindex="-1"
+  aria-labelledby="dsSchoolDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title h5 mb-1" id="dsSchoolDetailModalLabel">
+            <i class="bi bi-building me-1"></i> Chi tiết trường
+          </h2>
+          <div class="small text-muted" id="dsSchoolDetailName"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <div id="dsSchoolDetailLoading" class="text-center py-5">
+          <div class="spinner-border text-accent" role="status"></div>
+          <div class="small text-muted mt-2">Đang tải dữ liệu đã thu thập…</div>
+        </div>
+        <div class="d-none" id="dsSchoolDetailContent">
+          <div class="row g-2 mb-3" id="dsSchoolDetailStats"></div>
+          <ul class="nav nav-tabs mb-3" id="dsSchoolDetailTabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
+              data-bs-target="#dsDetailMajors" type="button">Ngành & điểm chuẩn</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+              data-bs-target="#dsDetailConversions" type="button">Hệ quy đổi</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+              data-bs-target="#dsDetailMethods" type="button">Phương thức & quy chế</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+              data-bs-target="#dsDetailSources" type="button">Nguồn tài liệu</button></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="dsDetailMajors"></div>
+            <div class="tab-pane fade" id="dsDetailConversions"></div>
+            <div class="tab-pane fade" id="dsDetailMethods"></div>
+            <div class="tab-pane fade" id="dsDetailSources"></div>
+          </div>
+        </div>
+        <div class="alert alert-warning d-none mb-0" id="dsSchoolDetailError"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
       </div>
     </div>
   </div>
@@ -213,6 +411,521 @@ const CLEAR_LABELS = {
   quy_doi: 'bảng quy đổi điểm',
   all: 'TOÀN BỘ dữ liệu đã lưu',
 };
+let dsSchoolsRows = [];
+let dsCrawlSchoolCode = '';
+let dsUploadSchoolCode = '';
+
+function foldText(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function renderSchoolList() {
+  const keyword = foldText(document.getElementById('dsSchoolKeyword').value);
+  const type = document.getElementById('dsSchoolType').value;
+  const rows = dsSchoolsRows.filter(s => {
+    const matchesKeyword = !keyword || foldText(`${s.code} ${s.name || s.short_name || ''}`).includes(keyword);
+    const matchesType = !type || String(s.type || '') === type;
+    return matchesKeyword && matchesType;
+  });
+  document.getElementById('dsSchoolsFiltered').textContent =
+    `${rows.length}/${dsSchoolsRows.length} trường`;
+  document.querySelector('#dsSchoolsTable tbody').innerHTML = rows.map((s, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><code>${esc(s.code)}</code></td>
+      <td>${esc(s.name || s.short_name || '')}</td>
+      <td class="small">${esc(s.type_label || s.type || '')}</td>
+      <td class="small">${s.website
+        ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">${esc(s.website)}</a>`
+        : '—'}</td>
+      <td class="small">${esc(s.dia_chi || '')}</td>
+      <td class="text-nowrap">
+        <button type="button" class="btn btn-sm btn-outline-teal"
+          data-school-detail="${esc(s.code)}">
+          <i class="bi bi-eye"></i> Chi tiết
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary"
+          data-school-upload="${esc(s.code)}">
+          <i class="bi bi-upload"></i> Tải tài liệu
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-dark"
+          data-school-summarize="${esc(s.code)}">
+          <i class="bi bi-layers"></i> Tổng hợp
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-accent"
+          data-crawl-school="${esc(s.code)}">
+          <i class="bi bi-cloud-download"></i> Thu thập
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+function detailSourceHtml(value) {
+  const text = String(value || '');
+  const match = text.match(/https?:\/\/[^\s<>'")]+/);
+  if (!match) return esc(text || '—');
+  const url = match[0].replace(/[.,;]+$/, '');
+  return `<a href="${esc(url)}" target="_blank" rel="noopener" class="text-break">
+    <i class="bi bi-box-arrow-up-right"></i> ${esc(url)}
+  </a>`;
+}
+
+function detailEmpty(message) {
+  return `<div class="text-muted small border rounded bg-light p-3">${esc(message)}</div>`;
+}
+
+function setSchoolUploadProgress(pct, status) {
+  const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
+  document.getElementById('dsSchoolUploadProgress').classList.remove('d-none');
+  document.getElementById('dsSchoolUploadStatus').textContent = status || '';
+  document.getElementById('dsSchoolUploadPct').textContent = `${p}%`;
+  const bar = document.getElementById('dsSchoolUploadBar');
+  bar.style.width = `${p}%`;
+  bar.textContent = `${p}%`;
+}
+
+function openSchoolUploadModal(code) {
+  const school = dsSchoolsRows.find(s => String(s.code).toUpperCase() === String(code).toUpperCase());
+  if (!school) return;
+  dsUploadSchoolCode = school.code;
+  document.getElementById('dsSchoolUploadName').innerHTML =
+    `<strong>${esc(school.name || school.short_name || school.code)}</strong> · <code>${esc(school.code)}</code>`;
+  document.getElementById('dsSchoolUploadFiles').value = '';
+  document.getElementById('dsSchoolUploadUrls').value = '';
+  document.getElementById('dsSchoolUploadProgress').classList.add('d-none');
+  const result = document.getElementById('dsSchoolUploadResult');
+  result.className = 'alert d-none mt-3 mb-0';
+  result.innerHTML = '';
+  document.getElementById('dsSchoolUploadStart').disabled = false;
+  document.getElementById('dsSchoolUploadClose').disabled = false;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('dsSchoolUploadModal')).show();
+}
+
+async function uploadSchoolDocuments() {
+  const files = [...document.getElementById('dsSchoolUploadFiles').files];
+  const urls = document.getElementById('dsSchoolUploadUrls').value
+    .split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+  if (!dsUploadSchoolCode || (!files.length && !urls.length)) {
+    window.App.toast('Hãy chọn file hoặc nhập ít nhất một link CDN.');
+    return;
+  }
+  if (files.length + urls.length > 20) {
+    window.App.toast('Chỉ được bổ sung tối đa 20 file/link mỗi lần.');
+    return;
+  }
+  const invalidUrl = urls.find(value => !/^https?:\/\//i.test(value));
+  if (invalidUrl) {
+    window.App.toast(`Link không hợp lệ: ${invalidUrl}`);
+    return;
+  }
+  const tooLarge = files.find(file => file.size > 20 * 1024 * 1024);
+  if (tooLarge) {
+    window.App.toast(`${tooLarge.name} vượt quá 20 MB.`);
+    return;
+  }
+  const form = new FormData();
+  form.append('code', dsUploadSchoolCode);
+  form.append('year', document.getElementById('dsSchoolUploadYear').value);
+  form.append('urls', urls.join('\n'));
+  files.forEach(file => form.append('files', file));
+  const startBtn = document.getElementById('dsSchoolUploadStart');
+  const closeBtn = document.getElementById('dsSchoolUploadClose');
+  const result = document.getElementById('dsSchoolUploadResult');
+  startBtn.disabled = true;
+  closeBtn.disabled = true;
+  result.className = 'alert d-none mt-3 mb-0';
+  setSchoolUploadProgress(2, 'Đang gửi file và link tài liệu…');
+
+  try {
+    const data = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/schools/upload-documents');
+      xhr.upload.addEventListener('progress', event => {
+        if (!event.lengthComputable) return;
+        const pct = Math.min(88, 5 + (event.loaded / event.total) * 83);
+        setSchoolUploadProgress(pct, 'Đang gửi file và link tài liệu…');
+      });
+      xhr.upload.addEventListener('load', () => {
+        setSchoolUploadProgress(90, 'Đã tải lên — đang đọc và bổ sung dữ liệu…');
+      });
+      xhr.addEventListener('load', () => {
+        let payload = {};
+        try { payload = JSON.parse(xhr.responseText || '{}'); } catch (_) {}
+        if (xhr.status < 200 || xhr.status >= 300 || !payload.ok) {
+          reject(new Error(payload.error || `HTTP ${xhr.status}`));
+          return;
+        }
+        resolve(payload);
+      });
+      xhr.addEventListener('error', () => reject(new Error('Không thể kết nối máy chủ.')));
+      xhr.send(form);
+    });
+    setSchoolUploadProgress(100, 'Đã bổ sung dữ liệu');
+    const warning = (data.errors || []).length
+      ? `<hr class="my-2"><div><strong>Cảnh báo:</strong> ${esc(data.errors.join('; '))}</div>`
+      : '';
+    result.className = 'alert alert-success mt-3 mb-0';
+    result.innerHTML = `
+      Đã lưu <strong>${esc(data.files || 0)}</strong> file:
+      ${esc(data.admissions || 0)} bản ghi ngành/điểm,
+      ${esc(data.conversions || 0)} dòng quy đổi,
+      ${esc(data.regulations || 0)} quy chế/ghi chú.${warning}`;
+    window.App.toast(`Đã bổ sung tài liệu cho ${dsUploadSchoolCode}.`);
+    await refreshDatasets();
+  } catch (err) {
+    setSchoolUploadProgress(100, 'Xử lý thất bại');
+    result.className = 'alert alert-danger mt-3 mb-0';
+    result.textContent = err.message;
+    window.App.toast(err.message);
+  } finally {
+    startBtn.disabled = false;
+    closeBtn.disabled = false;
+  }
+}
+
+async function summarizeSchoolData(code, button = null) {
+  const schoolCode = String(code || '').trim().toUpperCase();
+  if (!schoolCode) return;
+  const previous = button ? button.innerHTML : '';
+  if (button) {
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang tổng hợp…';
+  }
+  try {
+    const res = await fetch('/api/schools/summarize', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code: schoolCode}),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    const stats = data.summary?.thong_ke || {};
+    window.App.toast(
+      `Đã tạo quy chế tổng hợp ${schoolCode}: ${stats.majors || 0} ngành, ` +
+      `${stats.methods || 0} phương thức, ${stats.sources || 0} nguồn.`
+    );
+    const uploadResult = document.getElementById('dsSchoolUploadResult');
+    if (document.getElementById('dsSchoolUploadModal').classList.contains('show')) {
+      uploadResult.className = 'alert alert-success mt-3 mb-0';
+      uploadResult.innerHTML = `Đã tạo <strong>Quy chế tuyển sinh tổng hợp</strong> từ
+        ${esc(stats.admissions || 0)} bản ghi tuyển sinh,
+        ${esc(stats.conversion_rows || 0)} dòng quy đổi và
+        ${esc(stats.documents || 0)} tài liệu tải lên.`;
+    } else {
+      await openSchoolDetailModal(schoolCode);
+    }
+  } catch (err) {
+    window.App.toast(err.message);
+    const uploadResult = document.getElementById('dsSchoolUploadResult');
+    if (document.getElementById('dsSchoolUploadModal').classList.contains('show')) {
+      uploadResult.className = 'alert alert-danger mt-3 mb-0';
+      uploadResult.textContent = err.message;
+    }
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = previous;
+    }
+  }
+}
+
+function renderSchoolDetail(data) {
+  const s = data.school || {};
+  const summary = data.summary || {};
+  document.getElementById('dsSchoolDetailName').innerHTML =
+    `<strong>${esc(s.name || s.short_name || s.code || '')}</strong> · <code>${esc(s.code || '')}</code>`;
+  document.getElementById('dsSchoolDetailStats').innerHTML = [
+    ['Ngành', summary.majors || 0],
+    ['Bản ghi điểm', summary.admissions || 0],
+    ['Phương thức', summary.methods || 0],
+    ['Dòng quy đổi', summary.conversion_rows || 0],
+    ['Quy chế / ghi chú', summary.regulations || 0],
+    ['Tài liệu tải lên', summary.documents || 0],
+    ['Nguồn', summary.sources || 0],
+  ].map(([label, value]) => `
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="stat-tile h-100"><div class="stat-val">${esc(value)}</div>
+        <div class="stat-lbl">${esc(label)}</div></div>
+    </div>`).join('');
+
+  const majors = data.majors || [];
+  const admissions = data.admissions || [];
+  const majorsTable = majors.length ? `
+    <h3 class="h6">Danh sách ngành tuyển sinh</h3>
+    <div class="table-responsive mb-4" style="max-height:300px">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0">
+        <thead class="table-light sticky-top"><tr>
+          <th>Mã ngành</th><th>Tên ngành</th><th>Năm có dữ liệu</th><th>Phương thức</th>
+        </tr></thead>
+        <tbody>${majors.map(m => `<tr>
+          <td><code>${esc(m.ma_nganh || '—')}</code></td>
+          <td>${esc(m.ten_nganh || '—')}</td>
+          <td class="text-nowrap">${esc((m.years || []).join(', ') || '—')}</td>
+          <td class="small">${esc((m.methods || []).join('; ') || '—')}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : detailEmpty('Chưa có dữ liệu ngành tuyển sinh.');
+  const scoresTable = admissions.length ? `
+    <h3 class="h6">Điểm chuẩn qua các năm</h3>
+    <div class="table-responsive" style="max-height:420px">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0">
+        <thead class="table-light sticky-top"><tr>
+          <th>Năm</th><th>Mã ngành</th><th>Tên ngành</th><th>Phương thức</th>
+          <th>Tổ hợp</th><th>Điểm chuẩn</th><th>Thang điểm</th><th>Nguồn</th>
+        </tr></thead>
+        <tbody>${admissions.map(r => `<tr>
+          <td>${esc(r.nam || '—')}</td><td><code>${esc(r.ma_nganh || '—')}</code></td>
+          <td>${esc(r.ten_nganh || '—')}</td><td class="small">${esc(r.phuong_thuc || '—')}</td>
+          <td>${esc(r.to_hop || '—')}</td><td>${esc(r.diem_chuan ?? '—')}</td>
+          <td>${esc(r.thang_diem || '—')}</td><td class="small">${detailSourceHtml(r.nguon)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : detailEmpty('Chưa có điểm chuẩn đã thu thập.');
+  document.getElementById('dsDetailMajors').innerHTML = majorsTable + scoresTable;
+
+  const rows = data.conversion_rows || [];
+  const rowTables = rows.length ? `
+    <h3 class="h6">Bảng quy đổi giữa các phương thức</h3>
+    <div class="table-responsive mb-4" style="max-height:420px">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0">
+        <thead class="table-light sticky-top"><tr>
+          <th>Năm</th><th>Bảng</th><th>Khoảng / mức quy đổi</th><th>Nguồn</th>
+        </tr></thead>
+        <tbody>${rows.map(r => `<tr>
+          <td>${esc(r.nam || '—')}</td><td>${esc(r.tieu_de_bang || 'Bảng quy đổi')}</td>
+          <td>${Object.entries(r.cot_gia_tri || {}).map(([k, v]) =>
+            `<div><strong>${esc(k)}:</strong> ${esc(v)}</div>`).join('') || '—'}</td>
+          <td class="small">${detailSourceHtml(r.url_nguon || r.nguon)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : detailEmpty('Chưa có bảng quy đổi giữa các phương thức.');
+  const certs = [...(data.conversions || []), ...(data.certificate_conversions || [])];
+  const certTable = certs.length ? `
+    <h3 class="h6">Quy đổi chứng chỉ / hệ điểm</h3>
+    <div class="table-responsive" style="max-height:360px">
+      <table class="table table-sm table-bordered table-hover align-middle mb-0">
+        <thead class="table-light sticky-top"><tr>
+          <th>Năm</th><th>Loại</th><th>Mức điểm</th><th>Điểm quy đổi</th>
+          <th>Thang điểm</th><th>Phương thức áp dụng</th><th>Nguồn</th>
+        </tr></thead>
+        <tbody>${certs.map(r => `<tr>
+          <td>${esc(r.nam || '—')}</td><td>${esc(r.loai_bang || '—')}</td>
+          <td>${esc(r.hang_muc || '—')}</td><td>${esc(r.diem_quy_doi || '—')}</td>
+          <td>${esc(r.thang_diem || '—')}</td><td class="small">${esc(r.phuong_thuc || '—')}</td>
+          <td class="small">${detailSourceHtml(r.url_nguon || r.nguon)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : detailEmpty('Chưa có dữ liệu quy đổi chứng chỉ.');
+  document.getElementById('dsDetailConversions').innerHTML = rowTables + certTable;
+
+  const methods = data.methods || [];
+  const rules = [...(data.regulations || []), ...(data.conversion_notes || [])];
+  const summaryRegulation = data.summary_regulation || null;
+  const summaryHtml = summaryRegulation ? `
+    <div class="card border-dark mb-4">
+      <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
+        <strong><i class="bi bi-layers me-1"></i>${esc(summaryRegulation.tieu_de)}</strong>
+        <span class="small text-muted">Tạo lúc ${esc(summaryRegulation.generated_at || '—')}</span>
+      </div>
+      <div class="card-body">
+        <div style="white-space:pre-wrap">${esc(summaryRegulation.noi_dung || '')}</div>
+        <div class="small text-muted mt-3">${esc(summaryRegulation.nguon || '')}</div>
+      </div>
+    </div>` : `
+    <div class="alert alert-light border">
+      Chưa có quy chế tổng hợp. Dùng nút <strong>Tổng hợp</strong> ở danh sách trường
+      để tạo từ toàn bộ nguồn dữ liệu đang lưu.
+    </div>`;
+  document.getElementById('dsDetailMethods').innerHTML = `
+    ${summaryHtml}
+    <h3 class="h6">Phương thức tuyển sinh đã nhận diện</h3>
+    <div class="d-flex flex-wrap gap-2 mb-4">${methods.length
+      ? methods.map(m => `<span class="badge text-bg-light border text-dark">${esc(m)}</span>`).join('')
+      : '<span class="small text-muted">Chưa có dữ liệu phương thức.</span>'}</div>
+    <h3 class="h6">Quy chế, điều kiện và ghi chú</h3>
+    ${rules.length ? `<div class="list-group">${rules.map(r => `
+      <div class="list-group-item">
+        <div class="fw-semibold">${esc(r.tieu_de || 'Thông tin tuyển sinh')}
+          ${r.nam ? `<span class="badge text-bg-light border ms-1">${esc(r.nam)}</span>` : ''}</div>
+        <div class="small mt-1">${esc(r.noi_dung || '')}</div>
+        <div class="small mt-2">${detailSourceHtml(r.url_nguon || r.nguon)}</div>
+      </div>`).join('')}</div>` : detailEmpty('Chưa có quy chế hoặc ghi chú đã thu thập.')}`;
+
+  const sources = data.sources || [];
+  const documents = data.uploaded_documents || [];
+  const documentList = documents.length ? `
+    <h3 class="h6">Tài liệu đã tải lên</h3>
+    <div class="table-responsive mb-4">
+      <table class="table table-sm table-bordered align-middle mb-0">
+        <thead class="table-light"><tr>
+          <th>Tài liệu</th><th>Năm</th><th>Dữ liệu nhận diện</th><th>Thời gian</th><th></th>
+        </tr></thead>
+        <tbody>${documents.map(doc => `<tr>
+          <td>${esc(doc.filename || 'Tài liệu')}</td><td>${esc(doc.year || '—')}</td>
+          <td class="small">${esc(doc.admissions || 0)} ngành/điểm ·
+            ${esc(doc.conversions || 0)} quy đổi · ${esc(doc.regulations || 0)} quy chế</td>
+          <td class="small text-nowrap">${esc(doc.uploaded_at || '—')}</td>
+          <td>${doc.download_url ? `<a class="btn btn-sm btn-outline-teal"
+            href="${esc(doc.download_url)}"><i class="bi bi-download"></i> Tải</a>` : '—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : '';
+  const sourceList = sources.length
+    ? `<h3 class="h6">Nguồn tài liệu</h3><div class="list-group">${sources.map(src => `
+        <a class="list-group-item list-group-item-action" href="${esc(src.url)}"
+          target="_blank" rel="noopener">
+          <div class="fw-semibold">${esc(src.label || 'Nguồn tài liệu')}</div>
+          <div class="small text-break">${esc(src.url)}</div>
+        </a>`).join('')}</div>`
+    : detailEmpty('Chưa ghi nhận được liên kết nguồn trong dữ liệu đã lưu.');
+  document.getElementById('dsDetailSources').innerHTML = documentList + sourceList;
+}
+
+async function openSchoolDetailModal(code) {
+  const modalEl = document.getElementById('dsSchoolDetailModal');
+  const loading = document.getElementById('dsSchoolDetailLoading');
+  const content = document.getElementById('dsSchoolDetailContent');
+  const error = document.getElementById('dsSchoolDetailError');
+  const school = dsSchoolsRows.find(s => String(s.code).toUpperCase() === String(code).toUpperCase());
+  document.getElementById('dsSchoolDetailName').innerHTML =
+    `<strong>${esc(school?.name || school?.short_name || code)}</strong> · <code>${esc(code)}</code>`;
+  loading.classList.remove('d-none');
+  content.classList.add('d-none');
+  error.classList.add('d-none');
+  bootstrap.Tab.getOrCreateInstance(document.querySelector('#dsSchoolDetailTabs .nav-link')).show();
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  try {
+    const res = await fetch(`/api/schools/detail?code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    renderSchoolDetail(data);
+    loading.classList.add('d-none');
+    content.classList.remove('d-none');
+  } catch (err) {
+    loading.classList.add('d-none');
+    error.textContent = `Không tải được chi tiết: ${err.message}`;
+    error.classList.remove('d-none');
+  }
+}
+
+function setSchoolCrawlProgress(pct, status, logLine) {
+  const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
+  const wrap = document.getElementById('dsSchoolCrawlProgress');
+  const bar = document.getElementById('dsSchoolCrawlBar');
+  wrap.classList.remove('d-none');
+  bar.style.width = `${p}%`;
+  bar.textContent = `${p}%`;
+  document.getElementById('dsSchoolCrawlPct').textContent = `${p}%`;
+  document.getElementById('dsSchoolCrawlStatus').textContent = status || '';
+  if (logLine) {
+    const log = document.getElementById('dsSchoolCrawlLog');
+    log.textContent += `${log.textContent ? '\n' : ''}${logLine}`;
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+function openSchoolCrawlModal(code) {
+  const school = dsSchoolsRows.find(s => String(s.code).toUpperCase() === String(code).toUpperCase());
+  if (!school) return;
+  dsCrawlSchoolCode = school.code;
+  document.getElementById('dsSchoolCrawlName').innerHTML =
+    `<strong>${esc(school.name || school.code)}</strong> · <code>${esc(school.code)}</code>`;
+  document.getElementById('dsSchoolSourceUrls').value = '';
+  document.getElementById('dsSchoolUrlHint').innerHTML =
+    `Website gốc: ${school.website
+      ? `<a href="${esc(school.website)}" target="_blank" rel="noopener">${esc(school.website)}</a>`
+      : 'chưa có trong danh bạ'}. Mỗi dòng một URL, tối đa 20 liên kết.`;
+  document.getElementById('dsSchoolCrawlProgress').classList.add('d-none');
+  document.getElementById('dsSchoolCrawlLog').textContent = '';
+  document.getElementById('dsSchoolCrawlStart').disabled = false;
+  document.getElementById('dsSchoolCrawlClose').disabled = false;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('dsSchoolCrawlModal')).show();
+}
+
+async function crawlOneSchool() {
+  const code = dsCrawlSchoolCode;
+  const urls = document.getElementById('dsSchoolSourceUrls').value
+    .split(/\r?\n/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  const years = [...document.querySelectorAll('.ds-school-year:checked')].map(el => Number(el.value));
+  if (!code) return;
+  if (!years.length) {
+    window.App.toast('Hãy chọn ít nhất một năm.');
+    return;
+  }
+
+  const startBtn = document.getElementById('dsSchoolCrawlStart');
+  const closeBtn = document.getElementById('dsSchoolCrawlClose');
+  startBtn.disabled = true;
+  closeBtn.disabled = true;
+  document.getElementById('dsSchoolCrawlLog').textContent = '';
+  setSchoolCrawlProgress(3, `Đang kết nối website trường ${code}…`);
+
+  try {
+    const res = await fetch('/api/crawl/stream', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        codes: code,
+        years,
+        source_urls: {[code]: urls},
+        merge: true,
+      }),
+    });
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+      try { message = (await res.json()).error || message; } catch (_) {}
+      throw new Error(message);
+    }
+    if (!res.body) throw new Error('Trình duyệt không hỗ trợ stream.');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let completed = false;
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let evt;
+        try { evt = JSON.parse(line); } catch (_) { continue; }
+        if (evt.type === 'start') {
+          setSchoolCrawlProgress(8, `Đang thu thập ${code}…`);
+        } else if (evt.type === 'school') {
+          setSchoolCrawlProgress(
+            75,
+            evt.ok ? `Đã đọc xong website ${code}` : `Thu thập ${code} gặp lỗi`,
+            evt.log || evt.error || ''
+          );
+        } else if (evt.type === 'finalize') {
+          setSchoolCrawlProgress(90, evt.message || 'Đang lưu dữ liệu…');
+        } else if (evt.type === 'done') {
+          if (!evt.ok) throw new Error(evt.error || 'Không lưu được dữ liệu.');
+          completed = true;
+          setSchoolCrawlProgress(
+            100,
+            `Hoàn tất: ${evt.admissions || 0} bản ghi, ${evt.conversions || 0} quy đổi`,
+            `Đã lưu dữ liệu ${code}; các trường khác trong bộ dữ liệu vẫn được giữ nguyên.`
+          );
+        }
+      }
+    }
+    if (!completed) throw new Error('Luồng thu thập kết thúc nhưng không có kết quả.');
+    window.App.toast(`Đã thu thập và cập nhật dữ liệu ${code}.`);
+    await refreshDatasets();
+  } catch (err) {
+    setSchoolCrawlProgress(100, 'Thu thập thất bại', `Lỗi: ${err.message}`);
+    window.App.toast(err.message);
+  } finally {
+    startBtn.disabled = false;
+    closeBtn.disabled = false;
+  }
+}
 
 function fileRows(files, {loadKind, reuseKind} = {}) {
   if (!files || !files.length) {
@@ -453,22 +1166,16 @@ async function refreshDatasets() {
       }
       const schoolsRes = await fetch('/api/schools/saved');
       const schoolsData = await schoolsRes.json();
-      const tbody = document.querySelector('#dsSchoolsTable tbody');
       if (schoolsData.ok) {
-        tbody.innerHTML = (schoolsData.schools || []).map((s, i) => `
-          <tr>
-            <td>${i + 1}</td>
-            <td><code>${esc(s.code)}</code></td>
-            <td>${esc(s.name || s.short_name || '')}</td>
-            <td class="small">${esc(s.type_label || s.type || '')}</td>
-            <td class="small">${s.website ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">${esc(s.website)}</a>` : '—'}</td>
-            <td class="small">${esc(s.dia_chi || '')}</td>
-          </tr>`).join('');
+        dsSchoolsRows = schoolsData.schools || [];
+        renderSchoolList();
       }
     } else {
       schMeta.textContent = 'Chưa có dữ liệu đã lưu.';
       schEmpty.classList.remove('d-none');
       document.querySelector('#dsSchoolsTable tbody').innerHTML = '';
+      dsSchoolsRows = [];
+      renderSchoolList();
       schExcel.classList.add('d-none');
       btnClearSchools.classList.add('d-none');
     }
@@ -535,6 +1242,13 @@ async function refreshDatasets() {
 }
 
 document.getElementById('btnRefreshDatasets').addEventListener('click', refreshDatasets);
+document.getElementById('dsSchoolKeyword').addEventListener('input', renderSchoolList);
+document.getElementById('dsSchoolType').addEventListener('change', renderSchoolList);
+document.getElementById('dsSchoolCrawlStart').addEventListener('click', crawlOneSchool);
+document.getElementById('dsSchoolUploadStart').addEventListener('click', uploadSchoolDocuments);
+document.getElementById('dsSchoolUploadSummarize').addEventListener('click', e => {
+  summarizeSchoolData(dsUploadSchoolCode, e.currentTarget);
+});
 
 document.getElementById('btnLoadCrawlLatest').addEventListener('click', async () => {
   try {
@@ -568,6 +1282,33 @@ document.getElementById('btnClearAllDatasets').addEventListener('click', async (
 });
 
 document.body.addEventListener('click', async (e) => {
+  const summarizeSchoolBtn = e.target.closest('[data-school-summarize]');
+  if (summarizeSchoolBtn) {
+    await summarizeSchoolData(
+      summarizeSchoolBtn.dataset.schoolSummarize,
+      summarizeSchoolBtn,
+    );
+    return;
+  }
+
+  const uploadSchoolBtn = e.target.closest('[data-school-upload]');
+  if (uploadSchoolBtn) {
+    openSchoolUploadModal(uploadSchoolBtn.dataset.schoolUpload);
+    return;
+  }
+
+  const detailSchoolBtn = e.target.closest('[data-school-detail]');
+  if (detailSchoolBtn) {
+    openSchoolDetailModal(detailSchoolBtn.dataset.schoolDetail);
+    return;
+  }
+
+  const crawlSchoolBtn = e.target.closest('[data-crawl-school]');
+  if (crawlSchoolBtn) {
+    openSchoolCrawlModal(crawlSchoolBtn.dataset.crawlSchool);
+    return;
+  }
+
   const clearBtn = e.target.closest('[data-clear]');
   if (clearBtn) {
     const kind = clearBtn.dataset.clear;

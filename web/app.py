@@ -24,16 +24,24 @@ from flask import (
     redirect,
     url_for,
     stream_with_context,
+    send_from_directory,
 )
+from werkzeug.utils import secure_filename
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from ui.helpers import parse_school_codes_text, format_codes_for_copy
-from crawlers.school_directory import SchoolDirectory, TYPE_LABELS
+from crawlers.school_directory import (
+    SchoolDirectory,
+    TYPE_LABELS,
+    classify_school_sector,
+    split_addresses_by_region,
+)
 from crawlers.online_crawler import OnlineAdmissionCrawler
 from crawlers.score_conversion_crawler import ScoreConversionCrawler
+from crawlers.official_site_crawler import filter_official_urls, lookup_local_school
 from exporter.excel_exporter import ExcelAdmissionExporter
 from core.models import CrawlBundle
 from core.conversion_calculator import (
@@ -56,13 +64,8 @@ from core import dataset_store
 
 
 def _enrich_methods_for_school(code: str, quy_doi_methods: List) -> List:
-    """Gộp phương thức từ bảng quy-đổi + danh sách PTXT trên trang điểm chuẩn."""
-    try:
-        oc = OnlineAdmissionCrawler()
-        dc_methods = oc.list_admission_methods(code)
-    except Exception:
-        dc_methods = []
-    return merge_method_lists(dc_methods, quy_doi_methods or [])
+    """Danh sách phương thức lấy từ bảng quy đổi chính thức đã thu thập."""
+    return merge_method_lists([], quy_doi_methods or [])
 
 
 def create_app() -> Flask:
@@ -75,8 +78,10 @@ def create_app() -> Flask:
     app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.config["OUTPUT_DIR"] = os.path.join(ROOT, "data", "output")
     app.config["DATASETS_DIR"] = os.path.join(ROOT, "data", "datasets")
+    app.config["UPLOADS_DIR"] = os.path.join(ROOT, "data", "uploads")
     os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)
     os.makedirs(app.config["DATASETS_DIR"], exist_ok=True)
+    os.makedirs(app.config["UPLOADS_DIR"], exist_ok=True)
 
     # Nạp dữ liệu đã lưu (nếu có) để dùng lại sau khi restart
     _saved_crawl = dataset_store.load_admissions(ROOT)
@@ -110,6 +115,27 @@ def create_app() -> Flask:
     def datasets_page():
         return render_template("datasets.html")
     # ---------- API: Danh bạ trường ----------
+    def _working_directory(refresh: bool = False) -> SchoolDirectory:
+        """Danh sách đang hiện lấy từ file đã lưu. Làm mới thì nạp lại từ config."""
+        directory = SchoolDirectory()
+        saved = dataset_store.load_schools(ROOT) if not refresh else None
+        saved_rows = (saved or {}).get("schools") or []
+        if saved_rows:
+            schools = {}
+            for item in saved_rows:
+                if not isinstance(item, dict):
+                    continue
+                code = str(item.get("code") or "").strip().upper()
+                if not code:
+                    continue
+                entry = dict(item)
+                entry["code"] = code
+                schools[code] = entry
+            directory.schools = schools
+            return directory
+        directory.load(force_refresh=refresh)
+        return directory
+
     @app.post("/api/schools/fetch")
     def api_schools_fetch():
         data = request.get_json(silent=True) or {}
@@ -120,15 +146,7 @@ def create_app() -> Flask:
         school_filter = data.get("filter", "all")  # all | dai_hoc | cao_dang | hoc_vien | dai_hoc_hoc_vien
         keyword = (data.get("keyword") or "").strip()
 
-        directory = SchoolDirectory()
-        # Hồ sơ đầy đủ chỉ khi include_profile; website + địa chỉ khi include_contact.
-        directory.load(
-            force_refresh=refresh,
-            include_dai_hoc=True,
-            include_cao_dang=True,
-            include_profile=include_profile,
-            include_contact=include_contact and not include_profile,
-        )
+        directory = _working_directory(refresh=refresh)
 
         # Bổ sung hồ sơ đầy đủ còn thiếu (chỉ khi bật option; giới hạn để tránh timeout)
         if include_profile:
@@ -156,7 +174,7 @@ def create_app() -> Flask:
         json_path = os.path.join(app.config["OUTPUT_DIR"], "danh_sach_ma_truong.json")
         try:
             directory.export_excel(output_path=excel_path, school_type=stype)
-            directory.export_json(output_path=json_path, school_type=stype, also_update_config=True)
+            directory.export_json(output_path=json_path, also_update_config=False)
             dataset_store.copy_schools_exports_stamp(ROOT)
         except Exception as e:
             return jsonify({"ok": False, "error": str(e)}), 500
@@ -187,6 +205,129 @@ def create_app() -> Flask:
             "profile_fetched": include_profile,
             "contact_fetched": include_contact and not include_profile,
         })
+
+    @app.post("/api/schools/delete")
+    def api_schools_delete():
+        """Xoá một hoặc nhiều trường khỏi danh bạ đã lưu."""
+        data = request.get_json(silent=True) or {}
+        codes = []
+        seen = set()
+        for raw in data.get("codes") or []:
+            code = str(raw or "").strip().upper()
+            if not code or code in seen:
+                continue
+            seen.add(code)
+            codes.append(code)
+        if not codes:
+            return jsonify({"ok": False, "error": "Chưa chọn trường để xoá."}), 400
+
+        directory = _working_directory(refresh=False)
+        deleted = [code for code in codes if code in directory.schools]
+        missing = [code for code in codes if code not in directory.schools]
+        for code in deleted:
+            directory.schools.pop(code, None)
+
+        excel_path = os.path.join(app.config["OUTPUT_DIR"], "danh_sach_ma_truong.xlsx")
+        json_path = os.path.join(app.config["OUTPUT_DIR"], "danh_sach_ma_truong.json")
+        try:
+            # Chỉ xoá bản danh sách đã lưu. config/schools_all.json giữ nguyên
+            # để «Làm mới từ web» nạp và thu thập lại được.
+            directory.export_excel(output_path=excel_path)
+            directory.export_json(output_path=json_path, also_update_config=False)
+            dataset_store.copy_schools_exports_stamp(ROOT)
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500
+
+        rows = directory.list_schools()
+        return jsonify({
+            "ok": True,
+            "deleted": deleted,
+            "missing": missing,
+            "total": len(rows),
+            "schools": rows,
+            "excel_url": url_for("download_file", name="danh_sach_ma_truong.xlsx"),
+        })
+
+    @app.post("/api/schools/notices/stream")
+    def api_schools_notices_stream():
+        """Tìm domain điểm chuẩn và link quy chế trên website từng trường."""
+        from crawlers.school_directory import discover_admission_notices
+
+        data = request.get_json(silent=True) or {}
+        refresh = bool(data.get("refresh"))
+        directory = _working_directory(refresh=False)
+        targets = []
+        for code, info in directory.schools.items():
+            if refresh or not info.get("notices_checked"):
+                if info.get("website"):
+                    targets.append(code)
+                else:
+                    info["domain_diem_chuan"] = ""
+                    info["link_quy_che"] = ""
+                    info["notices_checked"] = True
+        targets.sort()
+
+        @stream_with_context
+        def generate():
+            total = len(targets)
+            yield json.dumps({
+                "type": "start",
+                "total": total,
+            }, ensure_ascii=False) + "\n"
+            done = 0
+            found_domain = 0
+            found_link = 0
+
+            def job(code: str):
+                info = directory.schools.get(code) or {}
+                notices = discover_admission_notices(info.get("website") or "")
+                return code, notices
+
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            with ThreadPoolExecutor(max_workers=6) as pool:
+                futures = [pool.submit(job, code) for code in targets]
+                for fut in as_completed(futures):
+                    code, notices = fut.result()
+                    info = directory.schools.get(code) or {}
+                    info["domain_diem_chuan"] = notices.get("domain_diem_chuan") or ""
+                    info["link_quy_che"] = notices.get("link_quy_che") or ""
+                    info["notices_checked"] = True
+                    directory.schools[code] = info
+                    done += 1
+                    if info["domain_diem_chuan"]:
+                        found_domain += 1
+                    if info["link_quy_che"]:
+                        found_link += 1
+                    yield json.dumps({
+                        "type": "school",
+                        "index": done,
+                        "total": total,
+                        "code": code,
+                        "domain_diem_chuan": info["domain_diem_chuan"],
+                        "link_quy_che": info["link_quy_che"],
+                    }, ensure_ascii=False) + "\n"
+
+            excel_path = os.path.join(app.config["OUTPUT_DIR"], "danh_sach_ma_truong.xlsx")
+            json_path = os.path.join(app.config["OUTPUT_DIR"], "danh_sach_ma_truong.json")
+            try:
+                directory.export_excel(output_path=excel_path)
+                directory.export_json(output_path=json_path, also_update_config=False)
+                dataset_store.copy_schools_exports_stamp(ROOT)
+            except Exception as exc:
+                yield json.dumps({
+                    "type": "error",
+                    "error": str(exc),
+                }, ensure_ascii=False) + "\n"
+                return
+            yield json.dumps({
+                "type": "done",
+                "total": total,
+                "found_domain": found_domain,
+                "found_link": found_link,
+                "excel_url": url_for("download_file", name="danh_sach_ma_truong.xlsx"),
+            }, ensure_ascii=False) + "\n"
+
+        return Response(generate(), mimetype="application/x-ndjson")
 
     @app.get("/api/schools/codes.txt")
     def download_codes_txt():
@@ -228,6 +369,69 @@ def create_app() -> Flask:
             pass
         return admissions
 
+    def _merge_last_crawl(bundle: CrawlBundle, years: List[int], codes: List[str], meta: dict):
+        """Thay dữ liệu của các trường vừa crawl, giữ nguyên các trường còn lại."""
+        cached = app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {}
+        replaced = {str(code).upper() for code in codes}
+
+        def keep_other(items):
+            return [
+                item for item in (items or [])
+                if str(item.get("ma_truong") or "").upper() not in replaced
+            ]
+
+        payload = dict(cached)
+        payload["admissions"] = keep_other(cached.get("admissions"))
+        payload["admissions"].extend(r.to_dict() for r in bundle.admissions)
+        payload["conversions"] = keep_other(cached.get("conversions"))
+        payload["conversions"].extend(c.to_dict() for c in bundle.conversions)
+        payload["regulations"] = keep_other(cached.get("regulations"))
+        payload["regulations"].extend(r.to_dict() for r in bundle.regulations)
+        payload["years"] = sorted({
+            *[int(y) for y in (cached.get("years") or [])],
+            *[int(y) for y in years],
+        })
+        payload["codes"] = sorted({
+            *[str(c).upper() for c in (cached.get("codes") or [])],
+            *replaced,
+        })
+        payload.update(meta)
+        app.config["LAST_CRAWL"] = payload
+        try:
+            dataset_store.save_admissions(ROOT, payload)
+        except OSError:
+            pass
+        return payload["admissions"]
+
+    def _source_urls_by_school(data: dict, codes: List[str]) -> Dict[str, List[str]]:
+        raw = data.get("source_urls") or {}
+        if isinstance(raw, list) and len(codes) == 1:
+            raw = {codes[0]: raw}
+        if not isinstance(raw, dict):
+            raise ValueError("Danh sách liên kết không hợp lệ.")
+        result: Dict[str, List[str]] = {}
+        for code in codes:
+            values = raw.get(code) or raw.get(code.lower()) or []
+            if isinstance(values, str):
+                values = [line.strip() for line in values.splitlines() if line.strip()]
+            if not isinstance(values, list):
+                raise ValueError(f"Danh sách liên kết của {code} không hợp lệ.")
+            values = [str(url).strip() for url in values if str(url).strip()][:20]
+            if not values:
+                continue
+            school = lookup_local_school(code)
+            accepted, rejected = filter_official_urls(
+                (school or {}).get("website") or "",
+                values,
+            )
+            if rejected:
+                raise ValueError(
+                    f"Liên kết của {code} phải thuộc website chính thức của trường: "
+                    + ", ".join(rejected[:3])
+                )
+            result[code] = accepted
+        return result
+
     def _store_last_quy_doi(payload: dict):
         app.config["LAST_QUY_DOI"] = payload
         try:
@@ -238,26 +442,37 @@ def create_app() -> Flask:
     # ---------- API: thu thập điểm chuẩn ----------
     @app.post("/api/crawl")
     def api_crawl():
-        codes, years, _ = _parse_crawl_request()
+        codes, years, data = _parse_crawl_request()
         if not codes:
             return jsonify({"ok": False, "error": "Chưa có mã trường hợp lệ."}), 400
         if not years:
             return jsonify({"ok": False, "error": "Chọn ít nhất 1 năm."}), 400
 
+        try:
+            source_urls = _source_urls_by_school(data, codes)
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
         crawler = OnlineAdmissionCrawler()
         bundle = CrawlBundle()
         logs: List[str] = []
 
         for i, code in enumerate(codes, start=1):
             try:
-                part = crawler.crawl_school_bundle(code, years=years, delay=0.3)
+                part = crawler.crawl_school_bundle(
+                    code,
+                    years=years,
+                    delay=0.3,
+                    source_urls=source_urls.get(code),
+                )
                 bundle.admissions.extend(part.admissions)
                 bundle.conversions.extend(part.conversions)
                 bundle.regulations.extend(part.regulations)
+                note = (part.source_note or "").strip()
                 logs.append(
                     f"✓ [{i}/{len(codes)}] {code}: "
                     f"{len(part.admissions)} ngành, {len(part.conversions)} quy đổi chứng chỉ, "
                     f"{len(part.regulations)} quy chế"
+                    + (f" — {note}" if note else "")
                 )
             except Exception as e:
                 logs.append(f"✗ [{i}/{len(codes)}] {code}: {e}")
@@ -294,11 +509,16 @@ def create_app() -> Flask:
     @app.post("/api/crawl/stream")
     def api_crawl_stream():
         """NDJSON stream: mỗi trường xong → 1 dòng JSON (hiển thị realtime trên modal)."""
-        codes, years, _ = _parse_crawl_request()
+        codes, years, data = _parse_crawl_request()
         if not codes:
             return jsonify({"ok": False, "error": "Chưa có mã trường hợp lệ."}), 400
         if not years:
             return jsonify({"ok": False, "error": "Chọn ít nhất 1 năm."}), 400
+        try:
+            source_urls = _source_urls_by_school(data, codes)
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        merge_existing = bool(data.get("merge", False))
 
         @stream_with_context
         def generate():
@@ -314,15 +534,22 @@ def create_app() -> Flask:
 
             for i, code in enumerate(codes, start=1):
                 try:
-                    part = crawler.crawl_school_bundle(code, years=years, delay=0.25)
+                    part = crawler.crawl_school_bundle(
+                        code,
+                        years=years,
+                        delay=0.25,
+                        source_urls=source_urls.get(code),
+                    )
                     bundle.admissions.extend(part.admissions)
                     bundle.conversions.extend(part.conversions)
                     bundle.regulations.extend(part.regulations)
                     preview = [r.to_dict() for r in part.admissions[:40]]
+                    note = (part.source_note or "").strip()
                     msg = (
                         f"✓ [{i}/{len(codes)}] {code}: "
                         f"{len(part.admissions)} ngành, {len(part.conversions)} quy đổi, "
                         f"{len(part.regulations)} quy chế"
+                        + (f" — {note}" if note else "")
                     )
                     logs.append(msg)
                     yield json.dumps({
@@ -394,8 +621,11 @@ def create_app() -> Flask:
                     },
                 }, ensure_ascii=False) + "\n"
 
-                admissions = _store_last_crawl(
-                    bundle, years, codes,
+                store = _merge_last_crawl if merge_existing else _store_last_crawl
+                admissions = store(
+                    bundle,
+                    years,
+                    codes,
                     {"download_url": download_url, "filename": out_name, "logs": logs},
                 )
                 # Không nhúng trends vào stream (payload rất nặng) — lấy sau qua /api/crawl/trends
@@ -881,6 +1111,12 @@ def create_app() -> Flask:
                 cached_notes = [n for n in (cached.get("notes") or []) if n.get("ma_truong") != code]
                 cached_notes.extend(part.get("notes") or [])
                 cached["notes"] = cached_notes
+                cached_certs = [
+                    c for c in (cached.get("certificate_conversions") or [])
+                    if c.get("ma_truong") != code
+                ]
+                cached_certs.extend(part.get("certificate_conversions") or [])
+                cached["certificate_conversions"] = cached_certs
                 mbs = cached.get("methods_by_school") or {}
                 mbs[code] = _enrich_methods_for_school(
                     code, list_methods_from_rows(part.get("rows") or [], code)
@@ -890,18 +1126,20 @@ def create_app() -> Flask:
             rows = cached.get("rows") or []
 
         if mode == "certificate":
-            # Lấy thêm bảng chứng chỉ từ đề án nếu cần
+            # Lấy thêm bảng chứng chỉ trực tiếp từ website trường nếu cần
             cert_type = (data.get("certificate_type") or method or "IELTS").upper()
             convs = cached.get("certificate_conversions") or []
             if not any(c.get("ma_truong") == code for c in convs):
-                from crawlers.online_crawler import OnlineAdmissionCrawler
-                oc = OnlineAdmissionCrawler()
-                info = oc.find_school(code)
-                if info:
-                    _, dean_conv, _ = oc.crawl_dean_data(
-                        info["code"], info.get("name") or code, info.get("slug") or ""
+                from crawlers.official_conversion import OfficialConversionCollector
+                from crawlers.official_site_crawler import lookup_local_school
+                info = lookup_local_school(code)
+                if info and info.get("website"):
+                    official = OfficialConversionCollector().collect(
+                        code,
+                        info.get("name") or code,
+                        info["website"],
                     )
-                    convs = [c.to_dict() for c in dean_conv]
+                    convs = [c.to_dict() for c in official.conversions]
                     cached["certificate_conversions"] = (
                         [c for c in (cached.get("certificate_conversions") or []) if c.get("ma_truong") != code]
                         + convs
@@ -937,7 +1175,14 @@ def create_app() -> Flask:
         data = dataset_store.load_schools(ROOT)
         if not data or not (data.get("schools") or []):
             return jsonify({"ok": False, "error": "Chưa có danh sách trường đã lưu."}), 404
-        schools = data.get("schools") or []
+        schools = []
+        for item in data.get("schools") or []:
+            row = dict(item)
+            regions = split_addresses_by_region(row.get("dia_chi") or "")
+            row["loai_truong"] = row.get("loai_truong") or classify_school_sector(row.get("name") or "")
+            for key, value in regions.items():
+                row[key] = row.get(key) or value
+            schools.append(row)
         stats = {}
         for r in schools:
             lb = r.get("type_label") or "?"
@@ -956,6 +1201,438 @@ def create_app() -> Flask:
             "from_disk": True,
             "meta": dataset_store.file_meta(dataset_store.schools_json_path(ROOT)),
         })
+
+    @app.get("/api/schools/detail")
+    def api_school_detail():
+        """Tổng hợp toàn bộ dữ liệu đã lưu của một trường và nguồn tương ứng."""
+        code = (request.args.get("code") or "").strip().upper()
+        aliases = {"NEU": "KHA", "FTU": "NTH", "HUST": "BKA", "UET": "QHI"}
+        code = aliases.get(code, code)
+        if not code:
+            return jsonify({"ok": False, "error": "Thiếu mã trường."}), 400
+
+        schools_data = dataset_store.load_schools(ROOT) or {}
+        school = next(
+            (
+                item for item in (schools_data.get("schools") or [])
+                if str(item.get("code") or "").upper() == code
+            ),
+            lookup_local_school(code) or {"code": code, "name": code},
+        )
+        crawl = app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {}
+        quy_doi = app.config.get("LAST_QUY_DOI") or dataset_store.load_quy_doi(ROOT) or {}
+
+        def match(item, field="ma_truong"):
+            return str(item.get(field) or "").upper() == code
+
+        admissions = [r for r in (crawl.get("admissions") or []) if match(r)]
+        admissions.sort(
+            key=lambda r: (
+                str(r.get("ten_nganh") or ""),
+                -(int(r.get("nam") or 0)),
+                str(r.get("phuong_thuc") or ""),
+            )
+        )
+        conversions = [r for r in (crawl.get("conversions") or []) if match(r)]
+        regulations = [r for r in (crawl.get("regulations") or []) if match(r)]
+        conversion_rows = [r for r in (quy_doi.get("rows") or []) if match(r)]
+        conversion_notes = [r for r in (quy_doi.get("notes") or []) if match(r)]
+        conversion_images = [r for r in (quy_doi.get("images") or []) if match(r)]
+        certificates = [
+            r for r in (quy_doi.get("certificate_conversions") or []) if match(r)
+        ]
+        uploaded_documents = [
+            r for r in (crawl.get("uploaded_documents") or [])
+            if str(r.get("ma_truong") or "").upper() == code
+        ]
+        summary_regulation = next(
+            (
+                r for r in (crawl.get("summaries") or [])
+                if str(r.get("ma_truong") or "").upper() == code
+            ),
+            None,
+        )
+        for document in uploaded_documents:
+            stored_name = document.get("stored_name") or ""
+            document["download_url"] = url_for(
+                "download_school_document",
+                code=code,
+                name=stored_name,
+            ) if stored_name else ""
+
+        majors = {}
+        methods = set()
+        for row in admissions:
+            major_key = (row.get("ma_nganh") or "", row.get("ten_nganh") or "")
+            major = majors.setdefault(major_key, {
+                "ma_nganh": major_key[0],
+                "ten_nganh": major_key[1],
+                "years": set(),
+                "methods": set(),
+            })
+            if row.get("nam"):
+                major["years"].add(row["nam"])
+            if row.get("phuong_thuc"):
+                major["methods"].add(row["phuong_thuc"])
+                methods.add(row["phuong_thuc"])
+        major_rows = [
+            {
+                **major,
+                "years": sorted(major["years"], reverse=True),
+                "methods": sorted(major["methods"]),
+            }
+            for major in majors.values()
+        ]
+        for method in (quy_doi.get("methods_by_school") or {}).get(code) or []:
+            label = method.get("label") if isinstance(method, dict) else str(method)
+            if label:
+                methods.add(label)
+        for row in conversions + regulations + certificates:
+            if row.get("phuong_thuc"):
+                methods.add(str(row["phuong_thuc"]))
+        for row in conversion_rows:
+            methods.update(str(k) for k in (row.get("cot_gia_tri") or {}).keys() if k)
+
+        sources = []
+        seen_sources = set()
+
+        def add_source(value, label):
+            text = str(value or "")
+            for url in re.findall(r"https?://[^\s<>'\")]+", text):
+                clean_url = url.rstrip(".,;")
+                if clean_url in seen_sources:
+                    continue
+                seen_sources.add(clean_url)
+                sources.append({"url": clean_url, "label": label})
+
+        add_source(school.get("website"), "Website trường")
+        if summary_regulation:
+            for source_url in summary_regulation.get("nguon_tai_lieu") or []:
+                add_source(source_url, "Nguồn của quy chế tổng hợp")
+        for document in uploaded_documents:
+            download_url = document.get("download_url") or ""
+            if download_url and download_url not in seen_sources:
+                seen_sources.add(download_url)
+                sources.append({
+                    "url": download_url,
+                    "label": f"Tài liệu tải lên: {document.get('filename') or 'Tài liệu'}",
+                })
+            if document.get("source_type") == "cdn":
+                add_source(
+                    document.get("source_url"),
+                    f"Link CDN: {document.get('filename') or 'Tài liệu'}",
+                )
+        for rows, label in (
+            (admissions, "Điểm chuẩn / ngành tuyển sinh"),
+            (conversions, "Quy đổi chứng chỉ"),
+            (regulations, "Quy chế tuyển sinh"),
+            (conversion_rows, "Bảng quy đổi phương thức"),
+            (conversion_notes, "Ghi chú quy đổi"),
+            (conversion_images, "Ảnh bảng quy đổi"),
+            (certificates, "Quy đổi chứng chỉ"),
+        ):
+            for row in rows:
+                add_source(row.get("url_nguon") or row.get("nguon"), label)
+
+        return jsonify({
+            "ok": True,
+            "school": school,
+            "majors": major_rows,
+            "admissions": admissions,
+            "methods": sorted(methods),
+            "conversions": conversions,
+            "regulations": regulations,
+            "conversion_rows": conversion_rows,
+            "conversion_notes": conversion_notes,
+            "conversion_images": conversion_images,
+            "certificate_conversions": certificates,
+            "uploaded_documents": uploaded_documents,
+            "summary_regulation": summary_regulation,
+            "sources": sources,
+            "summary": {
+                "majors": len(major_rows),
+                "admissions": len(admissions),
+                "methods": len(methods),
+                "conversion_rows": len(conversion_rows),
+                "conversions": len(conversions) + len(certificates),
+                "regulations": len(regulations) + len(conversion_notes),
+                "sources": len(sources),
+                "documents": len(uploaded_documents),
+                "has_summary": bool(summary_regulation),
+            },
+        })
+
+    @app.get("/api/schools/document/<code>/<name>")
+    def download_school_document(code: str, name: str):
+        safe_code = re.sub(r"[^A-Z0-9_-]", "", (code or "").upper())
+        safe_name = secure_filename(name or "")
+        if not safe_code or not safe_name:
+            return jsonify({"ok": False, "error": "Tên tài liệu không hợp lệ."}), 400
+        directory = os.path.join(app.config["UPLOADS_DIR"], safe_code)
+        return send_from_directory(directory, safe_name, as_attachment=True)
+
+    @app.post("/api/schools/upload-documents")
+    def api_school_upload_documents():
+        """Nhập file cho một trường và gộp dữ liệu, không chạy crawler website."""
+        if (request.content_length or 0) > 100 * 1024 * 1024:
+            return jsonify({"ok": False, "error": "Tổng dung lượng vượt quá 100 MB."}), 413
+        code = (request.form.get("code") or "").strip().upper()
+        try:
+            year = int(request.form.get("year") or datetime.now().year)
+        except ValueError:
+            return jsonify({"ok": False, "error": "Năm tuyển sinh không hợp lệ."}), 400
+        if not code or year < 2000 or year > 2100:
+            return jsonify({"ok": False, "error": "Thiếu mã trường hoặc năm không hợp lệ."}), 400
+        files = [f for f in request.files.getlist("files") if f and f.filename]
+        remote_urls = [
+            line.strip()
+            for line in (request.form.get("urls") or "").splitlines()
+            if line.strip()
+        ]
+        if not files and not remote_urls:
+            return jsonify({"ok": False, "error": "Chưa chọn file hoặc nhập link CDN."}), 400
+        if len(files) + len(remote_urls) > 20:
+            return jsonify({
+                "ok": False,
+                "error": "Chỉ được bổ sung tối đa 20 file/link mỗi lần.",
+            }), 400
+
+        allowed = {".xlsx", ".xls", ".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"}
+        schools_data = dataset_store.load_schools(ROOT) or {}
+        school = next(
+            (
+                item for item in (schools_data.get("schools") or [])
+                if str(item.get("code") or "").upper() == code
+            ),
+            lookup_local_school(code),
+        )
+        if not school:
+            return jsonify({"ok": False, "error": f"Không tìm thấy trường {code}."}), 404
+        school_name = school.get("name") or school.get("short_name") or code
+
+        from crawlers.uploaded_document_parser import (
+            download_remote_document,
+            parse_uploaded_document,
+        )
+        from core.models import MethodConversionBundle
+
+        combined = CrawlBundle()
+        method_bundle = MethodConversionBundle()
+        documents = []
+        errors = []
+        upload_dir = os.path.join(app.config["UPLOADS_DIR"], code)
+        os.makedirs(upload_dir, exist_ok=True)
+
+        def add_parsed_document(
+            path, original_name, stored_name, size, source_url, source_type
+        ):
+            try:
+                crawl_part, method_part = parse_uploaded_document(
+                    path, original_name, code, school_name, year, source_url
+                )
+            except Exception as exc:
+                errors.append(f"{original_name}: không đọc được ({exc})")
+                crawl_part = CrawlBundle()
+                method_part = MethodConversionBundle()
+            combined.admissions.extend(crawl_part.admissions)
+            combined.conversions.extend(crawl_part.conversions)
+            combined.regulations.extend(crawl_part.regulations)
+            method_bundle.rows.extend(method_part.rows)
+            method_bundle.notes.extend(method_part.notes)
+            method_bundle.images.extend(method_part.images)
+            method_bundle.conversions.extend(method_part.conversions)
+            documents.append({
+                "ma_truong": code,
+                "ten_truong": school_name,
+                "filename": original_name,
+                "stored_name": stored_name,
+                "source_type": source_type,
+                "source_url": source_url,
+                "year": year,
+                "size": size,
+                "uploaded_at": datetime.now().isoformat(timespec="seconds"),
+                "admissions": len(crawl_part.admissions),
+                "conversions": len(crawl_part.conversions) + len(method_part.rows),
+                "regulations": len(crawl_part.regulations),
+            })
+
+        for uploaded in files:
+            original_name = os.path.basename(uploaded.filename)
+            ext = os.path.splitext(original_name)[1].lower()
+            if ext not in allowed:
+                errors.append(f"{original_name}: định dạng không được hỗ trợ")
+                continue
+            safe_original = secure_filename(original_name)
+            if not safe_original:
+                errors.append(f"{original_name}: tên file không hợp lệ")
+                continue
+            stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            stored_name = f"{stamp}_{safe_original}"
+            path = os.path.join(upload_dir, stored_name)
+            uploaded.save(path)
+            size = os.path.getsize(path)
+            if size > 20 * 1024 * 1024:
+                os.unlink(path)
+                errors.append(f"{original_name}: vượt quá 20 MB")
+                continue
+            source_url = url_for(
+                "download_school_document",
+                code=code,
+                name=stored_name,
+            )
+            add_parsed_document(
+                path, original_name, stored_name, size, source_url, "file"
+            )
+
+        for remote_url in remote_urls:
+            stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            try:
+                remote = download_remote_document(
+                    remote_url, upload_dir, stamp
+                )
+            except Exception as exc:
+                errors.append(f"{remote_url}: không tải được ({exc})")
+                continue
+            add_parsed_document(
+                remote["path"],
+                remote["filename"],
+                remote["stored_name"],
+                remote["size"],
+                remote["source_url"],
+                "cdn",
+            )
+
+        if not documents and errors:
+            return jsonify({"ok": False, "error": "; ".join(errors)}), 400
+
+        crawl = app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {}
+
+        def append_unique(target, additions, fields):
+            seen = {tuple(str(row.get(field) or "") for field in fields) for row in target}
+            for row in additions:
+                key = tuple(str(row.get(field) or "") for field in fields)
+                if key not in seen:
+                    seen.add(key)
+                    target.append(row)
+
+        admissions = list(crawl.get("admissions") or [])
+        conversions = list(crawl.get("conversions") or [])
+        regulations = list(crawl.get("regulations") or [])
+        append_unique(
+            admissions,
+            [r.to_dict() for r in combined.admissions],
+            ("ma_truong", "ma_nganh", "ten_nganh", "nam", "phuong_thuc", "to_hop", "diem_chuan"),
+        )
+        append_unique(
+            conversions,
+            [r.to_dict() for r in combined.conversions],
+            ("ma_truong", "loai_bang", "hang_muc", "diem_quy_doi", "nam"),
+        )
+        append_unique(
+            regulations,
+            [r.to_dict() for r in combined.regulations],
+            ("ma_truong", "tieu_de", "noi_dung", "nam"),
+        )
+        crawl.update({
+            "admissions": admissions,
+            "conversions": conversions,
+            "regulations": regulations,
+            "uploaded_documents": list(crawl.get("uploaded_documents") or []) + documents,
+            "codes": sorted({*[str(c).upper() for c in (crawl.get("codes") or [])], code}),
+            "years": sorted({*[int(y) for y in (crawl.get("years") or [])], year}),
+        })
+        app.config["LAST_CRAWL"] = crawl
+        dataset_store.save_admissions(ROOT, crawl)
+
+        quy_doi = app.config.get("LAST_QUY_DOI") or dataset_store.load_quy_doi(ROOT) or {}
+        qd_rows = list(quy_doi.get("rows") or [])
+        qd_certs = list(quy_doi.get("certificate_conversions") or [])
+        append_unique(
+            qd_rows,
+            [r.to_dict() for r in method_bundle.rows],
+            ("ma_truong", "tieu_de_bang", "stt", "cot_gia_tri", "nam"),
+        )
+        append_unique(
+            qd_certs,
+            [r.to_dict() for r in combined.conversions],
+            ("ma_truong", "loai_bang", "hang_muc", "diem_quy_doi", "nam"),
+        )
+        quy_doi["rows"] = qd_rows
+        quy_doi["certificate_conversions"] = qd_certs
+        old_summary = quy_doi.get("summary") or {}
+        quy_doi["summary"] = {
+            **old_summary,
+            "rows": len(qd_rows),
+            "certificates": len(qd_certs),
+        }
+        app.config["LAST_QUY_DOI"] = quy_doi
+        dataset_store.save_quy_doi(ROOT, quy_doi)
+
+        return jsonify({
+            "ok": True,
+            "files": len(documents),
+            "admissions": len(combined.admissions),
+            "conversions": len(combined.conversions) + len(method_bundle.rows),
+            "regulations": len(combined.regulations),
+            "documents": documents,
+            "errors": errors,
+        })
+
+    @app.post("/api/schools/summarize")
+    def api_school_summarize():
+        """Tạo lại quy chế tổng hợp từ mọi nguồn dữ liệu đang lưu của một trường."""
+        data = request.get_json(silent=True) or {}
+        code = (data.get("code") or "").strip().upper()
+        if not code:
+            return jsonify({"ok": False, "error": "Thiếu mã trường."}), 400
+        schools_data = dataset_store.load_schools(ROOT) or {}
+        school = next(
+            (
+                item for item in (schools_data.get("schools") or [])
+                if str(item.get("code") or "").upper() == code
+            ),
+            lookup_local_school(code),
+        )
+        if not school:
+            return jsonify({"ok": False, "error": f"Không tìm thấy trường {code}."}), 404
+        crawl = app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {}
+        quy_doi = app.config.get("LAST_QUY_DOI") or dataset_store.load_quy_doi(ROOT) or {}
+
+        def has_school_rows(payload, keys):
+            return any(
+                str(row.get("ma_truong") or "").upper() == code
+                for key in keys
+                for row in (payload.get(key) or [])
+            )
+
+        has_data = has_school_rows(
+            crawl, ("admissions", "conversions", "regulations", "uploaded_documents")
+        ) or has_school_rows(
+            quy_doi, ("rows", "notes", "certificate_conversions", "images")
+        )
+        if not has_data:
+            return jsonify({
+                "ok": False,
+                "error": "Trường chưa có dữ liệu crawl hoặc tài liệu tải lên để tổng hợp.",
+            }), 400
+
+        from core.regulation_summarizer import summarize_school_regulation
+
+        summary = summarize_school_regulation(
+            crawl,
+            quy_doi,
+            code,
+            school.get("name") or school.get("short_name") or code,
+        )
+        summaries = [
+            row for row in (crawl.get("summaries") or [])
+            if str(row.get("ma_truong") or "").upper() != code
+        ]
+        summaries.append(summary)
+        crawl["summaries"] = summaries
+        app.config["LAST_CRAWL"] = crawl
+        dataset_store.save_admissions(ROOT, crawl)
+        return jsonify({"ok": True, "summary": summary})
 
     @app.get("/api/crawl/session")
     def api_crawl_session():
@@ -1025,6 +1702,9 @@ def create_app() -> Flask:
         notes = [n for n in (cached.get("notes") or []) if match(n.get("ma_truong"))]
         images = [i for i in (cached.get("images") or []) if match(i.get("ma_truong"))]
         ranges = [g for g in (cached.get("ranges") or []) if match(g.get("ma_truong"))]
+        certificates = [
+            c for c in (cached.get("certificate_conversions") or []) if match(c.get("ma_truong"))
+        ]
         school_results = [
             s for s in (cached.get("school_results") or []) if match(s.get("code"))
         ]
@@ -1041,6 +1721,7 @@ def create_app() -> Flask:
             "notes": notes,
             "images": images,
             "ranges": ranges,
+            "certificate_conversions": certificates,
             "school_results": school_results,
             "methods": methods,
             "method_labels": cached.get("method_labels") or METHOD_LABELS,
@@ -1050,6 +1731,7 @@ def create_app() -> Flask:
                 "notes": len(notes),
                 "images": len(images),
                 "ranges": len(ranges),
+                "certificates": len(certificates),
             },
             "download_url": download_url,
             "filename": filename,
@@ -1093,8 +1775,9 @@ def create_app() -> Flask:
         notes = cached.get("notes") or []
         images = cached.get("images") or []
         ranges = cached.get("ranges") or []
+        certificates = cached.get("certificate_conversions") or []
         # Preview giới hạn — đủ xem mẫu, không đủ để treo DOM
-        ROW_CAP, NOTE_CAP, IMG_CAP, RANGE_CAP = 120, 40, 24, 80
+        ROW_CAP, NOTE_CAP, IMG_CAP, RANGE_CAP, CERT_CAP = 120, 40, 24, 80, 200
         return jsonify({
             "ok": True,
             "has_data": True,
@@ -1107,6 +1790,7 @@ def create_app() -> Flask:
                 "notes": len(notes),
                 "images": len(images),
                 "ranges": len(ranges),
+                "certificates": len(certificates),
             },
             "school_results": cached.get("school_results") or [],
             "methods_by_school": cached.get("methods_by_school") or {},
@@ -1117,6 +1801,7 @@ def create_app() -> Flask:
             "notes": notes[:NOTE_CAP],
             "images": images[:IMG_CAP],
             "ranges": ranges[:RANGE_CAP],
+            "certificate_conversions": certificates[:CERT_CAP],
             "preview_capped": {
                 "rows": len(rows) > ROW_CAP,
                 "notes": len(notes) > NOTE_CAP,

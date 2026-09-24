@@ -219,7 +219,7 @@ def _score_in_range(
     half_open: bool = True,
 ) -> bool:
     """
-    Mặc định nửa mở [lo, hi) giống công cụ tuyensinh247.
+    Mặc định khoảng nửa mở [lo, hi) để hai khoảng liền kề không chồng biên.
     Khoảng suy biến (lo≈hi) hoặc half_open=False → đóng [lo, hi].
     """
     if abs(hi - lo) < eps:

@@ -3,7 +3,8 @@
 {% block content %}
 <h1 class="h3 mb-1">② Thu thập dữ liệu tuyển sinh</h1>
 <p class="text-muted mb-3">
-  Dán danh sách mã trường đã copy từ bước 1, chọn năm, rồi thu thập điểm chuẩn / mã ngành / phương thức.
+  Dán danh sách mã trường đã copy từ bước 1, chọn năm, rồi thu thập điểm chuẩn / mã ngành / phương thức
+  từ <strong>website chính thức của từng trường</strong>.
   Dữ liệu được lưu lại để dùng ở
   <a href="{{ url_for('danh_gia_page') }}">Đánh giá năng lực</a>
   và
@@ -133,6 +134,23 @@ function esc(s) {
   }[c]));
 }
 
+function sourceUrls(value) {
+  if (Array.isArray(value)) {
+    return [...new Set(value.map(u => String(u || '').trim()).filter(u => /^https?:\/\//i.test(u)))];
+  }
+  const found = String(value || '').match(/https?:\/\/[^\s,;]+/g) || [];
+  return [...new Set(found.map(u => u.replace(/[),.;]+$/, '')))];
+}
+
+function sourceLinksHtml(value) {
+  const urls = sourceUrls(value);
+  if (!urls.length) return '<span class="text-muted">—</span>';
+  return urls.map(href => {
+    const label = href.replace(/^https?:\/\//, '');
+    return `<a class="source-link" href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="${esc(href)}">${esc(label)}</a>`;
+  }).join('<br>');
+}
+
 function scoreOf(r) {
   const v = r.diem_chuan_ptxt ?? r.diem_chuan;
   return v == null || v === '' ? '—' : v;
@@ -146,7 +164,7 @@ function appendPreviewRows(rows, {prepend = true, max = 200} = {}) {
     delete thead.dataset.grouped;
     thead.innerHTML = `<tr>
       <th>STT</th><th>Mã</th><th>Trường</th><th>Năm</th><th>Ngành</th>
-      <th>Phương thức</th><th>Điểm</th><th>Tổ hợp</th>
+      <th>Phương thức</th><th>Điểm</th><th>Tổ hợp</th><th>Nguồn</th>
     </tr>`;
   }
   const tbody = document.querySelector('#crawlModalTable tbody');
@@ -162,6 +180,7 @@ function appendPreviewRows(rows, {prepend = true, max = 200} = {}) {
     <td><span class="badge text-bg-light border">${esc(r.phuong_thuc || '')}</span></td>
     <td><b>${esc(scoreOf(r))}</b></td>
     <td class="small">${esc(r.to_hop || '')}</td>
+    <td class="small source-cell">${sourceLinksHtml(r.nguon_urls || r.nguon)}</td>
   </tr>`).join('');
   if (prepend) tbody.insertAdjacentHTML('afterbegin', html);
   else tbody.insertAdjacentHTML('beforeend', html);
@@ -209,6 +228,7 @@ function renderGroupedScoreTable(payload) {
       <th rowspan="2" class="align-middle">Mã ngành</th>
       <th rowspan="2" class="align-middle">Tên ngành</th>
       <th rowspan="2" class="align-middle">Tổ hợp</th>
+      <th rowspan="2" class="align-middle">Nguồn</th>
       ${methodGroups || '<th rowspan="2">Điểm chuẩn</th>'}
     </tr>
     <tr>${methodCols}</tr>`;
@@ -219,13 +239,14 @@ function renderGroupedScoreTable(payload) {
     return;
   }
 
-  const colSpan = 4 + methods.length * Math.max(years.length, 1);
+  const colSpan = 5 + methods.length * Math.max(years.length, 1);
   const parts = [];
   schools.forEach(school => {
     parts.push(`<tr class="table-secondary crawl-school-group">
       <td colspan="${colSpan}">
         <strong><code>${esc(school.ma_truong)}</code> — ${esc(school.ten_truong || '')}</strong>
         <span class="text-muted small ms-2">${esc(school.major_count || 0)} ngành</span>
+        ${sourceUrls(school.nguon_urls).length ? `<div class="small fw-normal mt-1">Nguồn: ${sourceLinksHtml(school.nguon_urls)}</div>` : ''}
       </td>
     </tr>`);
     (school.majors || []).forEach(maj => {
@@ -241,6 +262,7 @@ function renderGroupedScoreTable(payload) {
         <td><code class="small">${esc(maj.ma_nganh || '')}</code></td>
         <td class="small">${esc(maj.ten_nganh || '')}</td>
         <td class="small">${esc(maj.to_hop || '')}</td>
+        <td class="small source-cell">${sourceLinksHtml(maj.nguon_urls)}</td>
         ${scoreCells}
       </tr>`);
     });
@@ -298,13 +320,14 @@ async function fillGroupedTableWithProgress(payload, totals = null) {
       <th rowspan="2" class="align-middle">Mã ngành</th>
       <th rowspan="2" class="align-middle">Tên ngành</th>
       <th rowspan="2" class="align-middle">Tổ hợp</th>
+      <th rowspan="2" class="align-middle">Nguồn</th>
       ${methodGroups || '<th rowspan="2">Điểm chuẩn</th>'}
     </tr>
     <tr>${methodCols}</tr>`;
 
   const tbody = document.querySelector('#crawlModalTable tbody');
   const empty = document.getElementById('crawlModalEmpty');
-  const colSpan = 4 + methods.length * Math.max(years.length, 1);
+  const colSpan = 5 + methods.length * Math.max(years.length, 1);
 
   if (!schools.length) {
     empty.style.display = 'block';
@@ -318,6 +341,7 @@ async function fillGroupedTableWithProgress(payload, totals = null) {
       <td colspan="${colSpan}">
         <strong><code>${esc(school.ma_truong)}</code> — ${esc(school.ten_truong || '')}</strong>
         <span class="text-muted small ms-2">${esc(school.major_count || 0)} ngành</span>
+        ${sourceUrls(school.nguon_urls).length ? `<div class="small fw-normal mt-1">Nguồn: ${sourceLinksHtml(school.nguon_urls)}</div>` : ''}
       </td>
     </tr>`;
     (school.majors || []).forEach(maj => {
@@ -333,6 +357,7 @@ async function fillGroupedTableWithProgress(payload, totals = null) {
         <td><code class="small">${esc(maj.ma_nganh || '')}</code></td>
         <td class="small">${esc(maj.ten_nganh || '')}</td>
         <td class="small">${esc(maj.to_hop || '')}</td>
+        <td class="small source-cell">${sourceLinksHtml(maj.nguon_urls)}</td>
         ${scoreCells}
       </tr>`;
     });

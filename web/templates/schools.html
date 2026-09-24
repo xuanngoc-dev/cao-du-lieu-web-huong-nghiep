@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}① Danh sách trường{% endblock %}
+{% block title %}Danh sách trường{% endblock %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
   <div>
-    <h1 class="h3 mb-1">① Danh sách mã trường</h1>
-    <p class="text-muted mb-0">Tải danh bạ, lọc loại hình, copy mã sang bước Thu thập dữ liệu / Quy đổi điểm.</p>
+    <h1 class="h3 mb-1">Danh sách mã trường</h1>
+    <p class="text-muted mb-0">Tải danh bạ, kèm domain thông báo điểm chuẩn và link thông báo quy chế tuyển sinh của từng trường.</p>
   </div>
 </div>
 
@@ -59,7 +59,7 @@
         <span class="spinner-border spinner-border-sm text-teal" role="status"></span>
       </div>
       <div class="progress" style="height: 8px;" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Đang tải danh sách">
-        <div class="progress-bar progress-bar-striped progress-bar-animated bg-teal" style="width: 100%"></div>
+        <div id="schoolFetchProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-teal" style="width: 100%"></div>
       </div>
     </div>
   </div>
@@ -68,17 +68,32 @@
 <div id="schoolStats" class="mb-3"></div>
 
 <div class="card panel-card mb-3">
+  <div class="card-body border-bottom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="small text-muted" id="schoolSelectInfo">Chưa chọn trường nào</div>
+    <button class="btn btn-outline-danger btn-sm" type="button" id="btnDeleteSelected" disabled>
+      <i class="bi bi-trash3"></i> Xoá đã chọn
+    </button>
+  </div>
   <div class="card-body p-0">
-    <div class="table-responsive" style="max-height: 420px;">
-      <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="schoolTable">
+    <div class="table-responsive table-scroll-x" style="max-height: 420px;">
+      <table class="table table-sm table-bordered table-hover mb-0 align-middle table-nowrap-head" id="schoolTable">
         <thead class="table-light sticky-top">
           <tr>
-            <th style="width:3rem">#</th>
+            <th class="text-center">
+              <input class="form-check-input" type="checkbox" id="schoolCheckAll"
+                aria-label="Chọn tất cả trường đang hiện">
+            </th>
+            <th>#</th>
             <th>Mã</th>
             <th>Tên trường</th>
             <th>Loại hình</th>
+            <th>Loại trường</th>
             <th>Website</th>
+            <th>Domain điểm chuẩn</th>
+            <th>Quy chế tuyển sinh</th>
             <th>Địa chỉ</th>
+            <th>Khu vực</th>
+            <th>Thao tác</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -96,17 +111,34 @@
       <button class="btn btn-outline-secondary btn-sm" type="button" id="btnCopyCodes">
         <i class="bi bi-clipboard"></i> Copy mã
       </button>
-      <a class="btn btn-teal btn-sm" href="{{ url_for('crawl_page') }}" id="btnToCrawl">
-        → Thu thập dữ liệu
-      </a>
-      <a class="btn btn-accent btn-sm" href="{{ url_for('quy_doi_page') }}" id="btnToQuyDoi">
-        → Quy đổi điểm
-      </a>
       <a class="btn btn-outline-teal btn-sm d-none" id="btnDlExcel" href="#">
         <i class="bi bi-file-earmark-excel"></i> Excel
       </a>
     </div>
     <div id="schoolMsg" class="mt-2 mb-0"></div>
+  </div>
+</div>
+
+<div class="modal fade" id="schoolDeleteModal" tabindex="-1" aria-labelledby="schoolDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title h5 text-danger" id="schoolDeleteModalLabel">
+          <i class="bi bi-exclamation-triangle me-1"></i> Xác nhận xoá
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="mb-2" id="schoolDeleteMessage"></p>
+        <p class="small text-muted mb-0">Dữ liệu đã lưu của các trường này sẽ bị xoá. Có thể lấy lại bằng «Làm mới từ web» rồi «Tải danh sách».</p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+        <button type="button" class="btn btn-danger" id="schoolDeleteConfirm">
+          <i class="bi bi-trash3"></i> Xoá
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -121,6 +153,7 @@ document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
 let allSchoolsCache = null;
 let lastExcelUrl = null;
 let fetchInFlight = false;
+const selectedSchoolCodes = new Set();
 
 function escapeHtml(str) {
   return String(str ?? '')
@@ -150,20 +183,65 @@ function filterSchoolsLocal(schools) {
   });
 }
 
+function linkCell(url, label) {
+  if (!url) return '—';
+  const text = label || url;
+  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(text)}</a>`;
+}
+
+function updateSelectionBar() {
+  const visible = filterSchoolsLocal(allSchoolsCache || []);
+  const visibleSelected = visible.filter(s => selectedSchoolCodes.has(String(s.code || '').toUpperCase()));
+  const info = document.getElementById('schoolSelectInfo');
+  const btn = document.getElementById('btnDeleteSelected');
+  const checkAll = document.getElementById('schoolCheckAll');
+  info.textContent = visibleSelected.length
+    ? `Đã chọn ${visibleSelected.length} / ${visible.length} trường đang hiện`
+    : 'Chưa chọn trường nào';
+  btn.disabled = visibleSelected.length === 0 || fetchInFlight;
+  checkAll.checked = visible.length > 0 && visibleSelected.length === visible.length;
+  checkAll.indeterminate = visibleSelected.length > 0 && visibleSelected.length < visible.length;
+}
+
+function regionLabel(school) {
+  if (school.khu_vuc) return school.khu_vuc;
+  const parts = [];
+  if (school.dia_chi_bac) parts.push('Bắc');
+  if (school.dia_chi_trung) parts.push('Trung');
+  if (school.dia_chi_nam) parts.push('Nam');
+  return parts.join(', ');
+}
+
 function renderSchools(schools) {
   const rows = filterSchoolsLocal(schools);
   const tbody = document.querySelector('#schoolTable tbody');
-  tbody.innerHTML = rows.map((s, i) => `
+  tbody.innerHTML = rows.map((s, i) => {
+    const code = String(s.code || '').toUpperCase();
+    const checked = selectedSchoolCodes.has(code) ? 'checked' : '';
+    return `
     <tr>
+      <td class="text-center">
+        <input class="form-check-input school-check" type="checkbox" value="${escapeHtml(code)}"
+          aria-label="Chọn ${escapeHtml(code)}" ${checked}>
+      </td>
       <td class="text-muted">${i + 1}</td>
       <td><code>${escapeHtml(s.code)}</code></td>
       <td>${escapeHtml(s.name)}</td>
-      <td><span class="badge text-bg-light border">${escapeHtml(s.type_label || '')}</span></td>
-      <td class="small">${s.website
-        ? `<a href="${escapeHtml(s.website)}" target="_blank" rel="noopener">${escapeHtml(s.website)}</a>`
-        : '—'}</td>
+      <td><span class="badge text-bg-light border text-nowrap">${escapeHtml(s.type_label || '')}</span></td>
+      <td class="small text-nowrap">${escapeHtml(s.loai_truong || '—')}</td>
+      <td class="small">${linkCell(s.website)}</td>
+      <td class="small">${linkCell(s.domain_diem_chuan)}</td>
+      <td class="small">${linkCell(s.link_quy_che, 'Thông báo')}</td>
       <td class="small text-muted">${escapeHtml(s.dia_chi || '—')}</td>
-    </tr>`).join('');
+      <td class="small text-nowrap">${escapeHtml(regionLabel(s) || '—')}</td>
+      <td class="text-nowrap">
+        <button type="button" class="btn btn-sm btn-outline-danger" data-delete-school="${escapeHtml(code)}">
+          <i class="bi bi-trash3"></i> Xoá
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+  updateSelectionBar();
 
   const stats = {};
   rows.forEach(r => {
@@ -212,21 +290,93 @@ document.getElementById('btnFetchSchools').addEventListener('click', async () =>
   const filter = document.getElementById('schoolFilter').value;
   const keyword = document.getElementById('schoolKeyword').value;
 
-  function setLoading(on, label) {
+  const progressBar = document.getElementById('schoolFetchProgressBar');
+
+  function setLoading(on, label, percent) {
     fetchInFlight = on;
     btn.disabled = on;
     if (on) {
       progressLabel.textContent = label || 'Đang tải danh sách…';
       progress.classList.remove('d-none');
+      const known = typeof percent === 'number';
+      progressBar.style.width = known ? `${percent}%` : '100%';
+      progressBar.classList.toggle('progress-bar-animated', !known || percent < 100);
     } else {
       progress.classList.add('d-none');
+      progressBar.style.width = '100%';
     }
+  }
+
+  async function collectNotices(refresh) {
+    const pending = (allSchoolsCache || []).some(s => refresh || !s.notices_checked);
+    if (!pending) return null;
+    setLoading(true, 'Đang tìm domain điểm chuẩn và link quy chế…', 0);
+    const res = await fetch('/api/schools/notices/stream', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ refresh: !!refresh })
+    });
+    if (!res.ok || !res.body) throw new Error(`Không thu thập được thông báo (HTTP ${res.status})`);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let summary = null;
+    const byCode = new Map((allSchoolsCache || []).map(s => [String(s.code || '').toUpperCase(), s]));
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        if (event.type === 'error') throw new Error(event.error || 'Lỗi lưu danh bạ');
+        if (event.type === 'school') {
+          const row = byCode.get(String(event.code || '').toUpperCase());
+          if (row) {
+            row.domain_diem_chuan = event.domain_diem_chuan || '';
+            row.link_quy_che = event.link_quy_che || '';
+            row.notices_checked = true;
+          }
+          const pct = event.total ? Math.round(event.index * 100 / event.total) : 100;
+          setLoading(true, `Đang tìm thông báo ${event.index}/${event.total} · ${event.code}`, pct);
+          if (event.index % 8 === 0 || event.index === event.total) renderSchools(allSchoolsCache);
+        } else if (event.type === 'done') {
+          summary = event;
+        }
+      }
+    }
+    renderSchools(allSchoolsCache);
+    if (summary && summary.excel_url) {
+      lastExcelUrl = summary.excel_url;
+      const dl = document.getElementById('btnDlExcel');
+      dl.href = lastExcelUrl;
+      dl.classList.remove('d-none');
+    }
+    return summary;
   }
 
   // Đã có danh sách + không «Làm mới từ web» → chỉ áp dụng bộ lọc (tức thì)
   if (allSchoolsCache && allSchoolsCache.length && !refresh) {
     const rows = renderSchools(allSchoolsCache);
-    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đang hiện <b>${rows.length}</b> / ${allSchoolsCache.length} trường theo bộ lọc.</div>`;
+    let noticeSummary = null;
+    try {
+      noticeSummary = await collectNotices(false);
+    } catch (e) {
+      msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
+      setLoading(false);
+      return;
+    }
+    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đang hiện <b>${rows.length}</b> / ${allSchoolsCache.length} trường theo bộ lọc.`
+      + (noticeSummary
+        ? ` Đã dò ${noticeSummary.total} trường: ${noticeSummary.found_domain} domain điểm chuẩn, ${noticeSummary.found_link} link quy chế.`
+        : '')
+      + `</div>`;
+    if (noticeSummary) {
+      setLoading(false);
+      return;
+    }
     // Xuất Excel đúng bộ lọc hiện tại (nhanh, không crawler lại)
     setLoading(true, 'Đang cập nhật Excel theo bộ lọc…');
     try {
@@ -289,8 +439,13 @@ document.getElementById('btnFetchSchools').addEventListener('click', async () =>
       ? data.with_contact
       : rows.filter(r => r.website && r.dia_chi).length;
 
+    const noticeSummary = await collectNotices(refresh);
     msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đã tải ${allSchoolsCache.length} trường, đang hiện <b>${rows.length}</b> theo bộ lọc`
-      + ` · ${withContact} có website/địa chỉ.</div>`;
+      + ` · ${withContact} có website/địa chỉ`
+      + (noticeSummary
+        ? ` · ${noticeSummary.found_domain} domain điểm chuẩn, ${noticeSummary.found_link} link quy chế.`
+        : '.')
+      + `</div>`;
   } catch (e) {
     msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
   } finally {
@@ -305,11 +460,106 @@ document.getElementById('btnCopyCodes').addEventListener('click', async () => {
   window.App.toast('Đã copy danh sách mã.');
 });
 
-['btnToCrawl', 'btnToQuyDoi'].forEach(id => {
-  document.getElementById(id).addEventListener('click', () => {
-    window.App.saveCodes(document.getElementById('codesBox').value);
-  });
+document.getElementById('schoolTable').addEventListener('change', (event) => {
+  const box = event.target.closest('.school-check');
+  if (!box) return;
+  const code = String(box.value || '').toUpperCase();
+  if (box.checked) selectedSchoolCodes.add(code);
+  else selectedSchoolCodes.delete(code);
+  updateSelectionBar();
 });
+
+document.getElementById('schoolCheckAll').addEventListener('change', () => {
+  const visible = filterSchoolsLocal(allSchoolsCache || []);
+  const on = document.getElementById('schoolCheckAll').checked;
+  visible.forEach(s => {
+    const code = String(s.code || '').toUpperCase();
+    if (on) selectedSchoolCodes.add(code);
+    else selectedSchoolCodes.delete(code);
+  });
+  renderSchools(allSchoolsCache || []);
+});
+
+document.getElementById('schoolTable').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-delete-school]');
+  if (!btn || fetchInFlight) return;
+  deleteSchools([btn.dataset.deleteSchool]);
+});
+
+document.getElementById('btnDeleteSelected').addEventListener('click', () => {
+  if (fetchInFlight) return;
+  const codes = filterSchoolsLocal(allSchoolsCache || [])
+    .map(s => String(s.code || '').toUpperCase())
+    .filter(code => selectedSchoolCodes.has(code));
+  deleteSchools(codes);
+});
+
+function confirmDeleteSchools(message) {
+  const modalEl = document.getElementById('schoolDeleteModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  document.getElementById('schoolDeleteMessage').textContent = message;
+  return new Promise((resolve) => {
+    const okBtn = document.getElementById('schoolDeleteConfirm');
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      okBtn.removeEventListener('click', onOk);
+      modalEl.removeEventListener('hidden.bs.modal', onHidden);
+      resolve(ok);
+    };
+    const onOk = () => {
+      finish(true);
+      modal.hide();
+    };
+    const onHidden = () => finish(false);
+    okBtn.addEventListener('click', onOk);
+    modalEl.addEventListener('hidden.bs.modal', onHidden, { once: true });
+    modal.show();
+  });
+}
+
+async function deleteSchools(codes) {
+  const unique = [...new Set((codes || []).map(c => String(c || '').toUpperCase()).filter(Boolean))];
+  if (!unique.length || fetchInFlight) return;
+  const label = unique.length === 1
+    ? `trường ${unique[0]}`
+    : `${unique.length} trường đã chọn`;
+  const accepted = await confirmDeleteSchools(`Xoá dữ liệu đã lưu của ${label}?`);
+  if (!accepted) return;
+
+  const msg = document.getElementById('schoolMsg');
+  const removed = new Set(unique);
+  fetchInFlight = true;
+  document.getElementById('btnDeleteSelected').disabled = true;
+  try {
+    const res = await fetch('/api/schools/delete', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ codes: unique })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Không xoá được');
+    unique.forEach(code => selectedSchoolCodes.delete(code));
+    const returned = Array.isArray(data.schools) ? data.schools : (allSchoolsCache || []);
+    allSchoolsCache = returned.filter(s => !removed.has(String(s.code || '').toUpperCase()));
+    if (data.excel_url) {
+      lastExcelUrl = data.excel_url;
+      const dl = document.getElementById('btnDlExcel');
+      dl.href = lastExcelUrl;
+      dl.classList.remove('d-none');
+    }
+    const rows = renderSchools(allSchoolsCache);
+    const deletedCount = (data.deleted || unique).length;
+    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đã xoá dữ liệu <b>${deletedCount}</b> trường. Còn <b>${rows.length}</b> trường trong danh sách đã lưu. Chọn «Làm mới từ web» rồi «Tải danh sách» nếu muốn lấy lại.</div>`;
+    window.App.toast(`Đã xoá dữ liệu ${deletedCount} trường.`);
+  } catch (e) {
+    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
+  } finally {
+    fetchInFlight = false;
+    updateSelectionBar();
+  }
+}
 
 function normalizeCodesDisplay(text) {
   return String(text || '')

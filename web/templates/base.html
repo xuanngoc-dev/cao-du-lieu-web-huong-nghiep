@@ -24,13 +24,7 @@
             <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">Tổng quan</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'schools_page' %}active{% endif %}" href="{{ url_for('schools_page') }}">① Danh sách trường</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'crawl_page' %}active{% endif %}" href="{{ url_for('crawl_page') }}">② Thu thập dữ liệu</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'quy_doi_page' %}active{% endif %}" href="{{ url_for('quy_doi_page') }}">③ Quy đổi điểm</a>
+            <a class="nav-link {% if request.endpoint == 'schools_page' %}active{% endif %}" href="{{ url_for('schools_page') }}">Danh sách trường</a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'danh_gia_page' %}active{% endif %}" href="{{ url_for('danh_gia_page') }}">
@@ -53,7 +47,7 @@
 
   <footer class="app-footer py-4 mt-auto">
     <div class="container small text-center text-muted">
-      Nguồn công khai: tuyensinh247 · Lưu tại <code>data/output/</code> &amp; <code>data/datasets/</code>
+      Dữ liệu tuyển sinh từ website chính thức của các trường.
     </div>
   </footer>
 

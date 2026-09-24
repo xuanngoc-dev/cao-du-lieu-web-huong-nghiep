@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Module: crawlers.dean_extractor
-Mô tả: Bóc tách từ trang Đề án tuyển sinh (tuyensinh247):
+Mô tả: Bóc tách nội dung tuyển sinh trên website chính thức của trường:
 - Bảng mã ngành + tổ hợp + phương thức
 - Bảng quy đổi / hoán đổi điểm chứng chỉ (IELTS, TOEFL, SAT, ACT, A-Level,...)
 - Đoạn quy chế / quy định xét tuyển
@@ -20,6 +20,8 @@ from core.normalizer import (
     clean_text,
     normalize_major_code,
     normalize_integer,
+    normalize_score,
+    normalize_score_ptxt,
     strip_accents,
     extract_year_from_text,
 )
@@ -146,9 +148,95 @@ def _is_conversion_table(headers: List[str], sample_text: str = "") -> bool:
 
 def _is_major_table(headers: List[str]) -> bool:
     joined = _header_join(headers)
-    has_code = any(k in joined for k in ["ma nganh", "ma xet tuyen", "ma xt"])
-    has_name = any(k in joined for k in ["ten nganh", "nganh dao tao", "chuong trinh"])
+    has_code = any(k in joined for k in [
+        "ma nganh", "ma xet tuyen", "ma xt", "ma tuyen sinh", "ma chuong trinh",
+    ])
+    has_name = any(k in joined for k in [
+        "ten nganh", "nganh dao tao", "chuong trinh", "ten ma xet",
+    ])
     return has_code and has_name
+
+
+def _flatten_header_grid(rows: List[Tag], max_rows: int = 3) -> Tuple[List[str], int]:
+    """Ghép tiêu đề có rowspan/colspan thành một nhãn cho mỗi cột dữ liệu."""
+    occupied: Dict[Tuple[int, int], str] = {}
+    header_rows = rows[:max_rows]
+    for r_i, tr in enumerate(header_rows):
+        col = 0
+        cells = tr.find_all(["th", "td"])
+        if r_i > 0:
+            texts = [clean_text(cell.get_text(" ", strip=True)) for cell in cells]
+            nonempty = [text for text in texts if text]
+            looks_like_methods = any(detect_admission_method(text) for text in nonempty)
+            if not looks_like_methods:
+                break
+        for cell in cells:
+            while (r_i, col) in occupied:
+                col += 1
+            text = clean_text(cell.get_text(" ", strip=True))
+            try:
+                colspan = max(1, int(cell.get("colspan") or 1))
+                rowspan = max(1, int(cell.get("rowspan") or 1))
+            except ValueError:
+                colspan, rowspan = 1, 1
+            for rr in range(rowspan):
+                for cc in range(colspan):
+                    occupied[(r_i + rr, col + cc)] = text
+            col += colspan
+    if not occupied:
+        return [], 0
+    header_depth = max(r for r, _ in occupied) + 1
+    ncols = max(c for _, c in occupied) + 1
+    headers: List[str] = []
+    for c in range(ncols):
+        parts: List[str] = []
+        for r in range(header_depth):
+            text = occupied.get((r, c), "")
+            if text and text not in parts:
+                parts.append(text)
+        headers.append(" ".join(parts))
+    return headers, header_depth
+
+
+def _method_mark_columns(headers: List[str]) -> List[Tuple[int, str]]:
+    """Cột đánh dấu áp dụng từng phương thức (XTTN / ĐGTD / THPT, ...)."""
+    found: List[Tuple[int, str]] = []
+    seen = set()
+    for idx, header in enumerate(headers):
+        method = detect_admission_method(header)
+        if not method or method in seen:
+            continue
+        # Chỉ nhận cột chỉ rõ một phương thức, không phải tiêu đề chung
+        if method == "Theo đề án tuyển sinh":
+            continue
+        seen.add(method)
+        found.append((idx, method))
+    return found if len(found) >= 2 else []
+
+
+def _is_method_mark(value: str) -> bool:
+    """Ô đánh dấu ngành có dùng phương thức (✓, x, Ö, Có, ...)."""
+    text = clean_text(value)
+    if not text:
+        return False
+    folded = strip_accents(text).lower()
+    if folded in {"x", "v", "co", "yes", "y", "1", "ok", "o"}:
+        return True
+    if len(text) <= 2 and any(ch in text for ch in "✓✔☑✅●•Öö×xXvV"):
+        return True
+    return False
+
+
+def _row_cell_texts(tr: Tag) -> List[str]:
+    cells: List[str] = []
+    for td in tr.find_all(["th", "td"]):
+        try:
+            span = max(1, int(td.get("colspan") or 1))
+        except ValueError:
+            span = 1
+        cells.append(clean_text(td.get_text(" ", strip=True)))
+        cells.extend([""] * (span - 1))
+    return cells
 
 
 def _guess_conversion_type(headers: List[str]) -> str:
@@ -230,14 +318,36 @@ def _row_detail(headers: List[str], cells: List[str], skip_idxs: set) -> str:
     return "; ".join(parts)
 
 
+def _scores_from_row(extracted: Dict[str, str], method: str) -> Tuple[Optional[float], Optional[float], float]:
+    """Điểm THPT để ở diem_chuan; điểm TSA/XTTN/HSA để ở diem_chuan_ptxt."""
+    raw_ptxt = extracted.get("diem_chuan_ptxt", "")
+    raw_thpt = extracted.get("diem_chuan", "")
+    diem = normalize_score(raw_thpt) if raw_thpt else None
+    diem_ptxt = normalize_score_ptxt(raw_ptxt) if raw_ptxt else None
+    mid = method_to_calc_id(method)
+    if mid and mid not in {"THPT", "HOC_BA"}:
+        if diem_ptxt is None and raw_thpt:
+            diem_ptxt = normalize_score_ptxt(raw_thpt)
+        diem = None
+    elif diem is None and raw_thpt:
+        diem_ptxt = diem_ptxt or normalize_score_ptxt(raw_thpt)
+    thang = 30.0
+    if diem_ptxt is not None:
+        if diem_ptxt <= 120:
+            thang = 100.0
+        elif diem_ptxt <= 200:
+            thang = 150.0
+        else:
+            thang = 1600.0
+    return diem, diem_ptxt, thang
+
+
 def _nearby_method(table: Tag) -> str:
-    """Lấy phương thức từ tiêu đề gần bảng."""
-    for tag_name in ["h2", "h3", "h4", "strong", "b", "p"]:
-        prev = table.find_previous(tag_name)
-        if prev:
-            method = detect_admission_method(prev.get_text(" ", strip=True))
-            if method:
-                return method
+    """Lấy phương thức từ đoạn chữ gần bảng nhất."""
+    for prev in table.find_all_previous(["h1", "h2", "h3", "h4", "strong", "b", "p"], limit=6):
+        method = detect_admission_method(prev.get_text(" ", strip=True))
+        if method:
+            return method
     return ""
 
 
@@ -284,6 +394,78 @@ class DeanAdmissionExtractor:
         title = clean_text(soup.get_text(" ", strip=True)[:1500])
         return extract_year_from_text(title)
 
+    def _append_method_mark_rows(
+        self,
+        records: List[AdmissionRecord],
+        seen: set,
+        data_rows: List[Tag],
+        headers: List[str],
+        method_cols: List[Tuple[int, str]],
+        school_code: str,
+        school_name: str,
+        year: int,
+        source: str,
+        section_method: str,
+    ) -> None:
+        """Mỗi ô đánh dấu (XTTN / ĐGTD / THPT) thành một bản ghi phương thức."""
+        col_map = BaseParser.map_table_headers(headers)
+        for idx, header in enumerate(headers):
+            if idx in col_map:
+                continue
+            folded = strip_accents(header)
+            if "khoi" in folded and "to_hop" not in col_map.values():
+                col_map[idx] = "to_hop"
+
+        for tr in data_rows:
+            cells = _row_cell_texts(tr)
+            if len(cells) < 2:
+                continue
+            extracted: Dict[str, str] = {}
+            for c_idx, field_name in col_map.items():
+                if c_idx < len(cells) and field_name != "phuong_thuc":
+                    extracted[field_name] = cells[c_idx]
+            raw_ma = extracted.get("ma_nganh", "")
+            raw_ten = extracted.get("ten_nganh", "")
+            ma_nganh = normalize_major_code(raw_ma)
+            ten_nganh = clean_text(raw_ten)
+            if not ma_nganh and not ten_nganh:
+                continue
+            if "mã ngành" in (ma_nganh + " " + ten_nganh).lower() or "tên ngành" in ten_nganh.lower():
+                continue
+            if not ma_nganh and re.match(r"^[A-ZIVXLC\d]+[\.\)]\s+", ten_nganh):
+                continue
+
+            to_hop = clean_text(extracted.get("to_hop", ""))
+            chi_tieu = normalize_integer(extracted.get("chi_tieu"))
+            ghi_chu = clean_text(extracted.get("ghi_chu", ""))
+            applied = []
+            for idx, method in method_cols:
+                if idx < len(cells) and _is_method_mark(cells[idx]):
+                    applied.append(method)
+            if not applied and section_method:
+                applied = [section_method]
+            if not applied:
+                continue
+            for method in applied:
+                key = (ma_nganh, ten_nganh.lower(), to_hop.lower(), method, year)
+                if key in seen:
+                    continue
+                seen.add(key)
+                records.append(
+                    AdmissionRecord(
+                        ma_truong=school_code,
+                        ten_truong=school_name,
+                        ma_nganh=ma_nganh,
+                        ten_nganh=ten_nganh or ma_nganh,
+                        nam=year,
+                        to_hop=to_hop,
+                        chi_tieu=chi_tieu,
+                        phuong_thuc=method,
+                        ghi_chu=ghi_chu,
+                        nguon=source,
+                    )
+                )
+
     def _extract_major_tables(
         self,
         soup: BeautifulSoup,
@@ -299,8 +481,30 @@ class DeanAdmissionExtractor:
             rows = table.find_all("tr")
             if len(rows) < 2:
                 continue
+            flat_headers, header_depth = _flatten_header_grid(rows)
             headers = [clean_text(td.get_text()) for td in rows[0].find_all(["th", "td"])]
-            if not _is_major_table(headers):
+            if _is_major_table(flat_headers):
+                headers_for_check = flat_headers
+            else:
+                headers_for_check = headers
+                header_depth = 1
+            if not _is_major_table(headers_for_check):
+                continue
+
+            method_cols = _method_mark_columns(flat_headers if flat_headers else headers)
+            if method_cols:
+                self._append_method_mark_rows(
+                    records,
+                    seen,
+                    rows[header_depth:],
+                    flat_headers or headers,
+                    method_cols,
+                    school_code,
+                    school_name,
+                    year or 2026,
+                    source,
+                    _nearby_method(table),
+                )
                 continue
 
             col_map = BaseParser.map_table_headers(headers)
@@ -319,10 +523,6 @@ class DeanAdmissionExtractor:
             for tr in rows[1:]:
                 cells = [clean_text(td.get_text()) for td in tr.find_all(["th", "td"])]
                 if not cells or len(cells) < 2:
-                    continue
-                # Bỏ dòng nhóm / quảng cáo
-                joined = " ".join(cells).lower()
-                if "tuyensinh247" in joined:
                     continue
                 if len(cells) == 1 or (len(set(cells)) == 1 and not cells[0]):
                     continue
@@ -366,6 +566,7 @@ class DeanAdmissionExtractor:
                         method = clean_text(method_raw)[:150]
                     else:
                         method = "Theo đề án tuyển sinh"
+                diem_chuan, diem_ptxt, thang = _scores_from_row(extracted, method)
 
                 key = (ma_nganh, ten_nganh.lower(), to_hop.lower(), method, yr)
                 if key in seen:
@@ -381,6 +582,9 @@ class DeanAdmissionExtractor:
                         nam=yr,
                         to_hop=to_hop,
                         chi_tieu=chi_tieu,
+                        diem_chuan=diem_chuan,
+                        diem_chuan_ptxt=diem_ptxt,
+                        thang_diem=thang,
                         phuong_thuc=method,
                         ghi_chu=ghi_chu,
                         nguon=source,
@@ -440,8 +644,6 @@ class DeanAdmissionExtractor:
                     cells = [clean_text(td.get_text()) for td in tr.find_all(["th", "td"])]
                     if not cells or cert_col >= len(cells):
                         continue
-                    if any("tuyensinh247" in c.lower() for c in cells):
-                        continue
                     cert_name = cells[cert_col]
                     if not cert_name or "chứng chỉ" in cert_name.lower():
                         continue
@@ -481,8 +683,6 @@ class DeanAdmissionExtractor:
             for tr in rows[1:]:
                 cells = [clean_text(td.get_text()) for td in tr.find_all(["th", "td"])]
                 if not cells or len(cells) < 2:
-                    continue
-                if any("tuyensinh247" in c.lower() for c in cells):
                     continue
                 # Bỏ dòng header lặp
                 if strip_accents(cells[0]) in ["stt", "tt"] and len(cells) > 1 and "ielts" in strip_accents(cells[1]):

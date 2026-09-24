@@ -155,6 +155,7 @@ class MethodConversionBundle:
     notes: List[MethodConversionNote] = field(default_factory=list)
     images: List[MethodConversionImage] = field(default_factory=list)
     ranges: List[MethodRangeHint] = field(default_factory=list)
+    conversions: List["ScoreConversionRecord"] = field(default_factory=list)
     school_results: List[Dict[str, Any]] = field(default_factory=list)  # meta từng trường
 
 
@@ -164,3 +165,4 @@ class CrawlBundle:
     admissions: List[AdmissionRecord] = field(default_factory=list)
     conversions: List[ScoreConversionRecord] = field(default_factory=list)
     regulations: List[AdmissionRegulation] = field(default_factory=list)
+    source_note: str = ""

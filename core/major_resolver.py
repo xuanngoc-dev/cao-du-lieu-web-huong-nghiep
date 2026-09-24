@@ -239,52 +239,9 @@ class MajorCodeResolver:
             pass
 
     def fetch_school_online_majors(self, slug: str, school_code: str) -> Dict[str, str]:
-        """
-        thu thập bảng mã ngành chính thức từ trang đề án tuyển sinh của trường (tuyensinh247).
-        """
+        """Không gọi nguồn tổng hợp; mã ngành được lấy ngay trong crawl website trường."""
         norm_code = normalize_school_code(school_code)
-        if norm_code in self.cached_mappings and len(self.cached_mappings[norm_code]) > 5:
-            return self.cached_mappings[norm_code]
-
-        mapping: Dict[str, str] = {}
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36"
-        }
-        url = f"https://diemthi.tuyensinh247.com/de-an-tuyen-sinh/{slug}.html"
-        try:
-            res = requests.get(url, headers=headers, timeout=10)
-            if res.status_code == 200:
-                soup = BeautifulSoup(res.text, "html.parser")
-                for tbl in soup.find_all("table"):
-                    rows = tbl.find_all("tr")
-                    if not rows:
-                        continue
-                    header_cells = [clean_text(td.get_text()).lower() for td in rows[0].find_all(["th", "td"])]
-                    code_idx = -1
-                    name_idx = -1
-                    for idx, h in enumerate(header_cells):
-                        h_no = strip_accents(h)
-                        if "ma nganh" in h_no or "ma xet tuyen" in h_no:
-                            code_idx = idx
-                        if "ten nganh" in h_no:
-                            name_idx = idx
-
-                    if code_idx != -1 and name_idx != -1:
-                        for r in rows[1:]:
-                            cells = [clean_text(td.get_text()) for td in r.find_all(["th", "td"])]
-                            if len(cells) > max(code_idx, name_idx):
-                                c_code = cells[code_idx].strip()
-                                c_name = cells[name_idx].strip()
-                                if c_code and c_name and "mã ngành" not in c_code.lower():
-                                    mapping[c_name] = c_code
-        except Exception:
-            pass
-
-        if mapping:
-            self.cached_mappings[norm_code] = mapping
-            self._save_cache()
-
-        return mapping
+        return self.cached_mappings.get(norm_code, {})
 
     def clean_major_name_for_matching(self, name: str) -> str:
         """
@@ -326,10 +283,7 @@ class MajorCodeResolver:
         if match_brk:
             return match_brk.group(1).upper()
 
-        # 3. Tra trong cache online thu thập từ đề án tuyển sinh của trường
-        if school_slug and norm_school not in self.cached_mappings:
-            self.fetch_school_online_majors(school_slug, norm_school)
-
+        # 3. Tra cache do crawler website trường đã tạo
         online_map = self.cached_mappings.get(norm_school, {})
         # Đối sánh trực tiếp tên
         if major_name in online_map:

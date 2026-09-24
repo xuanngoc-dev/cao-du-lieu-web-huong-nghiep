@@ -16,7 +16,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from core.models import AdmissionRecord, ScoreConversionRecord, AdmissionRegulation
-from core.aggregator import AdmissionAggregator
+from core.aggregator import AdmissionAggregator, source_urls
 
 
 class ExcelAdmissionExporter:
@@ -164,6 +164,7 @@ class ExcelAdmissionExporter:
         c_score_end = method_ranges[-1][3] if method_ranges else c_nv_end
         c_trend_start = (c_score_end + 1) if method_ranges else (c_nv_end + 1)
         c_trend_end = c_trend_start + 1
+        c_source = c_trend_end + 1
 
         groups = [
             (1, c_info_end, "THÔNG TIN CHUNG", self.COLOR_GROUP_INFO),
@@ -173,6 +174,7 @@ class ExcelAdmissionExporter:
         for mid, label, start_c, end_c, color in method_ranges:
             groups.append((start_c, end_c, f"ĐIỂM CHUẨN — {label}", color))
         groups.append((c_trend_start, c_trend_end, "PHÂN TÍCH XU HƯỚNG", self.COLOR_GROUP_TREND))
+        groups.append((c_source, c_source, "NGUỒN DỮ LIỆU", self.COLOR_GROUP_INFO))
 
         for start_c, end_c, title, color_hex in groups:
             if end_c < start_c:
@@ -205,6 +207,7 @@ class ExcelAdmissionExporter:
                 sub_headers.append((f"{yr}", color))
         sub_headers.append(("Điểm TB (THPT)", self.COLOR_GROUP_TREND))
         sub_headers.append(("Biến động gần nhất", self.COLOR_GROUP_TREND))
+        sub_headers.append(("Link gốc", self.COLOR_GROUP_INFO))
 
         for col_idx, (text, color_hex) in enumerate(sub_headers, start=1):
             cell = ws.cell(row=2, column=col_idx, value=text)
@@ -236,6 +239,7 @@ class ExcelAdmissionExporter:
                         row_vals.append(row.get(f"diem_{mid}_{yr}"))
                 row_vals.append(row.get("diem_tb"))
                 row_vals.append(row.get("bien_dong_diem"))
+                row_vals.append(row.get("nguon") or "")
 
                 for c_idx, val in enumerate(row_vals, start=1):
                     cell = ws.cell(row=row_num, column=c_idx)
@@ -258,11 +262,28 @@ class ExcelAdmissionExporter:
                     else:
                         cell.alignment = Alignment(horizontal="center", vertical="center")
 
+                    if c_idx == c_source:
+                        self._write_source_cell(cell, val)
+
         ws.freeze_panes = "E3"
         total_cols = len(sub_headers)
         last_row = max(len(df) + 2, 2)
         ws.auto_filter.ref = f"A2:{get_column_letter(total_cols)}{last_row}"
         self._autofit_columns(ws, max_cols=total_cols)
+
+    def _write_source_cell(self, cell, value) -> None:
+        """Ghi ô nguồn thành link tới URL gốc trên website trường."""
+        text = "" if value is None or (isinstance(value, float) and pd.isna(value)) else str(value)
+        urls = source_urls(text)
+        link_font = Font(name="Arial", size=10, color="0563C1", underline="single")
+        if not urls:
+            cell.value = text
+            cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+            return
+        cell.value = "\n".join(urls)
+        cell.hyperlink = urls[0]
+        cell.font = link_font
+        cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
     def _build_flat_sheet(self, ws: openpyxl.worksheet.worksheet.Worksheet, df: pd.DataFrame):
         """Xây dựng sheet dữ liệu phẳng phục vụ Pivot Table / PowerBI."""
@@ -325,6 +346,8 @@ class ExcelAdmissionExporter:
                             cell.alignment = Alignment(horizontal="center", vertical="center")
                     elif col_key in ["ma_truong", "ma_nganh", "nam", "to_hop"]:
                         cell.alignment = Alignment(horizontal="center", vertical="center")
+                    elif col_key == "nguon":
+                        self._write_source_cell(cell, val)
                     else:
                         cell.alignment = Alignment(horizontal="left", vertical="center")
 

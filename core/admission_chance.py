@@ -26,7 +26,7 @@ from core.bonus_policy import best_certificate_bonus, index_certificate_bonus_ba
 from core.normalizer import get_school_display_name
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_SCHOOL_CACHE = _PROJECT_ROOT / "data" / "cache" / "school_slugs_cache.json"
+_SCHOOL_CACHE = _PROJECT_ROOT / "config" / "schools_all.json"
 
 
 @lru_cache(maxsize=1)
@@ -38,17 +38,20 @@ def _school_link_map() -> Dict[str, Dict[str, str]]:
     except (OSError, json.JSONDecodeError, TypeError):
         return {}
     out: Dict[str, Dict[str, str]] = {}
-    for code, info in (raw or {}).items():
+    items = raw.get("schools") if isinstance(raw, dict) else []
+    if not isinstance(items, list):
+        items = []
+    for info in items:
         if not isinstance(info, dict):
             continue
-        key = str(code or info.get("code") or "").strip().upper()
+        key = str(info.get("code") or "").strip().upper()
         if not key:
             continue
         website = (info.get("website") or "").strip()
         gioi = (info.get("gioi_thieu_url") or "").strip()
         slug = (info.get("slug") or "").strip()
-        if not gioi and slug:
-            gioi = f"https://diemthi.tuyensinh247.com/de-an-tuyen-sinh/{slug}.html#gioi-thieu"
+        if not gioi:
+            gioi = website
         out[key] = {
             "website": website,
             "gioi_thieu_url": gioi,

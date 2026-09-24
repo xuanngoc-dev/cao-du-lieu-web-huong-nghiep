@@ -174,7 +174,7 @@ def _filter_type_key(label: str):
 def render_step1():
     st.subheader("Bước 1 — Lấy danh sách mã trường")
     st.caption(
-        "Tải danh bạ Đại học / Học viện / Cao đẳng từ tuyensinh247, "
+        "Nạp danh bạ Đại học / Học viện / Cao đẳng và website chính thức, "
         "lọc theo loại hình, rồi **copy mã** sang Bước 2 để Thu thập dữ liệu."
     )
 

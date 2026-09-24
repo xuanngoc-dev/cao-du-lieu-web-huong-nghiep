@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Module: crawlers.school_directory
-Mô tả: Lấy và xuất danh sách mã trường Đại học / Cao đẳng / Học viện
-từ cổng tuyensinh247, phục vụ làm đầu vào cho crawler điểm chuẩn & đề án.
+Mô tả: Đọc danh bạ mã trường và website chính thức từ cấu hình cục bộ.
 """
 
 import os
@@ -28,6 +27,119 @@ TYPE_LABELS = {
     TYPE_HOC_VIEN: "Học viện",
 }
 
+# Tỉnh/thành theo miền. Khớp cả tên cũ còn trong địa chỉ.
+_REGION_PROVINCES = {
+    "bac": (
+        "ha noi", "hai phong", "quang ninh", "bac ninh", "bac giang", "ha nam",
+        "nam dinh", "thai binh", "ninh binh", "vinh phuc", "phu tho", "hoa binh",
+        "son la", "dien bien", "lai chau", "lao cai", "yen bai", "tuyen quang",
+        "ha giang", "cao bang", "bac kan", "lang son", "thai nguyen", "hung yen",
+        "hai duong",
+    ),
+    "trung": (
+        "thanh hoa", "nghe an", "ha tinh", "quang binh", "quang tri",
+        "thua thien hue", "hue", "da nang", "quang nam", "quang ngai", "binh dinh",
+        "phu yen", "khanh hoa", "ninh thuan", "binh thuan", "kon tum", "gia lai",
+        "dak lak", "dak nong", "dac lac", "dac nong",
+    ),
+    "nam": (
+        "ho chi minh", "sai gon", "tp hcm", "binh duong", "binh phuoc", "dong nai",
+        "tay ninh", "ba ria", "vung tau", "long an", "tien giang", "ben tre",
+        "tra vinh", "vinh long", "dong thap", "an giang", "kien giang", "can tho",
+        "hau giang", "soc trang", "bac lieu", "ca mau", "lam dong",
+    ),
+}
+
+_SECTOR_RULES = (
+    ("Y - Dược", ("y duoc", "y khoa", "y te", " duoc", "dieu duong", " y ")),
+    ("Sư phạm", ("su pham", "giao duc")),
+    ("Luật", ("luat",)),
+    ("Kinh tế", ("kinh te", "thuong mai", "tai chinh", "ngan hang", "ngoai thuong", "ke toan")),
+    ("Kỹ thuật", ("bach khoa", "ky thuat", "cong nghe", "cong nghiep", "xay dung", "giao thong", "mo dia chat", "dien luc", "thuy loi")),
+    ("Nông - Lâm - Ngư", ("nong nghiep", "lam nghiep", "thuy san")),
+    ("Nghệ thuật", ("my thuat", "am nhac", "san khau", "dien anh", "van hoa nghe thuat")),
+    ("Ngoại ngữ", ("ngoai ngu",)),
+    ("An ninh - Quốc phòng", ("cong an", "an ninh", "quan su", "bien phong", "hau can")),
+    ("Du lịch", ("du lich",)),
+    ("Báo chí - Truyền thông", ("bao chi", "truyen thong")),
+    ("Thể dục - Thể thao", ("the duc", "the thao")),
+)
+
+
+def _fold_match(text: str) -> str:
+    from core.normalizer import strip_accents
+    folded = strip_accents(text or "")
+    folded = folded.replace("tp.", "tp ").replace("t.p", "tp")
+    return re.sub(r"[^a-z0-9]+", " ", folded).strip()
+
+
+def _region_of_text(text: str) -> str:
+    folded = f" {_fold_match(text)} "
+    if " ho chi minh " in folded or " sai gon " in folded or " tp hcm " in folded:
+        return "nam"
+    found = ""
+    found_at = -1
+    for region, names in _REGION_PROVINCES.items():
+        for name in names:
+            at = folded.rfind(f" {name} ")
+            if at > found_at:
+                found = region
+                found_at = at
+    return found
+
+
+def split_addresses_by_region(dia_chi: str) -> Dict[str, str]:
+    """Tách địa chỉ thành cơ sở miền Bắc, Trung, Nam."""
+    raw = clean_text(dia_chi or "")
+    result = {"dia_chi_bac": "", "dia_chi_trung": "", "dia_chi_nam": ""}
+    if not raw:
+        return result
+    chunks = [
+        clean_text(part).strip(" -")
+        for part in re.split(
+            r"(?:\s+-\s+-\s+|\n+|;\s*(?=cơ sở)|\s+(?=cơ sở\b))",
+            raw,
+            flags=re.I,
+        )
+        if clean_text(part).strip(" -")
+    ]
+    if not chunks:
+        chunks = [raw]
+    buckets = {"bac": [], "trung": [], "nam": []}
+    unknown = []
+    for chunk in chunks:
+        region = _region_of_text(chunk)
+        if region:
+            buckets[region].append(chunk)
+        else:
+            unknown.append(chunk)
+    if unknown and sum(bool(v) for v in buckets.values()) == 1:
+        only = next(key for key, val in buckets.items() if val)
+        buckets[only].extend(unknown)
+    elif unknown and not any(buckets.values()):
+        return result
+    result["dia_chi_bac"] = "\n".join(dict.fromkeys(buckets["bac"]))
+    result["dia_chi_trung"] = "\n".join(dict.fromkeys(buckets["trung"]))
+    result["dia_chi_nam"] = "\n".join(dict.fromkeys(buckets["nam"]))
+    labels = []
+    if result["dia_chi_bac"]:
+        labels.append("Bắc")
+    if result["dia_chi_trung"]:
+        labels.append("Trung")
+    if result["dia_chi_nam"]:
+        labels.append("Nam")
+    result["khu_vuc"] = ", ".join(labels)
+    return result
+
+
+def classify_school_sector(name: str) -> str:
+    """Loại trường theo lĩnh vực: kinh tế, kỹ thuật, y dược, …"""
+    folded = f" {_fold_match(name)} "
+    for label, hints in _SECTOR_RULES:
+        if any(hint in folded for hint in hints):
+            return label
+    return "Đa ngành"
+
 # Khóa hồ sơ trường (từ mục Giới thiệu trên trang đề án)
 PROFILE_KEYS = [
     "thong_tin_chung",
@@ -42,6 +154,182 @@ PROFILE_KEYS = [
 
 # Liên hệ cơ bản — luôn lấy kể cả khi tắt hồ sơ giới thiệu đầy đủ
 CONTACT_KEYS = ["dia_chi", "website", "hotline", "fanpage", "gioi_thieu_url"]
+
+# Nguồn thông báo tuyển sinh trên website chính thức của trường
+NOTICE_KEYS = ["domain_diem_chuan", "link_quy_che"]
+
+
+def _origin(url: str) -> str:
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url or "")
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return ""
+    return f"{parsed.scheme}://{parsed.netloc.lower()}"
+
+
+def discover_admission_notices(website: str, timeout: int = 8) -> Dict[str, str]:
+    """
+    Tìm domain đăng thông báo điểm chuẩn và link thông báo quy chế tuyển sinh
+    trên website chính thức của trường (kể cả cổng tuyển sinh cùng tổ chức).
+    """
+    from urllib.parse import urljoin, urlparse
+
+    from crawlers.official_site_crawler import (
+        _blob,
+        _same_org,
+        admission_portal_urls,
+        normalize_site_url,
+    )
+
+    empty = {key: "" for key in NOTICE_KEYS}
+    site = normalize_site_url(website)
+    if not site:
+        return empty
+
+    session = requests.Session()
+    session.headers.update(SchoolDirectory.HEADERS)
+    org_host = urlparse(site).netloc
+
+    def fetch(url: str, wait: int) -> Optional[requests.Response]:
+        try:
+            res = session.get(url, timeout=wait, allow_redirects=True)
+        except requests.exceptions.SSLError:
+            try:
+                res = session.get(url, timeout=wait, allow_redirects=True, verify=False)
+            except requests.exceptions.RequestException:
+                return None
+        except requests.exceptions.RequestException:
+            return None
+        if res.status_code != 200:
+            return None
+        if not _same_org(res.url or url, org_host):
+            return None
+        kind = (res.headers.get("Content-Type") or "").lower()
+        if "html" not in kind and "text" not in kind:
+            return None
+        return res
+
+    pages: List[requests.Response] = []
+    home = fetch(site, timeout)
+    if home is not None:
+        pages.append(home)
+    for portal in admission_portal_urls(site):
+        if sum(1 for page in pages if page is not home) >= 2:
+            break
+        found = fetch(portal, min(timeout, 6))
+        if found is None:
+            continue
+        sample = _blob(found.url or "", (found.text or "")[:4000])
+        if any(hint in sample for hint in ("tuyen sinh", "diem chuan", "xet tuyen", "quy che", "de an")):
+            pages.append(found)
+
+    cutoff_best = ("", 0)
+    regulation_best = ("", 0)
+    hub_best = ("", 0)
+
+    def consider(url: str, label: str) -> None:
+        nonlocal cutoff_best, regulation_best, hub_best
+        folded = _blob(label, url)
+        if not folded:
+            return
+        penalty = 0
+        for hint, weight in (
+            ("du bao", 18),
+            ("thac si", 20),
+            ("tien si", 16),
+            ("tuyen dung", 16),
+            ("lien thong", 12),
+            ("lien ket", 12),
+            ("cao hoc", 12),
+        ):
+            if hint in folded:
+                penalty += weight
+        year_bonus = 0
+        for year, bonus in (("2026", 8), ("2025", 5), ("2024", 2)):
+            if year in folded:
+                year_bonus = bonus
+                break
+        cutoff = year_bonus - penalty
+        for hint, weight in (
+            ("diem chuan", 22),
+            ("diem trung tuyen", 18),
+            ("thong bao diem", 14),
+            ("cong bo diem", 12),
+        ):
+            if hint in folded:
+                cutoff += weight
+        if "quy doi" in folded:
+            cutoff -= 8
+        if cutoff > cutoff_best[1]:
+            cutoff_best = (url, cutoff)
+
+        regulation = year_bonus - penalty
+        for hint, weight in (
+            ("quy che tuyen sinh", 32),
+            ("de an tuyen sinh", 28),
+            ("phuong an tuyen sinh", 24),
+            ("thong bao tuyen sinh", 16),
+            ("quy che", 10),
+            ("de an", 6),
+        ):
+            if hint in folded:
+                regulation += weight
+        if regulation > regulation_best[1]:
+            regulation_best = (url, regulation)
+
+        hub = 0
+        if any(hint in folded for hint in ("tuyen sinh", "xet tuyen", "thong bao")):
+            hub = 8 + year_bonus - penalty
+        if hub > hub_best[1]:
+            hub_best = (url, hub)
+
+    seen_pages = set()
+    for page in pages:
+        final = page.url or ""
+        if final in seen_pages:
+            continue
+        seen_pages.add(final)
+        consider(final, "")
+        try:
+            soup = BeautifulSoup(page.text or "", "html.parser")
+        except Exception:
+            continue
+        for anchor in soup.find_all("a", href=True):
+            href = (anchor.get("href") or "").strip()
+            if not href or href.startswith(("#", "mailto:", "tel:", "javascript:")):
+                continue
+            absolute = urljoin(final, href)
+            if not _same_org(absolute, org_host):
+                continue
+            consider(absolute, clean_text(anchor.get_text(" ", strip=True)))
+
+    if regulation_best[1] < 18 and hub_best[1] >= 8 and hub_best[0] not in seen_pages:
+        extra = fetch(hub_best[0], timeout)
+        if extra is not None:
+            final = extra.url or hub_best[0]
+            consider(final, "")
+            try:
+                soup = BeautifulSoup(extra.text or "", "html.parser")
+                for anchor in soup.find_all("a", href=True):
+                    href = (anchor.get("href") or "").strip()
+                    if not href or href.startswith(("#", "mailto:", "tel:", "javascript:")):
+                        continue
+                    absolute = urljoin(final, href)
+                    if _same_org(absolute, org_host):
+                        consider(absolute, clean_text(anchor.get_text(" ", strip=True)))
+            except Exception:
+                pass
+
+    if cutoff_best[1] >= 12:
+        empty["domain_diem_chuan"] = _origin(cutoff_best[0])
+    else:
+        portal_pages = [p for p in pages if _origin(p.url or "") != _origin(site)]
+        if portal_pages:
+            empty["domain_diem_chuan"] = _origin(portal_pages[0].url or "")
+    if regulation_best[1] >= 24:
+        empty["link_quy_che"] = regulation_best[0]
+    return empty
 
 
 def _has_contact(info: dict) -> bool:
@@ -122,12 +410,10 @@ def extract_code_from_slug_and_text(slug: str, text: str) -> str:
 class SchoolDirectory:
     """
     Danh bạ mã trường Đại học & Cao đẳng.
-    Nguồn:
-      - https://diemthi.tuyensinh247.com/diem-chuan.html              (ĐH / Học viện)
-      - https://diemthi.tuyensinh247.com/diem-chuan.html?type=cao-dang (Cao đẳng)
+    Mọi URL dùng để thu thập dữ liệu đều là website chính thức của trường.
     """
 
-    BASE_URL = "https://diemthi.tuyensinh247.com"
+    BASE_URL = ""
     HEADERS = {
         "User-Agent": (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -156,6 +442,36 @@ class SchoolDirectory:
         except Exception:
             return {}
 
+    def _read_official_catalog(self) -> Dict[str, Dict[str, Any]]:
+        path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "config",
+            "schools_all.json",
+        )
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+        except (OSError, json.JSONDecodeError, TypeError):
+            return {}
+        schools: Dict[str, Dict[str, Any]] = {}
+        for item in raw.get("schools") or []:
+            if not isinstance(item, dict):
+                continue
+            code = str(item.get("code") or "").strip().upper()
+            if not code:
+                continue
+            entry = dict(item)
+            entry["code"] = code
+            entry["slug"] = entry.get("online_slug") or entry.get("slug") or ""
+            entry["type"] = entry.get("type") or classify_school_type(
+                entry.get("name") or ""
+            )
+            entry["type_label"] = TYPE_LABELS.get(entry["type"], entry["type"])
+            # Không phát sinh link giới thiệu từ nguồn tổng hợp bên ngoài.
+            entry["gioi_thieu_url"] = entry.get("website") or ""
+            schools[code] = entry
+        return schools
+
     @staticmethod
     def _merge_preserved_fields(
         fetched: Dict[str, Dict[str, Any]],
@@ -182,13 +498,15 @@ class SchoolDirectory:
         include_contact: bool = True,
         profile_limit: int = 0,
     ) -> Dict[str, Dict[str, Any]]:
-        """
-        Nạp danh bạ từ cache hoặc thu thập mới từ web.
-        include_profile: bổ sung hồ sơ giới thiệu đầy đủ (chậm hơn).
-        include_contact: bổ sung website + địa chỉ (mặc định bật, kể cả khi tắt hồ sơ).
-        """
-        previous_cache = self._read_cache_file()
+        """Nạp danh bạ cục bộ; không gọi cổng dữ liệu bên ngoài."""
+        catalog = self._read_official_catalog()
+        self.schools = self._filter_types(
+            catalog, include_dai_hoc, include_cao_dang
+        )
+        return self.schools
 
+        # Mã cũ bên dưới chỉ giữ để đọc các file cache lịch sử; không còn được gọi.
+        previous_cache = self._read_cache_file()
         if not force_refresh and previous_cache:
             try:
                 data = previous_cache
@@ -248,7 +566,12 @@ class SchoolDirectory:
         include_dai_hoc: bool = True,
         include_cao_dang: bool = True,
     ) -> Dict[str, Dict[str, Any]]:
-        """thu thập danh sách trường từ các trang điểm chuẩn."""
+        """Tương thích API cũ: trả danh bạ cục bộ, không truy cập nguồn bên ngoài."""
+        return self._filter_types(
+            self._read_official_catalog(), include_dai_hoc, include_cao_dang
+        )
+
+        # Mã parser lịch sử bên dưới không còn được gọi.
         directory: Dict[str, Dict[str, Any]] = {}
 
         for src in self.LISTING_SOURCES:
@@ -321,15 +644,26 @@ class SchoolDirectory:
         code: str = "",
         contact_only: bool = False,
     ) -> Dict[str, str]:
-        """
-        Lấy hồ sơ giới thiệu trường từ trang đề án (#gioi-thieu):
-        - contact_only=True: chỉ website + địa chỉ (+ hotline/fanpage nếu có)
-        - đầy đủ: thêm thông tin chung, lĩnh vực/CTĐT, vị thế/thành tựu
-        """
+        """Trả hồ sơ đã lưu cùng website chính thức; không gọi nguồn tổng hợp."""
         empty = {k: "" for k in PROFILE_KEYS}
-        if not slug:
+        catalog = self._read_official_catalog()
+        item = catalog.get((code or "").strip().upper())
+        if item is None and slug:
+            item = next(
+                (entry for entry in catalog.values() if entry.get("slug") == slug),
+                None,
+            )
+        if not item:
             return empty
+        return {
+            key: (
+                item.get("website") if key == "gioi_thieu_url"
+                else item.get(key)
+            ) or ""
+            for key in PROFILE_KEYS
+        }
 
+        # Parser lịch sử bên dưới không còn được gọi.
         url = f"{self.BASE_URL}/de-an-tuyen-sinh/{slug}.html"
         empty["gioi_thieu_url"] = url + "#gioi-thieu"
         try:
@@ -555,20 +889,26 @@ class SchoolDirectory:
                 continue
             if kw and kw not in code.lower() and kw not in (info.get("name") or "").lower():
                 continue
+            regions = split_addresses_by_region(info.get("dia_chi", ""))
             rows.append({
                 "code": code,
                 "name": info.get("name", ""),
                 "slug": info.get("slug", ""),
                 "type": t,
                 "type_label": info.get("type_label") or TYPE_LABELS.get(t, t),
+                "loai_truong": info.get("loai_truong") or classify_school_sector(info.get("name", "")),
                 "thong_tin_chung": info.get("thong_tin_chung", ""),
                 "dia_chi": info.get("dia_chi", ""),
+                "khu_vuc": info.get("khu_vuc") or regions.get("khu_vuc", ""),
                 "website": info.get("website", ""),
                 "hotline": info.get("hotline", ""),
                 "fanpage": info.get("fanpage", ""),
                 "linh_vuc_chuong_trinh": info.get("linh_vuc_chuong_trinh", ""),
                 "vi_the_thanh_tuu": info.get("vi_the_thanh_tuu", ""),
                 "gioi_thieu_url": info.get("gioi_thieu_url", ""),
+                "domain_diem_chuan": info.get("domain_diem_chuan", ""),
+                "link_quy_che": info.get("link_quy_che", ""),
+                "notices_checked": bool(info.get("notices_checked")),
             })
 
         rows.sort(key=lambda x: (x["type_label"], x["code"]))
@@ -592,7 +932,7 @@ class SchoolDirectory:
         os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
         payload = {
-            "description": "Danh sách mã trường Đại học / Cao đẳng / Học viện (tự động lấy từ tuyensinh247)",
+            "description": "Danh sách mã trường và website chính thức của trường",
             "total": len(rows),
             "schools": [
                 {
@@ -602,14 +942,19 @@ class SchoolDirectory:
                     "online_slug": r["slug"],
                     "type": r["type"],
                     "type_label": r["type_label"],
+                    "loai_truong": r.get("loai_truong", ""),
                     "thong_tin_chung": r.get("thong_tin_chung", ""),
                     "dia_chi": r.get("dia_chi", ""),
+                    "khu_vuc": r.get("khu_vuc", ""),
                     "website": r.get("website", ""),
                     "hotline": r.get("hotline", ""),
                     "fanpage": r.get("fanpage", ""),
                     "linh_vuc_chuong_trinh": r.get("linh_vuc_chuong_trinh", ""),
                     "vi_the_thanh_tuu": r.get("vi_the_thanh_tuu", ""),
                     "gioi_thieu_url": r.get("gioi_thieu_url", ""),
+                    "domain_diem_chuan": r.get("domain_diem_chuan", ""),
+                    "link_quy_che": r.get("link_quy_che", ""),
+                    "notices_checked": bool(r.get("notices_checked")),
                 }
                 for r in rows
             ],
@@ -650,16 +995,20 @@ class SchoolDirectory:
             "Mã trường",
             "Tên trường",
             "Loại hình",
+            "Loại trường",
             "Slug (URL)",
-            "Link điểm chuẩn",
+            "Website chính thức",
             "Thông tin chung",
             "Địa chỉ các cơ sở",
+            "Khu vực",
             "Website",
             "Hotline",
             "Fanpage",
             "Lĩnh vực & Chương trình đào tạo",
             "Vị thế & Thành tựu nổi bật",
             "Link giới thiệu",
+            "Domain thông báo điểm chuẩn",
+            "Link thông báo quy chế tuyển sinh",
         ]
         header_fill = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
         header_font = Font(name="Arial", size=10, bold=True, color="FFFFFF")
@@ -685,22 +1034,26 @@ class SchoolDirectory:
         ws.row_dimensions[1].height = 32
 
         for idx, r in enumerate(rows, start=1):
-            link = f"{self.BASE_URL}/diem-chuan/{r['slug']}.html" if r.get("slug") else ""
+            link = r.get("website") or ""
             vals = [
                 idx,
                 r["code"],
                 r["name"],
                 r["type_label"],
+                r.get("loai_truong") or "",
                 r["slug"],
                 link,
                 r.get("thong_tin_chung") or "",
                 r.get("dia_chi") or "",
+                r.get("khu_vuc") or "",
                 r.get("website") or "",
                 r.get("hotline") or "",
                 r.get("fanpage") or "",
                 r.get("linh_vuc_chuong_trinh") or "",
                 r.get("vi_the_thanh_tuu") or "",
                 r.get("gioi_thieu_url") or "",
+                r.get("domain_diem_chuan") or "",
+                r.get("link_quy_che") or "",
             ]
             fill = type_fills.get(r["type"])
             for c, val in enumerate(vals, start=1):
@@ -745,7 +1098,7 @@ class SchoolDirectory:
         ws.freeze_panes = "A2"
         last_col = get_column_letter(len(headers))
         ws.auto_filter.ref = f"A1:{last_col}{len(rows) + 1}"
-        widths = [6, 12, 40, 12, 40, 45, 40, 28, 28, 16, 28, 45, 45, 40]
+        widths = [6, 12, 40, 12, 40, 45, 40, 28, 28, 16, 28, 45, 45, 40, 36, 55]
         for i, w in enumerate(widths, start=1):
             ws.column_dimensions[get_column_letter(i)].width = w
 
