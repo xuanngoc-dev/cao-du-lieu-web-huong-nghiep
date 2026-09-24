@@ -101,7 +101,7 @@ def create_app() -> Flask:
 
     @app.route("/crawl")
     def crawl_page():
-        return render_template("crawl.html")
+        return render_template("thu_thap.html")
 
     @app.route("/quy-doi")
     def quy_doi_page():
@@ -1665,6 +1665,161 @@ def create_app() -> Flask:
             "from_disk": True,
         })
 
+    @app.get("/api/crawl/records")
+    def api_crawl_records():
+        """Bảng ngành / phương thức / điểm chuẩn / chỉ tiêu vừa thu thập."""
+        cached = app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {}
+        rows = []
+        for item in cached.get("admissions") or []:
+            rows.append({
+                "ma_truong": item.get("ma_truong") or "",
+                "ten_truong": item.get("ten_truong") or "",
+                "nam": item.get("nam"),
+                "ma_nganh": item.get("ma_nganh") or "",
+                "ten_nganh": item.get("ten_nganh") or "",
+                "phuong_thuc": item.get("phuong_thuc") or "",
+                "diem_chuan": item.get("diem_chuan_ptxt") if item.get("diem_chuan_ptxt") is not None else item.get("diem_chuan"),
+                "chi_tieu": item.get("chi_tieu"),
+                "nguon": item.get("nguon") or "",
+            })
+        years = sorted({
+            int(row["nam"]) for row in rows
+            if row.get("nam") is not None
+        })
+        return jsonify({
+            "ok": True,
+            "total": len(rows),
+            "years": years,
+            "rows": rows,
+            "download_url": cached.get("download_url") or "",
+        })
+
+    def _record_key(item: dict) -> tuple:
+        return (
+            str(item.get("ma_truong") or "").strip().upper(),
+            str(item.get("ma_nganh") or item.get("ten_nganh") or "").strip(),
+            str(item.get("phuong_thuc") or "").strip(),
+        )
+
+    @app.post("/api/crawl/records/delete")
+    def api_crawl_records_delete():
+        """Xoá một hoặc nhiều dòng kết quả (trường + ngành + phương thức) khỏi dữ liệu đã lưu."""
+        data = request.get_json(silent=True) or {}
+        raw_keys = data.get("keys") or []
+        if not isinstance(raw_keys, list) or not raw_keys:
+            return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
+        drop = {_record_key(item) for item in raw_keys if isinstance(item, dict)}
+        drop.discard(("", "", ""))
+        if not drop:
+            return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
+
+        cached = dict(app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {})
+        admissions = [
+            item for item in (cached.get("admissions") or [])
+            if _record_key(item) not in drop
+        ]
+        years = sorted({
+            int(item["nam"]) for item in admissions
+            if item.get("nam") is not None
+        })
+        codes = sorted({
+            str(item.get("ma_truong") or "").strip().upper()
+            for item in admissions
+            if item.get("ma_truong")
+        })
+        cached["admissions"] = admissions
+        cached["years"] = years
+        cached["codes"] = codes
+        app.config["LAST_CRAWL"] = cached
+        try:
+            dataset_store.save_admissions(ROOT, cached)
+        except OSError:
+            pass
+
+        rows = []
+        for item in admissions:
+            rows.append({
+                "ma_truong": item.get("ma_truong") or "",
+                "ten_truong": item.get("ten_truong") or "",
+                "nam": item.get("nam"),
+                "ma_nganh": item.get("ma_nganh") or "",
+                "ten_nganh": item.get("ten_nganh") or "",
+                "phuong_thuc": item.get("phuong_thuc") or "",
+                "diem_chuan": item.get("diem_chuan_ptxt") if item.get("diem_chuan_ptxt") is not None else item.get("diem_chuan"),
+                "chi_tieu": item.get("chi_tieu"),
+                "nguon": item.get("nguon") or "",
+            })
+        return jsonify({
+            "ok": True,
+            "removed": len(drop),
+            "total": len(rows),
+            "years": years,
+            "rows": rows,
+            "download_url": cached.get("download_url") or "",
+        })
+
+    @app.post("/api/crawl/records/update")
+    def api_crawl_records_update():
+        """Sửa điểm chuẩn hoặc chỉ tiêu của một ngành, phương thức và năm."""
+        data = request.get_json(silent=True) or {}
+        field = str(data.get("field") or "")
+        if field not in ("diem", "chi_tieu"):
+            return jsonify({"ok": False, "error": "Ô cần sửa không hợp lệ."}), 400
+        try:
+            year = int(data.get("nam"))
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "Thiếu năm của ô cần sửa."}), 400
+        raw_value = data.get("value")
+        value = None
+        if raw_value is not None and raw_value != "":
+            try:
+                value = float(raw_value)
+            except (TypeError, ValueError):
+                return jsonify({"ok": False, "error": "Giá trị không hợp lệ."}), 400
+            if field == "chi_tieu":
+                value = int(round(value))
+            else:
+                value = round(value, 2)
+
+        target = _record_key(data)
+        if target == ("", "", ""):
+            return jsonify({"ok": False, "error": "Không tìm thấy dòng cần sửa."}), 400
+
+        cached = dict(app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {})
+        admissions = list(cached.get("admissions") or [])
+        matched = [
+            item for item in admissions
+            if _record_key(item) == target and int(item.get("nam") or 0) == year
+        ]
+        if not matched:
+            sample = next((item for item in admissions if _record_key(item) == target), None)
+            if sample is None:
+                return jsonify({"ok": False, "error": "Không tìm thấy dòng cần sửa."}), 404
+            created = dict(sample)
+            created["nam"] = year
+            created["diem_chuan"] = None
+            created["diem_chuan_ptxt"] = None
+            created["chi_tieu"] = None
+            admissions.append(created)
+            matched = [created]
+
+        for item in matched:
+            if field == "chi_tieu":
+                item["chi_tieu"] = value
+                continue
+            if item.get("diem_chuan_ptxt") is not None:
+                item["diem_chuan_ptxt"] = value
+            else:
+                item["diem_chuan"] = value
+
+        cached["admissions"] = admissions
+        app.config["LAST_CRAWL"] = cached
+        try:
+            dataset_store.save_admissions(ROOT, cached)
+        except OSError:
+            pass
+        return jsonify({"ok": True, "field": field, "nam": year, "value": value})
+
     @app.get("/api/crawl/table")
     def api_crawl_table():
         """Bảng xem lại: nhóm theo trường, điểm theo phương thức × năm."""
@@ -1735,6 +1890,60 @@ def create_app() -> Flask:
             },
             "download_url": download_url,
             "filename": filename,
+        })
+
+    @app.get("/api/quy-doi/records")
+    def api_quy_doi_records():
+        """Bảng quy đổi chứng chỉ và điểm thi THPT đã thu thập."""
+        cached = app.config.get("LAST_QUY_DOI") or {}
+        if not (cached.get("rows") or cached.get("certificate_conversions") or cached.get("notes")):
+            disk = dataset_store.load_quy_doi(ROOT)
+            if disk:
+                app.config["LAST_QUY_DOI"] = disk
+                cached = disk
+        items = []
+        for cert in cached.get("certificate_conversions") or []:
+            level = str(cert.get("hang_muc") or "").strip()
+            score = str(cert.get("diem_quy_doi") or "").strip()
+            content = " → ".join(part for part in (level, score) if part)
+            scale = str(cert.get("thang_diem") or "").strip()
+            if scale:
+                content = f"{content} (thang {scale})" if content else f"Thang {scale}"
+            if not content:
+                content = str(cert.get("chi_tiet_hang") or "").strip()
+            items.append({
+                "ma_truong": cert.get("ma_truong") or "",
+                "ten_truong": cert.get("ten_truong") or "",
+                "nam": cert.get("nam"),
+                "loai": cert.get("loai_bang") or "Chứng chỉ",
+                "noi_dung": content,
+                "nguon": cert.get("nguon") or "",
+            })
+        for row in cached.get("rows") or []:
+            pairs = row.get("cot_gia_tri") or {}
+            content = "; ".join(f"{key}: {value}" for key, value in pairs.items() if value)
+            items.append({
+                "ma_truong": row.get("ma_truong") or "",
+                "ten_truong": row.get("ten_truong") or "",
+                "nam": row.get("nam"),
+                "loai": row.get("tieu_de_bang") or "Quy đổi phương thức",
+                "noi_dung": content,
+                "nguon": row.get("url_nguon") or row.get("nguon") or "",
+            })
+        for note in cached.get("notes") or []:
+            items.append({
+                "ma_truong": note.get("ma_truong") or "",
+                "ten_truong": note.get("ten_truong") or "",
+                "nam": note.get("nam"),
+                "loai": note.get("tieu_de") or "Quy chế",
+                "noi_dung": note.get("noi_dung") or "",
+                "nguon": note.get("url_nguon") or note.get("nguon") or "",
+            })
+        return jsonify({
+            "ok": True,
+            "total": len(items),
+            "rows": items,
+            "download_url": cached.get("download_url") or "",
         })
 
     @app.get("/api/quy-doi/session")

@@ -703,6 +703,33 @@ select.cn-multi-native {
   white-space: nowrap;
   vertical-align: middle;
 }
+#resultTable thead th {
+  position: sticky;
+  background: #f8f9fa;
+  z-index: 2;
+}
+#resultTable thead tr:first-child th {
+  top: 0;
+}
+#resultTable thead tr:nth-child(2) th {
+  top: 2.05rem;
+}
+#resultTable td.result-edit {
+  cursor: text;
+}
+#resultTable td.result-edit input {
+  min-width: 4.5rem;
+}
+#convertTable td.convert-body {
+  max-width: 22rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#resultTable td.result-major {
+  max-width: 14rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 
 /* Collapse sections — trang Đánh giá năng lực */
 .dg-collapse-header {

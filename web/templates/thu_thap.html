@@ -1,0 +1,811 @@
+{% extends "base.html" %}
+{% block title %}Thu thập dữ liệu{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Thu thập dữ liệu</h1>
+    <p class="text-muted mb-0">Chọn trường và năm, rồi thu thập điểm chuẩn hoặc bảng quy đổi giữa chứng chỉ và điểm thi THPT.</p>
+  </div>
+</div>
+
+<div class="card panel-card mb-3">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="filterType">Loại hình</label>
+        <select id="filterType" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả loại hình">
+          <option value="Đại học">Đại học</option>
+          <option value="Học viện">Học viện</option>
+          <option value="Cao đẳng">Cao đẳng</option>
+        </select>
+      </div>
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="filterSector">Loại trường</label>
+        <select id="filterSector" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả loại trường"></select>
+      </div>
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="filterRegion">Khu vực</label>
+        <select id="filterRegion" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả khu vực">
+          <option value="Bắc">Bắc</option>
+          <option value="Trung">Trung</option>
+          <option value="Nam">Nam</option>
+        </select>
+      </div>
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="schoolPick">Trường</label>
+        <select id="schoolPick" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Chọn trường"></select>
+      </div>
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="crawlYears">Năm học</label>
+        <select id="crawlYears" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Chọn năm học">
+          {% for year in range(2021, 2027) %}
+          <option value="{{ year }}" {% if year >= 2024 %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6 col-xl-auto">
+        <button type="button" class="btn btn-teal" id="btnCollect">
+          <i class="bi bi-cloud-download"></i> Thu thập thông tin
+        </button>
+      </div>
+    </div>
+    <div id="collectProgress" class="mt-3 d-none" aria-live="polite">
+      <div class="d-flex justify-content-between small mb-1">
+        <span id="collectProgressLabel">Đang thu thập…</span>
+        <span id="collectProgressPct">0%</span>
+      </div>
+      <div class="progress" style="height: 1.35rem;" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="collectProgressTrack">
+        <div id="collectProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-teal" style="width: 0%">0%</div>
+      </div>
+    </div>
+    <div id="collectMsg" class="mt-3"></div>
+  </div>
+</div>
+
+<ul class="nav nav-pills mb-3" id="collectPills">
+  <li class="nav-item">
+    <button class="nav-link active" type="button" data-collect-pane="scores">Dữ liệu điểm</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" type="button" data-collect-pane="convert">Quy chế quy đổi điểm</button>
+  </li>
+</ul>
+
+<div id="paneScores">
+<div class="card panel-card">
+  <div class="card-body border-bottom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="small text-muted" id="resultInfo">Chưa có kết quả</div>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-outline-danger btn-sm" type="button" id="btnDeleteResults" disabled>
+        <i class="bi bi-trash3"></i> Xoá đã chọn
+      </button>
+      <a class="btn btn-outline-teal btn-sm d-none" id="btnExcel" href="#">
+        <i class="bi bi-file-earmark-excel"></i> Excel
+      </a>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+      <table class="table table-sm table-bordered table-hover mb-0 align-middle table-nowrap-head" id="resultTable">
+        <thead class="table-light sticky-top" id="resultHead">
+          <tr>
+            <th class="text-center">
+              <input class="form-check-input" type="checkbox" id="resultCheckAll" aria-label="Chọn tất cả dòng kết quả">
+            </th>
+            <th>#</th>
+            <th>Trường</th>
+            <th>Ngành tuyển sinh</th>
+            <th>Phương thức</th>
+            <th>Nguồn</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="paneConvert" class="d-none">
+  <div class="card panel-card">
+    <div class="card-body border-bottom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="small text-muted" id="convertInfo">Chưa có bảng quy đổi</div>
+      <a class="btn btn-outline-teal btn-sm d-none" id="btnConvertExcel" href="#">
+        <i class="bi bi-file-earmark-excel"></i> Excel
+      </a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="convertTable">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th>#</th>
+              <th>Trường</th>
+              <th>Năm</th>
+              <th>Loại</th>
+              <th>Nội dung quy đổi</th>
+              <th>Nguồn</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="resultSourceModal" tabindex="-1" aria-labelledby="resultSourceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="resultSourceModalLabel">Nguồn dữ liệu</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2" id="resultSourceCaption"></p>
+        <ol class="mb-0" id="resultSourceList"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="resultDeleteModal" tabindex="-1" aria-labelledby="resultDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title h5 text-danger" id="resultDeleteModalLabel">
+          <i class="bi bi-exclamation-triangle me-1"></i> Xác nhận xoá
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="mb-0" id="resultDeleteMessage"></p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+        <button type="button" class="btn btn-danger" id="resultDeleteConfirm">
+          <i class="bi bi-trash3"></i> Xoá
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
+<script>
+let schoolRows = [];
+let collectBusy = false;
+let activeCollectPane = 'scores';
+let convertRows = [];
+let resultGroups = [];
+const selectedResultKeys = new Set();
+
+document.querySelectorAll('select.js-multi-select').forEach(el => {
+  window.App.initMultiSelect(el, {
+    placeholder: el.getAttribute('data-placeholder') || 'Chọn…',
+  });
+});
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function checkedValues(id) {
+  return window.App.getSelectValues(document.getElementById(id));
+}
+
+function filteredSchools() {
+  const types = checkedValues('filterType');
+  const sectors = checkedValues('filterSector');
+  const regions = checkedValues('filterRegion');
+  return schoolRows.filter(s => {
+    if (types.length && !types.includes(s.type_label || '')) return false;
+    if (sectors.length && !sectors.includes(s.loai_truong || '')) return false;
+    if (regions.length) {
+      const area = String(s.khu_vuc || '');
+      if (!regions.some(region => area.includes(region))) return false;
+    }
+    return true;
+  });
+}
+
+function renderSchoolPick() {
+  const rows = filteredSchools();
+  const el = document.getElementById('schoolPick');
+  const prev = window.App.getSelectValues(el);
+  const html = rows.map(s => {
+    const code = String(s.code || '').toUpperCase();
+    return `<option value="${escapeHtml(code)}">${escapeHtml(code)} - ${escapeHtml(s.name || '')}</option>`;
+  }).join('');
+  window.App.setSelectOptions(el, html, prev, { placeholder: 'Chọn trường' });
+}
+
+function sourceUrls(texts) {
+  const found = String((texts || []).join(' ')).match(/https?:\/\/[^\s<>"')]+/g) || [];
+  return [...new Set(found.map(url => url.replace(/[.,;]+$/, '')))];
+}
+
+function resultKey(group) {
+  return [
+    group.ma_truong || '',
+    group.ma_nganh || group.ten_nganh || '',
+    group.phuong_thuc || '',
+  ].join('|');
+}
+
+function editCell(key, year, field, value) {
+  const shown = value == null || value === '' ? '—' : value;
+  const stored = value == null || value === '' ? '' : value;
+  return `<td class="text-center result-edit" data-key="${escapeHtml(key)}" data-year="${year}" data-field="${field}" data-value="${escapeHtml(stored)}" title="Nhấp đúp để sửa">${escapeHtml(shown)}</td>`;
+}
+
+function parseEditValue(field, raw) {
+  const text = String(raw ?? '').trim().replace(',', '.');
+  if (!text || text === '—') return null;
+  const num = Number(text);
+  if (!Number.isFinite(num)) throw new Error('Giá trị không hợp lệ.');
+  if (field === 'chi_tieu') return Math.round(num);
+  return Math.round(num * 100) / 100;
+}
+
+function codeName(code, name) {
+  const label = String(code || '').trim();
+  const title = String(name || '').trim();
+  if (label && title) return `[${label}] - ${title}`;
+  return label || title || '—';
+}
+
+function renderResults(rows, downloadUrl, years) {
+  const yearList = (years && years.length)
+    ? years
+    : [...new Set((rows || []).map(r => Number(r.nam)).filter(Boolean))].sort((a, b) => a - b);
+  const head = document.getElementById('resultHead');
+  const span = yearList.length ? ' rowspan="2"' : '';
+  const groupHeads = yearList.length
+    ? `<th class="text-center" colspan="${yearList.length}">Điểm chuẩn</th><th class="text-center" colspan="${yearList.length}">Chỉ tiêu</th>`
+    : '';
+  const yearHeads = yearList.length
+    ? `<tr>${yearList.map(year => `<th class="text-center">${year}</th>`).join('')}${yearList.map(year => `<th class="text-center">${year}</th>`).join('')}</tr>`
+    : '';
+  head.innerHTML = `<tr>
+    <th class="text-center"${span}><input class="form-check-input" type="checkbox" id="resultCheckAll" aria-label="Chọn tất cả dòng kết quả"></th>
+    <th${span}>#</th><th${span}>Trường</th><th${span}>Ngành tuyển sinh</th><th${span}>Phương thức</th>
+    ${groupHeads}
+    <th${span}>Nguồn</th><th${span}>Thao tác</th>
+  </tr>${yearHeads}`;
+
+  const groups = new Map();
+  (rows || []).forEach(row => {
+    const key = [
+      row.ma_truong || '',
+      row.ma_nganh || row.ten_nganh || '',
+      row.phuong_thuc || '',
+    ].join('|');
+    if (!groups.has(key)) {
+      groups.set(key, {
+        ma_truong: row.ma_truong || '',
+        ten_truong: row.ten_truong || '',
+        ma_nganh: row.ma_nganh || '',
+        ten_nganh: row.ten_nganh || '',
+        phuong_thuc: row.phuong_thuc || '',
+        byYear: {},
+        sources: [],
+      });
+    }
+    const group = groups.get(key);
+    const year = Number(row.nam);
+    if (year) {
+      const cell = group.byYear[year] || { diem: null, chi_tieu: null };
+      if (row.diem_chuan != null && row.diem_chuan !== '') cell.diem = row.diem_chuan;
+      if (row.chi_tieu != null && row.chi_tieu !== '') cell.chi_tieu = row.chi_tieu;
+      group.byYear[year] = cell;
+    }
+    if (row.nguon && !group.sources.includes(row.nguon)) group.sources.push(row.nguon);
+  });
+
+  const list = [...groups.values()];
+  resultGroups = list;
+  const alive = new Set(list.map(resultKey));
+  [...selectedResultKeys].forEach(key => {
+    if (!alive.has(key)) selectedResultKeys.delete(key);
+  });
+  document.querySelector('#resultTable tbody').innerHTML = list.map((group, i) => {
+    const key = resultKey(group);
+    const checked = selectedResultKeys.has(key) ? 'checked' : '';
+    return `
+    <tr>
+      <td class="text-center"><input class="form-check-input result-pick" type="checkbox" data-key="${escapeHtml(key)}" aria-label="Chọn dòng ${i + 1}" ${checked}></td>
+      <td class="text-muted">${i + 1}</td>
+      <td class="text-nowrap">${escapeHtml(codeName(group.ma_truong, group.ten_truong))}</td>
+      <td class="result-major">${escapeHtml(codeName(group.ma_nganh, group.ten_nganh))}</td>
+      <td>${escapeHtml(group.phuong_thuc || '—')}</td>
+      ${yearList.map(year => editCell(key, year, 'diem', (group.byYear[year] || {}).diem)).join('')}
+      ${yearList.map(year => editCell(key, year, 'chi_tieu', (group.byYear[year] || {}).chi_tieu)).join('')}
+      <td class="text-nowrap">
+        ${sourceUrls(group.sources).length
+          ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-source-result="${escapeHtml(key)}">Chi tiết</button>`
+          : '—'}
+      </td>
+      <td>
+        <button type="button" class="btn btn-outline-danger btn-sm" data-delete-result="${escapeHtml(key)}" title="Xoá dòng này">
+          <i class="bi bi-trash3"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('resultInfo').textContent = list.length
+    ? `${list.length} ngành × phương thức`
+    : 'Chưa có kết quả';
+  updateResultSelect();
+  const excel = document.getElementById('btnExcel');
+  if (downloadUrl && list.length) {
+    excel.href = downloadUrl;
+    excel.classList.remove('d-none');
+  } else {
+    excel.classList.add('d-none');
+  }
+}
+
+function visibleConversions(rows) {
+  const years = new Set(selectedYears());
+  if (!years.size) return rows || [];
+  return (rows || []).filter(row => !row.nam || years.has(Number(row.nam)));
+}
+
+function renderConversions(rows, downloadUrl) {
+  convertRows = rows || [];
+  const list = visibleConversions(convertRows);
+  document.querySelector('#convertTable tbody').innerHTML = list.map((row, i) => `
+    <tr>
+      <td class="text-muted">${i + 1}</td>
+      <td class="text-nowrap">${escapeHtml(codeName(row.ma_truong, row.ten_truong))}</td>
+      <td class="text-center">${escapeHtml(row.nam || '—')}</td>
+      <td>${escapeHtml(row.loai || '—')}</td>
+      <td class="convert-body">${escapeHtml(row.noi_dung || '—')}</td>
+      <td class="text-nowrap">
+        ${sourceUrls([row.nguon]).length
+          ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-convert-source="${i}">Chi tiết</button>`
+          : '—'}
+      </td>
+    </tr>`).join('');
+  document.getElementById('convertInfo').textContent = list.length
+    ? `${list.length} dòng quy đổi`
+    : 'Chưa có bảng quy đổi';
+  const excel = document.getElementById('btnConvertExcel');
+  if (downloadUrl && list.length) {
+    excel.href = downloadUrl;
+    excel.classList.remove('d-none');
+  } else {
+    excel.classList.add('d-none');
+  }
+}
+
+function setProgress(mode, label, pct) {
+  const wrap = document.getElementById('collectProgress');
+  const bar = document.getElementById('collectProgressBar');
+  const track = document.getElementById('collectProgressTrack');
+  if (mode === 'hide') {
+    wrap.classList.add('d-none');
+    return;
+  }
+  wrap.classList.remove('d-none');
+  const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
+  document.getElementById('collectProgressLabel').textContent = label || '';
+  document.getElementById('collectProgressPct').textContent = `${p}%`;
+  bar.style.width = `${p}%`;
+  bar.textContent = `${p}%`;
+  track.setAttribute('aria-valuenow', String(p));
+  const done = mode === 'done';
+  bar.classList.toggle('progress-bar-animated', !done);
+  bar.classList.toggle('progress-bar-striped', !done);
+  bar.classList.toggle('bg-success', done);
+  bar.classList.toggle('bg-teal', !done);
+}
+
+function selectedYears() {
+  return window.App.getSelectValues(document.getElementById('crawlYears')).map(Number).filter(Boolean);
+}
+
+function renderSectorFilters() {
+  const sectors = [...new Set(schoolRows.map(s => s.loai_truong || '').filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+  const html = sectors.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+  window.App.setSelectOptions(document.getElementById('filterSector'), html, [], {
+    placeholder: 'Tất cả loại trường',
+  });
+}
+
+['filterType', 'filterSector', 'filterRegion'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderSchoolPick);
+});
+
+document.getElementById('collectPills').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-collect-pane]');
+  if (!btn) return;
+  activeCollectPane = btn.dataset.collectPane;
+  document.querySelectorAll('#collectPills .nav-link').forEach(el => {
+    el.classList.toggle('active', el === btn);
+  });
+  document.getElementById('paneScores').classList.toggle('d-none', activeCollectPane !== 'scores');
+  document.getElementById('paneConvert').classList.toggle('d-none', activeCollectPane !== 'convert');
+  if (activeCollectPane === 'convert') renderConversions(convertRows, document.getElementById('btnConvertExcel').getAttribute('href') || '');
+});
+
+async function collectConversions() {
+  const codes = window.App.getSelectValues(document.getElementById('schoolPick'));
+  const msg = document.getElementById('collectMsg');
+  if (!codes.length) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một trường.</div>';
+    return;
+  }
+  collectBusy = true;
+  document.getElementById('btnCollect').disabled = true;
+  msg.innerHTML = '';
+  setProgress('run', `Đang thu thập quy đổi 0/${codes.length} trường…`, 0);
+  try {
+    const res = await fetch('/api/quy-doi/stream', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ codes: codes.join(',') }),
+    });
+    if (!res.ok || !res.body) throw new Error(`Không thu thập được (HTTP ${res.status})`);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let donePayload = null;
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buffer += decoder.decode(chunk.value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        if (event.type === 'school') {
+          const pct = event.total ? Math.round(event.index * 90 / event.total) : 0;
+          const note = event.ok
+            ? `${event.code}: ${event.rows || 0} dòng quy đổi`
+            : (event.error || event.code);
+          setProgress('run', note, pct);
+        } else if (event.type === 'finalize') {
+          setProgress('run', event.message || 'Đang lưu bảng quy đổi…', 95);
+        } else if (event.type === 'done') {
+          donePayload = event;
+        } else if (event.type === 'error') {
+          throw new Error(event.error || 'Thu thập quy đổi thất bại');
+        }
+      }
+    }
+    const saved = await fetch('/api/quy-doi/records');
+    const data = await saved.json();
+    if (!data.ok) throw new Error(data.error || 'Không đọc được bảng quy đổi');
+    renderConversions(data.rows || [], (donePayload && donePayload.download_url) || data.download_url || '');
+    setProgress('done', 'Thu thập quy đổi hoàn tất', 100);
+    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Thu thập thành công <b>${(data.rows || []).length}</b> dòng quy đổi chứng chỉ và điểm thi THPT.</div>`;
+  } catch (e) {
+    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
+    setProgress('hide');
+  } finally {
+    collectBusy = false;
+    document.getElementById('btnCollect').disabled = false;
+  }
+}
+
+document.getElementById('btnCollect').addEventListener('click', async () => {
+  if (collectBusy) return;
+  if (activeCollectPane === 'convert') {
+    await collectConversions();
+    return;
+  }
+  const codes = window.App.getSelectValues(document.getElementById('schoolPick'));
+  const years = selectedYears();
+  const msg = document.getElementById('collectMsg');
+  if (!codes.length) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một trường.</div>';
+    return;
+  }
+  if (!years.length) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một năm học.</div>';
+    return;
+  }
+  collectBusy = true;
+  document.getElementById('btnCollect').disabled = true;
+  msg.innerHTML = '';
+  setProgress('run', `Đang thu thập 0/${codes.length} trường…`, 0);
+  try {
+    const res = await fetch('/api/crawl/stream', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ codes: codes.join(','), years, merge: false })
+    });
+    if (!res.ok || !res.body) throw new Error(`Không thu thập được (HTTP ${res.status})`);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let donePayload = null;
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buffer += decoder.decode(chunk.value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        if (event.type === 'school') {
+          const pct = event.total ? Math.round(event.index * 90 / event.total) : 0;
+          setProgress('run', event.log || `${event.code}: ${event.index}/${event.total}`, pct);
+        } else if (event.type === 'finalize') {
+          setProgress('run', event.message || 'Đang lưu kết quả…', 95);
+        } else if (event.type === 'done') {
+          donePayload = event;
+        } else if (event.type === 'error') {
+          throw new Error(event.error || 'Thu thập thất bại');
+        }
+      }
+    }
+    const saved = await fetch('/api/crawl/records');
+    const data = await saved.json();
+    if (!data.ok) throw new Error(data.error || 'Không đọc được kết quả');
+    renderResults(data.rows || [], (donePayload && donePayload.download_url) || data.download_url || '', data.years || years);
+    const total = (donePayload && donePayload.admissions) || (data.rows || []).length;
+    setProgress('done', 'Thu thập hoàn tất', 100);
+    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Thu thập thành công <b>${total}</b> dòng ngành, điểm chuẩn theo phương thức và chỉ tiêu theo năm.</div>`;
+  } catch (e) {
+    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
+    setProgress('hide');
+  } finally {
+    collectBusy = false;
+    document.getElementById('btnCollect').disabled = false;
+  }
+});
+
+function updateResultSelect() {
+  const boxes = [...document.querySelectorAll('.result-pick')];
+  const checked = boxes.filter(box => box.checked).length;
+  const all = document.getElementById('resultCheckAll');
+  if (all) {
+    all.checked = boxes.length > 0 && checked === boxes.length;
+    all.indeterminate = checked > 0 && checked < boxes.length;
+  }
+  document.getElementById('btnDeleteResults').disabled = selectedResultKeys.size === 0;
+}
+
+function confirmDeleteResults(message) {
+  const modalEl = document.getElementById('resultDeleteModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  document.getElementById('resultDeleteMessage').textContent = message;
+  return new Promise((resolve) => {
+    const okBtn = document.getElementById('resultDeleteConfirm');
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      okBtn.removeEventListener('click', onOk);
+      modalEl.removeEventListener('hidden.bs.modal', onHidden);
+      resolve(ok);
+    };
+    const onOk = () => {
+      finish(true);
+      modal.hide();
+    };
+    const onHidden = () => finish(false);
+    okBtn.addEventListener('click', onOk);
+    modalEl.addEventListener('hidden.bs.modal', onHidden, { once: true });
+    modal.show();
+  });
+}
+
+async function deleteResultKeys(keys) {
+  const unique = [...new Set((keys || []).filter(Boolean))];
+  if (!unique.length) return;
+  const label = unique.length === 1 ? 'dòng đã chọn' : `${unique.length} dòng đã chọn`;
+  const accepted = await confirmDeleteResults(`Xoá ${label} khỏi dữ liệu đã tải?`);
+  if (!accepted) return;
+  const payload = unique.map(key => {
+    const group = resultGroups.find(item => resultKey(item) === key);
+    return group ? {
+      ma_truong: group.ma_truong,
+      ma_nganh: group.ma_nganh,
+      ten_nganh: group.ten_nganh,
+      phuong_thuc: group.phuong_thuc,
+    } : null;
+  }).filter(Boolean);
+  const msg = document.getElementById('collectMsg');
+  try {
+    const res = await fetch('/api/crawl/records/delete', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ keys: payload }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Không xoá được');
+    unique.forEach(key => selectedResultKeys.delete(key));
+    renderResults(data.rows || [], data.download_url || '', data.years || []);
+    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đã xoá ${unique.length} dòng khỏi dữ liệu đã tải.</div>`;
+  } catch (e) {
+    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+document.getElementById('resultTable').addEventListener('change', (event) => {
+  const all = event.target.id === 'resultCheckAll' ? event.target : null;
+  if (all) {
+    document.querySelectorAll('.result-pick').forEach(box => {
+      box.checked = all.checked;
+      const key = box.dataset.key || '';
+      if (all.checked) selectedResultKeys.add(key);
+      else selectedResultKeys.delete(key);
+    });
+    updateResultSelect();
+    return;
+  }
+  const box = event.target.closest('.result-pick');
+  if (!box) return;
+  const key = box.dataset.key || '';
+  if (box.checked) selectedResultKeys.add(key);
+  else selectedResultKeys.delete(key);
+  updateResultSelect();
+});
+
+function openSourceModal(key) {
+  const group = resultGroups.find(item => resultKey(item) === key);
+  if (!group) return;
+  const urls = sourceUrls(group.sources);
+  document.getElementById('resultSourceCaption').textContent = [
+    codeName(group.ma_truong, group.ten_truong),
+    codeName(group.ma_nganh, group.ten_nganh),
+    group.phuong_thuc || '',
+  ].filter(Boolean).join(' · ');
+  document.getElementById('resultSourceList').innerHTML = urls.length
+    ? urls.map(url => `<li class="mb-1"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></li>`).join('')
+    : '<li>Không có liên kết.</li>';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('resultSourceModal')).show();
+}
+
+function showEditedCell(td, value) {
+  const shown = value == null || value === '' ? '—' : String(value);
+  td.dataset.value = value == null || value === '' ? '' : String(value);
+  td.textContent = shown;
+}
+
+async function saveEditedCell(td, raw) {
+  const group = resultGroups.find(item => resultKey(item) === (td.dataset.key || ''));
+  if (!group) throw new Error('Không tìm thấy dòng cần sửa.');
+  const field = td.dataset.field;
+  const year = Number(td.dataset.year);
+  const value = parseEditValue(field, raw);
+  const res = await fetch('/api/crawl/records/update', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      ma_truong: group.ma_truong,
+      ma_nganh: group.ma_nganh,
+      ten_nganh: group.ten_nganh,
+      phuong_thuc: group.phuong_thuc,
+      nam: year,
+      field,
+      value,
+    }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Không lưu được');
+  if (!group.byYear[year]) group.byYear[year] = {};
+  group.byYear[year][field] = value;
+  showEditedCell(td, value);
+}
+
+function beginCellEdit(td) {
+  if (!td || td.querySelector('input')) return;
+  const previous = td.dataset.value || '';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'form-control form-control-sm text-center px-1';
+  input.value = previous;
+  input.setAttribute('aria-label', 'Sửa giá trị');
+  td.textContent = '';
+  td.appendChild(input);
+  input.focus();
+  input.select();
+  let closed = false;
+  const close = async (save) => {
+    if (closed) return;
+    closed = true;
+    if (!save || input.value.trim() === previous) {
+      showEditedCell(td, previous);
+      return;
+    }
+    try {
+      await saveEditedCell(td, input.value);
+    } catch (e) {
+      showEditedCell(td, previous);
+      document.getElementById('collectMsg').innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
+    }
+  };
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      input.blur();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      input.value = previous;
+      input.blur();
+    }
+  });
+  input.addEventListener('blur', () => close(true));
+}
+
+document.getElementById('resultTable').addEventListener('dblclick', (event) => {
+  const td = event.target.closest('td.result-edit');
+  if (!td) return;
+  beginCellEdit(td);
+});
+
+document.getElementById('convertTable').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-convert-source]');
+  if (!btn) return;
+  const row = visibleConversions(convertRows)[Number(btn.dataset.convertSource)];
+  if (!row) return;
+  document.getElementById('resultSourceCaption').textContent = [
+    codeName(row.ma_truong, row.ten_truong),
+    row.loai || '',
+  ].filter(Boolean).join(' · ');
+  const urls = sourceUrls([row.nguon]);
+  document.getElementById('resultSourceList').innerHTML = urls.length
+    ? urls.map(url => `<li class="mb-1"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></li>`).join('')
+    : '<li>Không có liên kết.</li>';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('resultSourceModal')).show();
+});
+
+document.getElementById('resultTable').addEventListener('click', (event) => {
+  const sourceBtn = event.target.closest('[data-source-result]');
+  if (sourceBtn) {
+    openSourceModal(sourceBtn.dataset.sourceResult || '');
+    return;
+  }
+  const btn = event.target.closest('[data-delete-result]');
+  if (!btn) return;
+  deleteResultKeys([btn.dataset.deleteResult]);
+});
+
+document.getElementById('btnDeleteResults').addEventListener('click', () => {
+  deleteResultKeys([...selectedResultKeys]);
+});
+
+(async function loadSchools() {
+  try {
+    const res = await fetch('/api/schools/saved');
+    const data = await res.json();
+    schoolRows = (data && data.ok && data.schools) || [];
+  renderSectorFilters();
+  } catch (_) {
+    schoolRows = [];
+  }
+  renderSchoolPick();
+  try {
+    const saved = await fetch('/api/crawl/records');
+    if (!saved.ok) return;
+    const data = await saved.json();
+    if (data.ok && (data.rows || []).length) {
+      renderResults(data.rows, data.download_url || '', data.years || []);
+    }
+  } catch (_) {}
+  try {
+    const saved = await fetch('/api/quy-doi/records');
+    if (!saved.ok) return;
+    const data = await saved.json();
+    if (data.ok) renderConversions(data.rows || [], data.download_url || '');
+  } catch (_) {}
+})();
+</script>
+{% endblock %}

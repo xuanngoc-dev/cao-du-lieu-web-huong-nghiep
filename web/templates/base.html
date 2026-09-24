@@ -6,7 +6,7 @@
   <title>{% block title %}Tuyển sinh ĐH/CĐ{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="{{ url_for('static', filename='css/app.css') }}?v=20260922y" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/app.css') }}?v=20260924d" rel="stylesheet">
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -25,6 +25,9 @@
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'schools_page' %}active{% endif %}" href="{{ url_for('schools_page') }}">Danh sách trường</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'crawl_page' %}active{% endif %}" href="{{ url_for('crawl_page') }}">Thu thập dữ liệu</a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'danh_gia_page' %}active{% endif %}" href="{{ url_for('danh_gia_page') }}">

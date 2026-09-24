@@ -279,14 +279,10 @@ class OfficialSiteCrawler:
         doc_queue: List[Tuple[int, str, str]] = []
 
         try:
-            home = self._fetch(site)
+            home = self._fetch(site, timeout=8)
         except Exception as e:
             home = None
             print(f"[CẢNH BÁO] Không mở được trang chủ {site}: {e}")
-
-        if home is None and not accepted_seeds:
-            bundle.source_note = f"Không mở được {site}"
-            return bundle
 
         queue: List[Tuple[int, str]] = []
         home_url = site
@@ -296,6 +292,11 @@ class OfficialSiteCrawler:
             if home_canon:
                 seen_html.add(home_canon)
             self._harvest(home, site, org_host, years, queue, doc_queue, seen_html)
+        elif not accepted_seeds:
+            print(
+                f"[CẢNH BÁO] {school_code}: trang chủ không phản hồi, "
+                "tiếp tục tìm trên cổng tuyển sinh (tên miền phụ)"
+            )
         for seed_url in accepted_seeds:
             if _DOC_RE.search(seed_url):
                 doc_queue.append((120, seed_url, seed_url))
@@ -314,8 +315,8 @@ class OfficialSiteCrawler:
             )
 
         queue.sort(key=lambda item: item[0], reverse=True)
-        for portal in admission_portal_urls(home_url):
-            queue.append((45, portal))
+        for portal in admission_portal_urls(site):
+            queue.append((70, portal))
         pending = queue
         while pending and pages_read < self.MAX_HTML_PAGES:
             pending.sort(key=lambda item: item[0], reverse=True)
@@ -569,7 +570,7 @@ class OfficialSiteCrawler:
             mentioned = _years_in(absolute, label)
             if "diem chuan" in text and "du bao" not in text:
                 if not mentioned or any(y in years for y in mentioned):
-                    score += 12
+                    score += 60
             if re.search(r"(?:[?&]page=|/page/)\d+", absolute) and "diem chuan" not in text:
                 score -= 20
             if score < 4:
