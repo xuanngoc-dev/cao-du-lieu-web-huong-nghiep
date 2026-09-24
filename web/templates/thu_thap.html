@@ -55,6 +55,9 @@
         <button type="button" class="btn btn-outline-teal" id="btnCollectConvert">
           <i class="bi bi-arrow-left-right"></i> Thu thập quy chế quy đổi điểm
         </button>
+        <button type="button" class="btn btn-outline-teal" id="btnCollectBonus">
+          <i class="bi bi-plus-circle"></i> Thu thập điểm cộng
+        </button>
       </div>
     </div>
     <div id="collectProgress" class="mt-3 d-none" aria-live="polite">
@@ -76,6 +79,9 @@
   </li>
   <li class="nav-item">
     <button class="nav-link" type="button" data-collect-pane="convert">Quy chế quy đổi điểm</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" type="button" data-collect-pane="bonus">Điểm cộng</button>
   </li>
 </ul>
 
@@ -113,6 +119,32 @@
     </div>
   </div>
 </div>
+</div>
+
+<div id="paneBonus" class="d-none">
+  <div class="card panel-card">
+    <div class="card-body border-bottom py-2">
+      <div class="small text-muted" id="bonusInfo">Chưa có điểm cộng</div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="bonusTable">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th>#</th>
+              <th>Trường</th>
+              <th>Năm</th>
+              <th>Phương thức</th>
+              <th>Điều kiện</th>
+              <th>Điểm cộng</th>
+              <th>Nguồn</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="paneConvert" class="d-none">
@@ -188,6 +220,7 @@ let schoolRows = [];
 let collectBusy = false;
 let activeCollectPane = 'scores';
 let convertRows = [];
+let bonusRows = [];
 let resultGroups = [];
 const selectedResultKeys = new Set();
 
@@ -435,6 +468,7 @@ function setCollectBusy(on) {
   collectBusy = on;
   document.getElementById('btnCollectScores').disabled = on;
   document.getElementById('btnCollectConvert').disabled = on;
+  document.getElementById('btnCollectBonus').disabled = on;
 }
 
 function showCollectPane(pane) {
@@ -444,6 +478,7 @@ function showCollectPane(pane) {
   });
   document.getElementById('paneScores').classList.toggle('d-none', pane !== 'scores');
   document.getElementById('paneConvert').classList.toggle('d-none', pane !== 'convert');
+  document.getElementById('paneBonus').classList.toggle('d-none', pane !== 'bonus');
   if (pane === 'convert') {
     renderConversions(convertRows, document.getElementById('btnConvertExcel').getAttribute('href') || '');
   }
@@ -514,6 +549,112 @@ async function collectConversions() {
     setCollectBusy(false);
   }
 }
+
+function renderBonus(rows) {
+  bonusRows = rows || [];
+  document.querySelector('#bonusTable tbody').innerHTML = bonusRows.map((row, i) => `
+    <tr>
+      <td class="text-muted">${i + 1}</td>
+      <td class="text-nowrap">${escapeHtml(codeName(row.ma_truong, row.ten_truong))}</td>
+      <td class="text-center">${escapeHtml(row.nam || '—')}</td>
+      <td>${escapeHtml(row.phuong_thuc || '—')}</td>
+      <td class="convert-body">${escapeHtml(row.dieu_kien || '—')}</td>
+      <td class="text-nowrap">${escapeHtml(row.diem_cong || '—')}</td>
+      <td class="text-nowrap">
+        ${sourceUrls([row.nguon]).length
+          ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-bonus-source="${i}">Chi tiết</button>`
+          : '—'}
+      </td>
+    </tr>`).join('');
+  document.getElementById('bonusInfo').textContent = bonusRows.length
+    ? `${bonusRows.length} mức điểm cộng`
+    : 'Không có điểm cộng cho trường đã chọn';
+}
+
+async function loadBonus(codes, years) {
+  const params = new URLSearchParams();
+  if (codes && codes.length) params.set('schools', codes.join(','));
+  if (years && years.length) params.set('years', years.join(','));
+  const res = await fetch('/api/crawl/bonus?' + params.toString());
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Không đọc được điểm cộng');
+  renderBonus(data.records || []);
+  return data.records || [];
+}
+
+document.getElementById('btnCollectBonus').addEventListener('click', async () => {
+  if (collectBusy) return;
+  const codes = window.App.getSelectValues(document.getElementById('schoolPick'));
+  const years = selectedYears();
+  const msg = document.getElementById('collectMsg');
+  if (!codes.length) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một trường.</div>';
+    return;
+  }
+  if (!years.length) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một năm học.</div>';
+    return;
+  }
+  showCollectPane('bonus');
+  setCollectBusy(true);
+  msg.innerHTML = '';
+  setProgress('run', `Đang thu thập điểm cộng 0/${codes.length} trường…`, 0);
+  try {
+    const res = await fetch('/api/crawl/stream', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ codes: codes.join(','), years, merge: true })
+    });
+    if (!res.ok || !res.body) throw new Error(`Không thu thập được (HTTP ${res.status})`);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buffer += decoder.decode(chunk.value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        if (event.type === 'school') {
+          const pct = event.total ? Math.round(event.index * 90 / event.total) : 0;
+          setProgress('run', event.log || `${event.code}: ${event.index}/${event.total}`, pct);
+        } else if (event.type === 'finalize') {
+          setProgress('run', event.message || 'Đang lọc điểm cộng…', 95);
+        } else if (event.type === 'error') {
+          throw new Error(event.error || 'Thu thập điểm cộng thất bại');
+        }
+      }
+    }
+    const rows = await loadBonus(codes, years);
+    setProgress('done', 'Thu thập điểm cộng hoàn tất', 100);
+    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Thu thập thành công <b>${rows.length}</b> mức điểm cộng theo phương thức và điều kiện.</div>`;
+  } catch (e) {
+    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
+    setProgress('hide');
+  } finally {
+    setCollectBusy(false);
+  }
+});
+
+document.getElementById('bonusTable').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-bonus-source]');
+  if (!btn) return;
+  const row = bonusRows[Number(btn.dataset.bonusSource)];
+  if (!row) return;
+  document.getElementById('resultSourceCaption').textContent = [
+    codeName(row.ma_truong, row.ten_truong),
+    row.phuong_thuc || '',
+    row.dieu_kien || '',
+  ].filter(Boolean).join(' · ');
+  const urls = sourceUrls([row.nguon]);
+  document.getElementById('resultSourceList').innerHTML = urls.length
+    ? urls.map(url => `<li class="mb-1"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></li>`).join('')
+    : '<li>Không có liên kết.</li>';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('resultSourceModal')).show();
+});
 
 document.getElementById('btnCollectConvert').addEventListener('click', async () => {
   if (collectBusy) return;
@@ -819,6 +960,9 @@ document.getElementById('btnDeleteResults').addEventListener('click', () => {
     if (!saved.ok) return;
     const data = await saved.json();
     if (data.ok) renderConversions(data.rows || [], data.download_url || '');
+  } catch (_) {}
+  try {
+    await loadBonus([], []);
   } catch (_) {}
 })();
 </script>

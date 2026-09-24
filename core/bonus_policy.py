@@ -402,6 +402,181 @@ def _names_for(
     return names
 
 
+_TEST_RE = re.compile(
+    r"đánh giá tư duy|đgt[dđ]|\btsa\b|\bhsa\b|v-act|vact|đánh giá năng lực",
+    re.I,
+)
+
+
+def _band_kind(text: str, cert: str) -> str:
+    head = (text or "").split("=", 1)[0]
+    if re.search(r"toefl\s*ibt", head, re.I):
+        return "TOEFL iBT"
+    if re.search(r"toefl\s*itp", head, re.I):
+        return "TOEFL ITP"
+    return cert
+
+
+def _kind_bands(loai: str, hang: str, detail: str) -> List[dict]:
+    """Khoảng điểm riêng cho từng loại điều kiện (IELTS khác thang TOEFL)."""
+    items: List[dict] = []
+    covered = set()
+    for piece in (detail or "").split(";"):
+        piece_certs = _certs_in(piece)
+        piece_bands = _score_bands(piece)
+        if not piece_certs or not piece_bands:
+            continue
+        label = piece.replace("=", ": ").strip()
+        for cert in piece_certs:
+            kind = _band_kind(piece, cert)
+            covered.add(cert)
+            covered.add(kind)
+            for lo, hi in piece_bands:
+                items.append({
+                    "kind": kind,
+                    "lo": lo,
+                    "hi": None if hi == float("inf") else hi,
+                    "label": label[:120],
+                })
+    hang_bands = _score_bands(hang)
+    named = _certs_in(hang)
+    if named:
+        hang_certs = named
+    else:
+        hang_certs = [cert for cert in _certs_in(loai) if cert not in covered]
+    for cert in hang_certs:
+        kind = _band_kind(hang, cert)
+        for lo, hi in hang_bands:
+            items.append({
+                "kind": kind,
+                "lo": lo,
+                "hi": None if hi == float("inf") else hi,
+                "label": hang or loai,
+            })
+    return items
+
+
+def _condition_label(loai: str, hang: str, certs: Sequence[str]) -> str:
+    parts = [part for part in (loai, hang) if str(part or "").strip()]
+    label = " · ".join(parts)
+    if label:
+        return label
+    return ", ".join(certs) or "Điều kiện cộng điểm"
+
+
+def list_bonus_records(
+    conversions: Sequence[Dict[str, Any]],
+    regulations: Sequence[Dict[str, Any]],
+    school_codes: Optional[Sequence[str]] = None,
+    years: Optional[Sequence[int]] = None,
+) -> List[dict]:
+    """
+    Dòng điểm cộng theo trường, năm, phương thức và điều kiện
+    (chứng chỉ IELTS/TOEFL…, giải thưởng, bài đánh giá tư duy/năng lực).
+    """
+    codes = {str(c).strip().upper() for c in (school_codes or []) if str(c).strip()} or None
+    year_set = {int(y) for y in (years or []) if str(y).strip()} or None
+    records: List[dict] = []
+    seen = set()
+
+    def keep_year(raw: Any) -> bool:
+        if not year_set:
+            return True
+        try:
+            year = int(raw)
+        except (TypeError, ValueError):
+            return True
+        return year in year_set
+
+    for row in conversions or []:
+        code = str(row.get("ma_truong") or "").strip().upper()
+        if not code or (codes is not None and code not in codes):
+            continue
+        if not keep_year(row.get("nam")):
+            continue
+        loai = str(row.get("loai_bang") or "").strip()
+        hang = str(row.get("hang_muc") or "").strip()
+        diem = str(row.get("diem_quy_doi") or "").strip()
+        detail = str(row.get("chi_tiet_hang") or "").strip()
+        blob = " ".join([loai, hang, diem, detail])
+        amount = _bonus_amount(diem, detail)
+        bonusish = bool(_BONUS_WORD_RE.search(blob) or re.search(r"thưởng|khuyến khích", blob, re.I))
+        certs = _certs_in(blob)
+        is_test = bool(_TEST_RE.search(blob))
+        is_prize = bool(_PRIZE_RE.search(blob))
+        if not amount or not (bonusish or certs or is_test or is_prize):
+            continue
+        if certs and not bonusish and not re.search(r"điểm\b", diem, re.I):
+            continue
+        condition = _condition_label(loai, hang, certs)
+        method = str(row.get("phuong_thuc") or "").strip()
+        sig = (code, method.casefold(), condition.casefold(), amount.casefold())
+        if sig in seen:
+            continue
+        seen.add(sig)
+        records.append({
+            "ma_truong": code,
+            "ten_truong": str(row.get("ten_truong") or "").strip(),
+            "nam": row.get("nam"),
+            "phuong_thuc": method,
+            "dieu_kien": condition,
+            "diem_cong": amount,
+            "bands": _kind_bands(loai, hang, detail),
+            "nguon": str(row.get("nguon") or "").strip(),
+        })
+
+    for row in regulations or []:
+        code = str(row.get("ma_truong") or "").strip().upper()
+        if not code or (codes is not None and code not in codes):
+            continue
+        if not keep_year(row.get("nam")):
+            continue
+        title = str(row.get("tieu_de") or "")
+        body = str(row.get("noi_dung") or "")
+        original = re.sub(r"\s+", " ", f"{title} {body}").strip()
+        masked = _mask_vact(original)
+        match = _LINK_RE.search(masked) or _TEST_RE.search(masked)
+        if not match or not _BONUS_WORD_RE.search(masked):
+            continue
+        window = masked[max(0, match.start() - 40): match.end() + 80]
+        if _NEGATIVE_RE.search(window) and not _POSITIVE_RE.search(window):
+            continue
+        amount_match = _AMOUNT_DIEM_RE.search(window) or _AMOUNT_DETAIL_RE.search(window)
+        amount = ""
+        if amount_match:
+            amount = _bonus_amount(amount_match.group(0), window) or amount_match.group(0)
+        snippet = _clean_snippet(original, match.start(), match.end())
+        method = str(row.get("phuong_thuc") or "").strip()
+        sig = (code, method.casefold(), snippet[:90].casefold(), amount.casefold())
+        if sig in seen:
+            continue
+        seen.add(sig)
+        records.append({
+            "ma_truong": code,
+            "ten_truong": str(row.get("ten_truong") or "").strip(),
+            "nam": row.get("nam"),
+            "phuong_thuc": method,
+            "dieu_kien": snippet,
+            "diem_cong": amount or "Có cộng điểm",
+            "nguon": str(row.get("nguon") or "").strip(),
+        })
+
+    def sort_key(item: dict) -> Tuple:
+        try:
+            year = -int(item.get("nam") or 0)
+        except (TypeError, ValueError):
+            year = 0
+        return (
+            item.get("ma_truong") or "",
+            year,
+            (item.get("phuong_thuc") or "").casefold(),
+            (item.get("dieu_kien") or "").casefold(),
+        )
+
+    records.sort(key=sort_key)
+    return records
+
+
 def summarize_certificate_bonus(
     conversions: Sequence[Dict[str, Any]],
     regulations: Sequence[Dict[str, Any]],

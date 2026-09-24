@@ -423,9 +423,16 @@ textarea.form-control {
   padding: 0 0.5rem !important;
 }
 
-#scoreTrendChart .apexcharts-tooltip {
+#scoreTrendChart .apexcharts-tooltip,
+#scoreSpreadChart .apexcharts-tooltip {
   font-family: var(--font);
   font-weight: 300;
+}
+
+.score-comment {
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 
 #chanceMajor:disabled {
@@ -720,11 +727,13 @@ select.cn-multi-native {
 #resultTable td.result-edit input {
   min-width: 4.5rem;
 }
+#verifyConvertTable td.convert-body,
 #convertTable td.convert-body {
   max-width: 22rem;
   white-space: normal;
   overflow-wrap: anywhere;
 }
+#verifyScoreTable td.result-major,
 #resultTable td.result-major {
   max-width: 14rem;
   white-space: normal;

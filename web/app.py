@@ -61,6 +61,7 @@ from core.conversion_calculator import (
     calculate_certificate_conversion,
     list_methods_from_rows,
     merge_method_lists,
+    rows_for_latest_year,
     METHOD_LABELS,
 )
 from core.admission_chance import (
@@ -71,7 +72,7 @@ from core.admission_chance import (
     list_school_majors,
 )
 from core.aggregator import METHOD_COLUMN_LABELS, build_grouped_score_view
-from core.bonus_policy import summarize_certificate_bonus
+from core.bonus_policy import list_bonus_records, summarize_certificate_bonus
 from core import dataset_store
 
 
@@ -155,6 +156,10 @@ def create_app() -> Flask:
     @app.route("/crawl")
     def crawl_page():
         return render_template("thu_thap.html")
+
+    @app.route("/kiem-chung")
+    def kiem_chung_page():
+        return render_template("kiem_chung.html")
 
     @app.route("/quy-doi")
     def quy_doi_page():
@@ -835,22 +840,45 @@ def create_app() -> Flask:
     @app.get("/api/crawl/bonus")
     def api_crawl_bonus():
         """Quy chế cộng điểm theo loại chứng chỉ và phương thức xét tuyển."""
-        cached = app.config.get("LAST_CRAWL") or {}
-        conversions = cached.get("conversions") or []
-        regulations = cached.get("regulations") or []
+        cached = app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {}
+        quy_doi = app.config.get("LAST_QUY_DOI") or dataset_store.load_quy_doi(ROOT) or {}
+        conversions = list(cached.get("conversions") or [])
+        conversions.extend(quy_doi.get("certificate_conversions") or [])
+        regulations = list(cached.get("regulations") or [])
+        for note in quy_doi.get("notes") or []:
+            regulations.append({
+                "ma_truong": note.get("ma_truong") or "",
+                "ten_truong": note.get("ten_truong") or "",
+                "tieu_de": note.get("tieu_de") or "",
+                "noi_dung": note.get("noi_dung") or "",
+                "phuong_thuc": note.get("phuong_thuc") or "",
+                "nam": note.get("nam"),
+                "nguon": note.get("url_nguon") or note.get("nguon") or "",
+            })
         admissions = cached.get("admissions") or []
         if not admissions and not conversions and not regulations:
             return jsonify({
                 "ok": False,
-                "error": "Chưa có dữ liệu đã tổng hợp. Hãy chạy bước 2 trước.",
+                "error": "Chưa có dữ liệu đã tổng hợp. Hãy thu thập dữ liệu điểm trước.",
             }), 400
         schools_raw = request.args.get("schools") or ""
         school_codes = [c.strip().upper() for c in schools_raw.split(",") if c.strip()]
+        years = []
+        for part in (request.args.get("years") or "").split(","):
+            part = part.strip()
+            if part.isdigit():
+                years.append(int(part))
         payload = summarize_certificate_bonus(
             conversions,
             regulations,
             school_codes=school_codes or None,
             admissions=admissions,
+        )
+        payload["records"] = list_bonus_records(
+            conversions,
+            regulations,
+            school_codes=school_codes or None,
+            years=years or None,
         )
         payload["ok"] = True
         return jsonify(payload)
@@ -2051,10 +2079,33 @@ def create_app() -> Flask:
                 "noi_dung": note.get("noi_dung") or "",
                 "nguon": note.get("url_nguon") or note.get("nguon") or "",
             })
+        calculators = []
+        by_school: Dict[str, Dict[str, Any]] = {}
+        for row in cached.get("rows") or []:
+            code = str(row.get("ma_truong") or "").strip().upper()
+            if not code:
+                continue
+            bucket = by_school.setdefault(code, {"name": row.get("ten_truong") or "", "rows": []})
+            if row.get("ten_truong"):
+                bucket["name"] = row.get("ten_truong")
+            bucket["rows"].append(row)
+        for code, bucket in sorted(by_school.items()):
+            latest_rows, year, narrowed = rows_for_latest_year(bucket["rows"])
+            methods = list_methods_from_rows(latest_rows, code)
+            if len(methods) < 2:
+                continue
+            calculators.append({
+                "ma_truong": code,
+                "ten_truong": bucket["name"],
+                "nam": year,
+                "nhieu_nam": narrowed,
+                "methods": [{"id": m.get("id"), "label": m.get("label") or m.get("id")} for m in methods],
+            })
         return jsonify({
             "ok": True,
             "total": len(items),
             "rows": items,
+            "calculators": calculators,
             "download_url": cached.get("download_url") or "",
         })
 

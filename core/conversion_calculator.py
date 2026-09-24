@@ -203,6 +203,7 @@ class ConversionCalcResult:
     equivalents: List[ConvertedMethodResult] = field(default_factory=list)
     groups: List[ConversionGroupResult] = field(default_factory=list)
     all_methods: List[str] = field(default_factory=list)
+    nam: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
@@ -238,6 +239,28 @@ def _interpolate(score: float, src: Tuple[float, float], dst: Tuple[float, float
     ratio = max(0.0, min(1.0, ratio))
     val = d_lo + ratio * (d_hi - d_lo)
     return round(val, 2)
+
+
+def row_year(row: Dict[str, Any]) -> Optional[int]:
+    """Năm của một dòng bảng quy đổi, nếu ghi nhận được."""
+    try:
+        year = int(row.get("nam"))
+    except (TypeError, ValueError):
+        return None
+    return year if year > 1900 else None
+
+
+def rows_for_latest_year(rows: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], Optional[int], bool]:
+    """
+    Nếu cùng trường có nhiều năm, chỉ giữ năm lớn nhất.
+    Trả về (dòng đã lọc, năm dùng, có thu hẹp theo năm hay không).
+    """
+    years = {year for year in (row_year(row) for row in rows) if year}
+    if len(years) <= 1:
+        return rows, (max(years) if years else None), False
+    latest = max(years)
+    kept = [row for row in rows if row_year(row) == latest]
+    return (kept or rows), latest, bool(kept)
 
 
 def list_methods_from_rows(rows: List[Dict[str, Any]], school_code: str = "") -> List[Dict[str, str]]:
@@ -394,13 +417,16 @@ def calculate_equivalence(
     Nếu có nhiều bảng BPV theo tổ hợp (A00/D01…), trả về `groups` cho từng tổ hợp.
     """
     school_rows = [r for r in rows if r.get("ma_truong") == school_code]
+    school_rows, used_year, narrowed = rows_for_latest_year(school_rows)
     if table_title:
         school_rows = [
             r for r in school_rows
             if (r.get("tieu_de_bang") or "") == table_title
         ]
     if not school_rows:
-        school_rows = [r for r in rows if r.get("ma_truong") == school_code]
+        school_rows, used_year, narrowed = rows_for_latest_year(
+            [r for r in rows if r.get("ma_truong") == school_code]
+        )
     if not school_rows:
         return ConversionCalcResult(
             ok=False,
@@ -497,6 +523,8 @@ def calculate_equivalence(
         if n_ok > 1
         else "Khớp khoảng quy đổi BPV/bảng và ước tính điểm tương đương (nội suy tuyến tính trong khoảng)."
     )
+    if narrowed and used_year:
+        msg = f"Dùng bảng năm {used_year} (năm gần nhất). {msg}"
     return ConversionCalcResult(
         ok=True,
         ma_truong=school_code,
@@ -506,6 +534,7 @@ def calculate_equivalence(
         diem_nhap=score,
         khoang_khop=primary.khoang_khop,
         message=msg,
+        nam=used_year,
         equivalents=primary.equivalents,
         groups=groups,
         all_methods=all_methods,

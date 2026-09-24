@@ -1,0 +1,1027 @@
+{% extends "base.html" %}
+{% block title %}Kiểm chứng dữ liệu{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@7.4.0/dist/apexcharts.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<ul class="nav nav-pills mb-3" id="verifyPills">
+  <li class="nav-item">
+    <button class="nav-link active" type="button" data-verify-pane="scores">Dữ liệu điểm</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" type="button" data-verify-pane="convert">Quy chế quy đổi điểm</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" type="button" data-verify-pane="bonus">Điểm ưu tiên, khuyến khích</button>
+  </li>
+</ul>
+
+<div id="verifyScores">
+  <div class="card panel-card mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small mb-1" for="scoreSchool">Trường</label>
+          <select id="scoreSchool" class="form-select form-select-sm js-multi-select"
+            data-placeholder="Chọn một trường"></select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small mb-1" for="scoreMajor">Ngành tuyển sinh</label>
+          <select id="scoreMajor" class="form-select form-select-sm js-multi-select" multiple disabled
+            data-placeholder="Chọn ngành của trường"></select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small mb-1" for="scoreMethod">Phương thức</label>
+          <select id="scoreMethod" class="form-select form-select-sm js-multi-select" disabled
+            data-placeholder="Chọn phương thức"></select>
+        </div>
+        <div class="col-auto">
+          <button type="button" class="btn btn-teal" id="btnFindScores">
+            <i class="bi bi-search"></i> Tìm
+          </button>
+        </div>
+      </div>
+      <div id="scoreMsg" class="mt-3"></div>
+    </div>
+  </div>
+  <div class="card panel-card mb-3 d-none" id="scoreChartCard">
+    <div class="card-body">
+      <div class="chart-wrap">
+        <div id="scoreSpreadChart"></div>
+      </div>
+      <div class="score-comment mt-3" id="scoreComment"></div>
+    </div>
+  </div>
+  <div class="card panel-card">
+    <div class="card-body border-bottom py-2">
+      <div class="small text-muted" id="scoreInfo">Chưa tìm</div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle table-nowrap-head" id="verifyScoreTable">
+          <thead class="table-light sticky-top" id="verifyScoreHead">
+            <tr>
+              <th>#</th>
+              <th>Trường</th>
+              <th>Ngành tuyển sinh</th>
+              <th>Phương thức</th>
+              <th>Nguồn</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="verifyConvert" class="d-none">
+  <div class="card panel-card mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-8 col-lg-6">
+          <label class="form-label small mb-1" for="convertSchool">Trường</label>
+          <select id="convertSchool" class="form-select form-select-sm js-multi-select" multiple
+            data-placeholder="Chọn trường đã thu thập"></select>
+        </div>
+        <div class="col-auto">
+          <button type="button" class="btn btn-teal" id="btnFindConvert">
+            <i class="bi bi-search"></i> Tìm
+          </button>
+        </div>
+      </div>
+      <div id="convertMsg" class="mt-3"></div>
+      <div id="convertCalcs" class="mt-3 d-none"></div>
+    </div>
+  </div>
+  <div class="card panel-card">
+    <div class="card-body border-bottom py-2">
+      <div class="small text-muted" id="convertInfo">Chưa tìm</div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="verifyConvertTable">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th>#</th>
+              <th>Trường</th>
+              <th>Năm</th>
+              <th>Loại</th>
+              <th>Nội dung quy đổi</th>
+              <th>Nguồn</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="verifyBonus" class="d-none">
+  <div class="card panel-card mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small mb-1" for="bonusSchool">Trường</label>
+          <select id="bonusSchool" class="form-select form-select-sm js-multi-select"
+            data-placeholder="Chọn một trường"></select>
+        </div>
+      </div>
+      <div class="row g-2 mt-1 align-items-end" id="bonusInputs"></div>
+      <div class="mt-2 d-none" id="bonusCalcWrap">
+        <button type="button" class="btn btn-teal" id="btnCalcBonus">
+          <i class="bi bi-plus-circle"></i> Tính điểm cộng
+        </button>
+      </div>
+      <p class="small text-muted mb-0 mt-2 d-none" id="bonusYearNote"></p>
+      <div id="bonusMsg" class="mt-3"></div>
+      <div id="bonusResult" class="mt-3"></div>
+    </div>
+  </div>
+  <div class="card panel-card">
+    <div class="card-body border-bottom py-2">
+      <div class="small text-muted" id="bonusInfo">Chưa tìm</div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="verifyBonusTable">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th>#</th>
+              <th>Trường</th>
+              <th>Năm</th>
+              <th>Phương thức</th>
+              <th>Điều kiện</th>
+              <th>Điểm cộng</th>
+              <th>Nguồn</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="verifySourceModal" tabindex="-1" aria-labelledby="verifySourceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="verifySourceModalLabel">Nguồn dữ liệu</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2" id="verifySourceCaption"></p>
+        <ol class="mb-0" id="verifySourceList"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
+<script>
+let scoreRows = [];
+let convertRows = [];
+let convertCalcs = [];
+let bonusRows = [];
+let shownBonus = [];
+let shownConvert = [];
+let shownScoreGroups = [];
+let scoreChart = null;
+const SCORE_COLORS = ['#0d7377', '#c45c26', '#1a5276', '#6c3483', '#1e8449', '#b7950b', '#922b21', '#1a5276', '#148f77', '#5d6d7e'];
+
+document.querySelectorAll('select.js-multi-select').forEach(el => {
+  window.App.initMultiSelect(el, {
+    placeholder: el.getAttribute('data-placeholder') || 'Chọn…',
+  });
+});
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function codeName(code, name) {
+  const label = String(code || '').trim();
+  const title = String(name || '').trim();
+  if (label && title) return `[${label}] - ${title}`;
+  return label || title || '—';
+}
+
+function sourceUrls(texts) {
+  const found = String((texts || []).join(' ')).match(/https?:\/\/[^\s<>"')]+/g) || [];
+  return [...new Set(found.map(url => url.replace(/[.,;]+$/, '')))];
+}
+
+function schoolOptions(rows) {
+  const map = new Map();
+  (rows || []).forEach(row => {
+    const code = String(row.ma_truong || '').toUpperCase();
+    if (!code || map.has(code)) return;
+    map.set(code, row.ten_truong || '');
+  });
+  return [...map.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0], 'vi'))
+    .map(([code, name]) => `<option value="${escapeHtml(code)}">${escapeHtml(codeName(code, name))}</option>`)
+    .join('');
+}
+
+function selectedSchools(id) {
+  return new Set(window.App.getSelectValues(document.getElementById(id)).map(code => String(code).toUpperCase()));
+}
+
+function majorKey(row) {
+  return String(row.ma_nganh || row.ten_nganh || '').trim();
+}
+
+function rowsOfSchool(code) {
+  const key = String(code || '').toUpperCase();
+  return scoreRows.filter(row => String(row.ma_truong || '').toUpperCase() === key);
+}
+
+function majorOptions(rows) {
+  const map = new Map();
+  (rows || []).forEach(row => {
+    const key = majorKey(row);
+    if (!key || map.has(key)) return;
+    map.set(key, codeName(row.ma_nganh, row.ten_nganh));
+  });
+  return [...map.entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'vi'))
+    .map(([key, label]) => `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`)
+    .join('');
+}
+
+function methodCounts(rows) {
+  const counts = new Map();
+  (rows || []).forEach(row => {
+    const method = String(row.phuong_thuc || '').trim();
+    if (!method) return;
+    counts.set(method, (counts.get(method) || 0) + 1);
+  });
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'vi'));
+}
+
+function preferMethod(methods) {
+  const thpt = methods.find(([name]) => /thpt/i.test(name));
+  return (thpt || methods[0] || [''])[0];
+}
+
+function fillScoreDependents(code) {
+  const majorEl = document.getElementById('scoreMajor');
+  const methodEl = document.getElementById('scoreMethod');
+  const rows = rowsOfSchool(code);
+  majorEl.disabled = !code;
+  methodEl.disabled = !code;
+  const methods = methodCounts(rows);
+  window.App.setSelectOptions(majorEl, majorOptions(rows), [], {
+    placeholder: code ? 'Chọn ngành của trường' : 'Chọn trường trước',
+  });
+  window.App.setSelectOptions(
+    methodEl,
+    methods.map(([name, count]) => `<option value="${escapeHtml(name)}">${escapeHtml(name)} (${count})</option>`).join(''),
+    preferMethod(methods),
+    { placeholder: 'Chọn phương thức' },
+  );
+}
+
+function fmtScore(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '—';
+  return Number.isInteger(num) ? String(num) : String(Math.round(num * 100) / 100);
+}
+
+function scoreSeries(rows, majors, method) {
+  const grouped = new Map();
+  rows.forEach(row => {
+    if (String(row.phuong_thuc || '').trim() !== method) return;
+    const key = majorKey(row);
+    if (!majors.has(key)) return;
+    if (!grouped.has(key)) {
+      grouped.set(key, { label: codeName(row.ma_nganh, row.ten_nganh), byYear: {} });
+    }
+    const year = Number(row.nam);
+    const score = row.diem_chuan;
+    if (year && score != null && score !== '' && Number.isFinite(Number(score))) {
+      grouped.get(key).byYear[year] = Number(score);
+    }
+  });
+  const groups = [...grouped.values()].filter(group => Object.keys(group.byYear).length);
+  const years = [...new Set(groups.flatMap(group => Object.keys(group.byYear).map(Number)))].sort((a, b) => a - b);
+  return { years, groups };
+}
+
+function buildScoreComment(groups, years, schoolLabel, method) {
+  if (!groups.length) return 'Các ngành đã chọn chưa có điểm chuẩn số cho phương thức này.';
+  const span = years.length > 1 ? `${years[0]}–${years[years.length - 1]}` : String(years[0] || '');
+  const lines = [`Phổ điểm chuẩn ${method} tại ${schoolLabel}${span ? `, các năm ${span}` : ''}.`];
+  const bands = years.map(year => {
+    const vals = groups.map(group => group.byYear[year]).filter(value => value != null).sort((a, b) => a - b);
+    if (!vals.length) return null;
+    return {
+      year,
+      lo: vals[0],
+      hi: vals[vals.length - 1],
+      mid: vals[Math.floor((vals.length - 1) / 2)],
+    };
+  }).filter(Boolean);
+
+  if (bands.length < 2) {
+    const band = bands[0];
+    lines.push(band
+      ? `Mới có điểm của năm ${band.year}, nên chưa so được xu hướng. Điểm chuẩn nằm trong khoảng ${fmtScore(band.lo)}–${fmtScore(band.hi)} (${groups.length} ngành).`
+      : 'Chưa có đủ điểm theo năm để nhận xét xu hướng.');
+    return lines.join(' ');
+  }
+
+  const first = bands[0];
+  const last = bands[bands.length - 1];
+  const delta = last.mid - first.mid;
+  const direction = Math.abs(delta) < 0.15 ? 'gần như đi ngang' : (delta > 0 ? 'nhích lên' : 'hạ xuống');
+  lines.push(`Trung vị điểm chuẩn ${direction}: ${fmtScore(first.mid)} (${first.year}) so với ${fmtScore(last.mid)} (${last.year}), chênh ${fmtScore(Math.abs(delta))} điểm.`);
+  const spread = bands.filter(band => groups.filter(group => group.byYear[band.year] != null).length >= 2);
+  if (spread.length >= 2) {
+    const early = spread[0];
+    const late = spread[spread.length - 1];
+    const widthEarly = early.hi - early.lo;
+    const widthLate = late.hi - late.lo;
+    const widthWord = Math.abs(widthLate - widthEarly) < 0.2
+      ? 'giữ biên độ tương đương'
+      : (widthLate > widthEarly ? 'nở rộng' : 'thu hẹp');
+    lines.push(`Khoảng cách giữa ngành cao nhất và thấp nhất ${widthWord}: ${fmtScore(widthEarly)} điểm (${early.year}) và ${fmtScore(widthLate)} điểm (${late.year}).`);
+  }
+
+  const movers = groups.map(group => {
+    const present = years.filter(year => group.byYear[year] != null);
+    if (present.length < 2) return null;
+    const start = group.byYear[present[0]];
+    const end = group.byYear[present[present.length - 1]];
+    return { name: group.label, start, end, delta: end - start, y0: present[0], y1: present[present.length - 1] };
+  }).filter(Boolean).sort((a, b) => b.delta - a.delta);
+
+  if (movers.length) {
+    const up = movers.filter(item => item.delta >= 0.15).length;
+    const down = movers.filter(item => item.delta <= -0.15).length;
+    const flat = movers.length - up - down;
+    const bits = [];
+    if (up) bits.push(`${up} ngành tăng`);
+    if (down) bits.push(`${down} ngành giảm`);
+    if (flat) bits.push(`${flat} ngành ổn định`);
+    lines.push(`So năm đầu và năm cuối có điểm: ${bits.join(', ')}.`);
+    const risen = movers[0];
+    const fallen = movers[movers.length - 1];
+    if (risen && risen.delta >= 0.15) {
+      lines.push(`${risen.name} tăng nhiều nhất, từ ${fmtScore(risen.start)} (${risen.y0}) lên ${fmtScore(risen.end)} (${risen.y1}).`);
+    }
+    if (fallen && fallen !== risen && fallen.delta <= -0.15) {
+      lines.push(`${fallen.name} giảm nhiều nhất, từ ${fmtScore(fallen.start)} (${fallen.y0}) xuống ${fmtScore(fallen.end)} (${fallen.y1}).`);
+    }
+  }
+
+  if (groups.length > 1) {
+    const ranked = groups
+      .map(group => ({ name: group.label, value: group.byYear[last.year] }))
+      .filter(item => item.value != null)
+      .sort((a, b) => b.value - a.value);
+    if (ranked.length >= 2) {
+      lines.push(`Năm ${last.year}, ${ranked[0].name} cao nhất (${fmtScore(ranked[0].value)}), ${ranked[ranked.length - 1].name} thấp nhất (${fmtScore(ranked[ranked.length - 1].value)}).`);
+    }
+  }
+
+  const gapped = groups.filter(group => years.some(year => group.byYear[year] == null));
+  if (gapped.length === 1) {
+    lines.push(`${gapped[0].label} thiếu điểm ở một số năm, nên đường trên biểu đồ có thể đứt đoạn.`);
+  } else if (gapped.length > 1) {
+    lines.push(`${gapped.length} ngành thiếu điểm ở một số năm, nên đường trên biểu đồ có thể đứt đoạn.`);
+  }
+  return lines.join(' ');
+}
+
+function destroyScoreChart() {
+  if (scoreChart) {
+    try { scoreChart.destroy(); } catch (_) {}
+    scoreChart = null;
+  }
+  const el = document.getElementById('scoreSpreadChart');
+  if (el) el.innerHTML = '';
+}
+
+function paintScoreChart(rows, majors, method, schoolLabel) {
+  const card = document.getElementById('scoreChartCard');
+  const { years, groups } = scoreSeries(rows, majors, method);
+  const comment = document.getElementById('scoreComment');
+  if (!groups.length || typeof ApexCharts === 'undefined') {
+    destroyScoreChart();
+    card.classList.remove('d-none');
+    comment.textContent = buildScoreComment(groups, years, schoolLabel, method);
+    return;
+  }
+  card.classList.remove('d-none');
+  destroyScoreChart();
+  scoreChart = new ApexCharts(document.querySelector('#scoreSpreadChart'), {
+    series: groups.map(group => ({
+      name: group.label,
+      data: years.map(year => (group.byYear[year] != null ? group.byYear[year] : null)),
+    })),
+    chart: {
+      height: 420,
+      type: 'line',
+      fontFamily: 'inherit',
+      toolbar: { show: true, tools: { download: true, selection: false, zoom: true, zoomin: true, zoomout: true, pan: false, reset: true } },
+      zoom: { enabled: true },
+      animations: { enabled: true, speed: 450 },
+    },
+    colors: SCORE_COLORS,
+    stroke: { width: 2.5, curve: 'smooth' },
+    markers: { size: 4, hover: { sizeOffset: 2 } },
+    dataLabels: { enabled: groups.length <= 3 },
+    title: {
+      text: `Phổ điểm chuẩn · ${method}`,
+      align: 'left',
+      style: { fontSize: '15px', fontWeight: 400, color: '#1a2b33' },
+    },
+    subtitle: {
+      text: `${schoolLabel} · mỗi đường là một ngành`,
+      align: 'left',
+      style: { fontSize: '12px', color: '#4a5c64' },
+    },
+    grid: { borderColor: '#d7e3de', strokeDashArray: 3 },
+    legend: { position: 'bottom', fontSize: '11px', itemMargin: { horizontal: 8, vertical: 4 } },
+    tooltip: { shared: true, intersect: false, y: { formatter: (value) => (value == null ? '—' : fmtScore(value)) } },
+    xaxis: {
+      categories: years.map(String),
+      title: { text: 'Năm', style: { color: '#4a5c64' } },
+      labels: { style: { colors: '#4a5c64' } },
+    },
+    yaxis: {
+      title: { text: 'Điểm chuẩn', style: { color: '#4a5c64' } },
+      labels: {
+        formatter: (value) => (value == null ? '' : Number(value).toFixed(1)),
+        style: { colors: '#4a5c64' },
+      },
+      decimalsInFloat: 2,
+    },
+  });
+  scoreChart.render();
+  comment.textContent = buildScoreComment(groups, years, schoolLabel, method);
+}
+
+function openSources(caption, texts) {
+  const urls = sourceUrls(texts);
+  document.getElementById('verifySourceCaption').textContent = caption;
+  document.getElementById('verifySourceList').innerHTML = urls.length
+    ? urls.map(url => `<li class="mb-1"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></li>`).join('')
+    : '<li>Không có liên kết.</li>';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('verifySourceModal')).show();
+}
+
+function renderScores(rows) {
+  const yearList = [...new Set((rows || []).map(row => Number(row.nam)).filter(Boolean))].sort((a, b) => a - b);
+  const head = document.getElementById('verifyScoreHead');
+  const span = yearList.length ? ' rowspan="2"' : '';
+  const groups = yearList.length
+    ? `<th class="text-center" colspan="${yearList.length}">Điểm chuẩn</th><th class="text-center" colspan="${yearList.length}">Chỉ tiêu</th>`
+    : '';
+  const yearHeads = yearList.length
+    ? `<tr>${yearList.map(year => `<th class="text-center">${year}</th>`).join('')}${yearList.map(year => `<th class="text-center">${year}</th>`).join('')}</tr>`
+    : '';
+  head.innerHTML = `<tr>
+    <th${span}>#</th><th${span}>Trường</th><th${span}>Ngành tuyển sinh</th><th${span}>Phương thức</th>
+    ${groups}<th${span}>Nguồn</th>
+  </tr>${yearHeads}`;
+
+  const grouped = new Map();
+  (rows || []).forEach(row => {
+    const key = [row.ma_truong || '', row.ma_nganh || row.ten_nganh || '', row.phuong_thuc || ''].join('|');
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        ma_truong: row.ma_truong || '',
+        ten_truong: row.ten_truong || '',
+        ma_nganh: row.ma_nganh || '',
+        ten_nganh: row.ten_nganh || '',
+        phuong_thuc: row.phuong_thuc || '',
+        byYear: {},
+        sources: [],
+      });
+    }
+    const group = grouped.get(key);
+    const year = Number(row.nam);
+    if (year) {
+      const cell = group.byYear[year] || {};
+      if (row.diem_chuan != null && row.diem_chuan !== '') cell.diem = row.diem_chuan;
+      if (row.chi_tieu != null && row.chi_tieu !== '') cell.chi_tieu = row.chi_tieu;
+      group.byYear[year] = cell;
+    }
+    if (row.nguon && !group.sources.includes(row.nguon)) group.sources.push(row.nguon);
+  });
+
+  const list = [...grouped.values()];
+  shownScoreGroups = list;
+  document.querySelector('#verifyScoreTable tbody').innerHTML = list.map((group, i) => `
+    <tr>
+      <td class="text-muted">${i + 1}</td>
+      <td class="text-nowrap">${escapeHtml(codeName(group.ma_truong, group.ten_truong))}</td>
+      <td class="result-major">${escapeHtml(codeName(group.ma_nganh, group.ten_nganh))}</td>
+      <td>${escapeHtml(group.phuong_thuc || '—')}</td>
+      ${yearList.map(year => `<td class="text-center">${escapeHtml((group.byYear[year] || {}).diem ?? '—')}</td>`).join('')}
+      ${yearList.map(year => `<td class="text-center">${escapeHtml((group.byYear[year] || {}).chi_tieu ?? '—')}</td>`).join('')}
+      <td class="text-nowrap">
+        ${sourceUrls(group.sources).length
+          ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-score-source="${i}">Chi tiết</button>`
+          : '—'}
+      </td>
+    </tr>`).join('');
+  document.getElementById('scoreInfo').textContent = list.length
+    ? `${list.length} ngành × phương thức`
+    : 'Không có dữ liệu điểm cho trường đã chọn';
+  return list;
+}
+
+function renderConvert(rows) {
+  shownConvert = rows || [];
+  document.querySelector('#verifyConvertTable tbody').innerHTML = shownConvert.map((row, i) => `
+    <tr>
+      <td class="text-muted">${i + 1}</td>
+      <td class="text-nowrap">${escapeHtml(codeName(row.ma_truong, row.ten_truong))}</td>
+      <td class="text-center">${escapeHtml(row.nam || '—')}</td>
+      <td>${escapeHtml(row.loai || '—')}</td>
+      <td class="convert-body">${escapeHtml(row.noi_dung || '—')}</td>
+      <td class="text-nowrap">
+        ${sourceUrls([row.nguon]).length
+          ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-convert-source="${i}">Chi tiết</button>`
+          : '—'}
+      </td>
+    </tr>`).join('');
+  document.getElementById('convertInfo').textContent = shownConvert.length
+    ? `${shownConvert.length} dòng quy đổi`
+    : 'Không có quy chế quy đổi cho trường đã chọn';
+}
+
+function renderConvertCalcs(picked) {
+  const box = document.getElementById('convertCalcs');
+  const list = convertCalcs.filter(item => picked.has(String(item.ma_truong || '').toUpperCase()));
+  if (!list.length) {
+    box.classList.add('d-none');
+    box.innerHTML = '';
+    return;
+  }
+  box.classList.remove('d-none');
+  box.innerHTML = list.map(item => {
+    const code = item.ma_truong;
+    const yearNote = item.nam
+      ? (item.nhieu_nam
+        ? `Quy chế khác giữa các năm — dùng bảng năm ${item.nam} (năm gần nhất).`
+        : `Bảng quy đổi năm ${item.nam}.`)
+      : 'Bảng quy đổi đã lưu của trường.';
+    const options = (item.methods || []).map(method =>
+      `<option value="${escapeHtml(method.id)}">${escapeHtml(method.label || method.id)}</option>`
+    ).join('');
+    return `<div class="border rounded-3 p-3 mb-2" data-convert-calc="${escapeHtml(code)}">
+      <div class="mb-1">${escapeHtml(codeName(code, item.ten_truong))}</div>
+      <p class="small text-muted mb-2">${escapeHtml(yearNote)} Nhập điểm một phương thức để xem điểm tương đương các phương thức còn lại.</p>
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small mb-1">Điểm theo phương thức</label>
+          <select class="form-select form-select-sm js-multi-select" data-calc-method
+            data-placeholder="Chọn phương thức">${options}</select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small mb-1">Nhập điểm</label>
+          <input type="number" step="0.01" class="form-control form-control-sm" data-calc-score placeholder="VD: 27.5">
+        </div>
+        <div class="col-auto">
+          <button type="button" class="btn btn-teal" data-calc-run="${escapeHtml(code)}">Quy đổi</button>
+        </div>
+      </div>
+      <div class="mt-2" data-calc-msg></div>
+      <div class="mt-2" data-calc-result></div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('select.js-multi-select').forEach(el => {
+    window.App.initMultiSelect(el, { placeholder: el.getAttribute('data-placeholder') || 'Chọn phương thức' });
+  });
+}
+
+function renderConvertCalcResult(card, payload) {
+  const msg = card.querySelector('[data-calc-msg]');
+  const box = card.querySelector('[data-calc-result]');
+  const result = (payload && payload.result) || {};
+  if (!payload || !payload.ok) {
+    msg.innerHTML = `<div class="alert alert-warning py-2 mb-0">${escapeHtml(payload && (payload.error || (payload.result && payload.result.message)) || 'Không tính được.')}</div>`;
+    box.innerHTML = '';
+    return;
+  }
+  const groups = (result.groups || []).filter(group => group.ok);
+  const yearNote = result.nam ? ` · Năm ${result.nam}` : '';
+  msg.innerHTML = `<div class="alert alert-success py-2 mb-0">${escapeHtml(result.message || 'Đã quy đổi.')}
+    <div class="small mt-1">Nguồn <b>${escapeHtml(result.phuong_thuc_nguon || '')}</b> = <b>${escapeHtml(result.diem_nhap)}</b>${escapeHtml(yearNote)}</div></div>`;
+
+  function tiles(eqs, source) {
+    return `<div class="row g-2">${(eqs || []).map(item => `
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="calc-result-tile ${item.phuong_thuc === source ? 'is-source' : ''}">
+          <div class="small text-muted">${escapeHtml(item.ten_hien_thi || item.phuong_thuc)}</div>
+          <div class="calc-est">${item.diem_uoc_tinh != null ? escapeHtml(item.diem_uoc_tinh) : '—'}</div>
+          <div class="small">Khoảng: <b>${escapeHtml(item.khoang || '—')}</b></div>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  if (groups.length > 1) {
+    box.innerHTML = groups.map(group => `
+      <div class="border rounded-3 p-2 mb-2">
+        <div class="small mb-2">${escapeHtml([group.block, group.applied || group.tieu_de].filter(Boolean).join(' · '))}</div>
+        ${tiles(group.equivalents, result.phuong_thuc_nguon)}
+      </div>`).join('');
+    return;
+  }
+  const eqs = (groups[0] && groups[0].equivalents) || result.equivalents || [];
+  box.innerHTML = tiles(eqs, result.phuong_thuc_nguon);
+}
+
+async function runConvertCalc(card) {
+  const code = card.getAttribute('data-convert-calc');
+  const method = window.App.getSelectValues(card.querySelector('[data-calc-method]'))[0] || '';
+  const score = card.querySelector('[data-calc-score]').value;
+  const msg = card.querySelector('[data-calc-msg]');
+  if (score === '' || score == null) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Nhập điểm cần quy đổi.</div>';
+    return;
+  }
+  msg.innerHTML = '<div class="small text-muted">Đang quy đổi…</div>';
+  card.querySelector('[data-calc-result]').innerHTML = '';
+  try {
+    const res = await fetch('/api/quy-doi/tinh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, method, score, mode: 'method', refresh: false }),
+    });
+    const data = await res.json();
+    renderConvertCalcResult(card, data);
+  } catch (err) {
+    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(err.message || 'Không quy đổi được.')}</div>`;
+  }
+}
+
+document.getElementById('verifyPills').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-verify-pane]');
+  if (!btn) return;
+  document.querySelectorAll('#verifyPills .nav-link').forEach(el => el.classList.toggle('active', el === btn));
+  const pane = btn.dataset.verifyPane;
+  document.getElementById('verifyScores').classList.toggle('d-none', pane !== 'scores');
+  document.getElementById('verifyConvert').classList.toggle('d-none', pane !== 'convert');
+  document.getElementById('verifyBonus').classList.toggle('d-none', pane !== 'bonus');
+});
+
+document.getElementById('scoreSchool').addEventListener('change', () => {
+  const code = [...selectedSchools('scoreSchool')][0] || '';
+  fillScoreDependents(code);
+  document.getElementById('scoreChartCard').classList.add('d-none');
+  document.getElementById('scoreMsg').innerHTML = '';
+  destroyScoreChart();
+});
+
+document.getElementById('btnFindScores').addEventListener('click', () => {
+  const picked = [...selectedSchools('scoreSchool')];
+  const majors = new Set(window.App.getSelectValues(document.getElementById('scoreMajor')));
+  const method = window.App.getSelectValues(document.getElementById('scoreMethod'))[0] || '';
+  const msg = document.getElementById('scoreMsg');
+  if (!picked.length) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn một trường.</div>';
+    return;
+  }
+  if (!majors.size) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một ngành tuyển sinh.</div>';
+    return;
+  }
+  if (!method) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn phương thức để vẽ phổ điểm.</div>';
+    return;
+  }
+  msg.innerHTML = '';
+  const schoolRows = rowsOfSchool(picked[0]);
+  const matched = schoolRows.filter(row => majors.has(majorKey(row)));
+  renderScores(matched);
+  const sample = schoolRows.find(row => String(row.ma_truong || '').toUpperCase() === picked[0]) || {};
+  paintScoreChart(matched, majors, method, codeName(sample.ma_truong || picked[0], sample.ten_truong));
+});
+
+function bonusMethodKey(row) {
+  return String(row.phuong_thuc || '').trim() || '—';
+}
+
+function bonusMethodLabel(key) {
+  return !key || key === '—' ? 'Mọi phương thức' : key;
+}
+
+const BONUS_KINDS = ['IELTS', 'TOEFL', 'TOEIC', 'VSTEP', 'Cambridge', 'SAT', 'ACT', 'A-Level', 'JLPT', 'HSK', 'TSA', 'HSA', 'V-ACT'];
+
+function parseScoreBands(text) {
+  const raw = String(text || '').replace(/[–—−]/g, '-');
+  const ranges = [...raw.matchAll(/(\d+(?:[.,]\d+)?)\s*-\s*(\d+(?:[.,]\d+)?)/g)];
+  if (ranges.length) {
+    return ranges.map(match => {
+      let lo = Number(String(match[1]).replace(',', '.'));
+      let hi = Number(String(match[2]).replace(',', '.'));
+      if (lo > hi) [lo, hi] = [hi, lo];
+      return { lo, hi };
+    }).filter(band => Number.isFinite(band.lo) && Number.isFinite(band.hi));
+  }
+  const up = raw.match(/(?:≥|>=|từ)\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s*(?:trở lên|\+)/i);
+  if (up) {
+    const lo = Number(String(up[1] || up[2]).replace(',', '.'));
+    if (Number.isFinite(lo)) return [{ lo, hi: Infinity }];
+  }
+  const nums = [...raw.matchAll(/\d+(?:[.,]\d+)?/g)].map(match => Number(String(match[0]).replace(',', '.')));
+  if (nums.length === 1 && Number.isFinite(nums[0])) return [{ lo: nums[0], hi: nums[0] }];
+  return [];
+}
+
+function scoreInBand(score, band) {
+  if (band.hi === Infinity) return score + 1e-9 >= band.lo;
+  return band.lo - 1e-9 <= score && score <= band.hi + 1e-9;
+}
+
+function conditionKinds(text) {
+  const found = BONUS_KINDS.filter(name => new RegExp(name.replace('-', '[- ]?'), 'i').test(text));
+  return found.length ? found : [];
+}
+
+function bonusForSchool(code) {
+  const rows = bonusRows.filter(row => String(row.ma_truong || '').toUpperCase() === String(code || '').toUpperCase());
+  const years = [...new Set(rows.map(row => Number(row.nam)).filter(Boolean))];
+  const latest = years.length ? Math.max(...years) : null;
+  const narrowed = years.length > 1;
+  const used = narrowed ? rows.filter(row => Number(row.nam) === latest) : rows;
+  return { rows: used.length ? used : rows, year: latest, narrowed };
+}
+
+function bonusKindsFor(rows) {
+  const kinds = [];
+  (rows || []).forEach(row => {
+    const bands = row.bands || [];
+    if (bands.length) {
+      bands.forEach(band => {
+        if (band.kind && !kinds.includes(band.kind)) kinds.push(band.kind);
+      });
+      return;
+    }
+    if (!parseScoreBands(row.dieu_kien).length) return;
+    conditionKinds(row.dieu_kien).forEach(kind => {
+      if (!kinds.includes(kind)) kinds.push(kind);
+    });
+  });
+  return kinds;
+}
+
+function fillBonusInputs(code) {
+  const box = document.getElementById('bonusInputs');
+  const calcWrap = document.getElementById('bonusCalcWrap');
+  const note = document.getElementById('bonusYearNote');
+  const pack = bonusForSchool(code);
+  const kinds = bonusKindsFor(pack.rows);
+  const sample = { IELTS: 'VD: 7.6', 'TOEFL iBT': 'VD: 94', 'TOEFL ITP': 'VD: 627', TOEFL: 'VD: 94' };
+  box.replaceChildren();
+  kinds.forEach((kind, index) => {
+    const col = document.createElement('div');
+    col.className = 'col-6 col-md-3';
+    col.innerHTML = `
+      <label class="form-label small mb-1" for="bonusScore-${index}">${escapeHtml(kind)}</label>
+      <input type="number" step="0.01" class="form-control form-control-sm" id="bonusScore-${index}"
+        data-bonus-kind="${escapeHtml(kind)}" placeholder="${escapeHtml(sample[kind] || 'Nhập điểm')}">`;
+    box.appendChild(col);
+  });
+  calcWrap.classList.toggle('d-none', !kinds.length);
+  if (code && kinds.length) {
+    note.classList.remove('d-none');
+    note.textContent = (pack.narrowed && pack.year
+      ? `Quy chế khác giữa các năm — dùng bảng năm ${pack.year} (năm gần nhất). `
+      : (pack.year ? `Bảng điểm cộng năm ${pack.year}. ` : ''))
+      + 'Nhập điểm từng điều kiện. Nhiều điều kiện không cộng dồn — lấy mức cao nhất.';
+  } else if (code) {
+    note.classList.remove('d-none');
+    note.textContent = 'Trường này chưa có điều kiện nhập điểm.';
+  } else {
+    note.classList.add('d-none');
+    note.textContent = '';
+  }
+}
+
+function bonusNumber(text) {
+  const match = String(text || '').match(/(\d+(?:[.,]\d+)?)/);
+  if (!match) return 0;
+  const value = Number(match[1].replace(',', '.'));
+  return Number.isFinite(value) ? value : 0;
+}
+
+function bandsForKind(row, kind) {
+  const listed = (row.bands || []).filter(band => band.kind === kind);
+  if (listed.length) {
+    return listed.map(band => ({
+      lo: Number(band.lo),
+      hi: band.hi == null ? Infinity : Number(band.hi),
+      label: band.label || row.dieu_kien,
+    }));
+  }
+  if (!conditionKinds(row.dieu_kien).includes(kind)) return [];
+  return parseScoreBands(row.dieu_kien).map(band => ({ ...band, label: row.dieu_kien }));
+}
+
+function renderBonusTable(rows) {
+  shownBonus = rows || [];
+  document.querySelector('#verifyBonusTable tbody').innerHTML = shownBonus.map((row, i) => `
+    <tr>
+      <td class="text-muted">${i + 1}</td>
+      <td class="text-nowrap">${escapeHtml(codeName(row.ma_truong, row.ten_truong))}</td>
+      <td class="text-center">${escapeHtml(row.nam || '—')}</td>
+      <td>${escapeHtml(row.phuong_thuc || '—')}</td>
+      <td class="convert-body">${escapeHtml(row.dieu_kien || '—')}</td>
+      <td class="text-nowrap">${escapeHtml(row.diem_cong || '—')}</td>
+      <td class="text-nowrap">
+        ${sourceUrls([row.nguon]).length
+          ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-bonus-source="${i}">Chi tiết</button>`
+          : '—'}
+      </td>
+    </tr>`).join('');
+  document.getElementById('bonusInfo').textContent = shownBonus.length
+    ? `${shownBonus.length} mức điểm cộng`
+    : 'Không có điểm ưu tiên, khuyến khích cho trường đã chọn';
+}
+
+document.getElementById('bonusSchool').addEventListener('change', () => {
+  const code = window.App.getSelectValues(document.getElementById('bonusSchool'))[0] || '';
+  fillBonusInputs(code);
+  document.getElementById('bonusMsg').innerHTML = '';
+  document.getElementById('bonusResult').innerHTML = '';
+  renderBonusTable(code ? bonusForSchool(code).rows : []);
+});
+
+document.getElementById('bonusInputs').addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return;
+  if (!event.target.closest('[data-bonus-kind]')) return;
+  event.preventDefault();
+  document.getElementById('btnCalcBonus').click();
+});
+
+document.getElementById('btnCalcBonus').addEventListener('click', () => {
+  const code = window.App.getSelectValues(document.getElementById('bonusSchool'))[0] || '';
+  const msg = document.getElementById('bonusMsg');
+  const box = document.getElementById('bonusResult');
+  if (!code) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn một trường.</div>';
+    box.innerHTML = '';
+    return;
+  }
+  const entered = [...document.querySelectorAll('#bonusInputs [data-bonus-kind]')]
+    .map(input => ({
+      kind: input.dataset.bonusKind,
+      score: Number(String(input.value).replace(',', '.')),
+    }))
+    .filter(item => Number.isFinite(item.score));
+  if (!entered.length) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy nhập điểm ít nhất một điều kiện.</div>';
+    box.innerHTML = '';
+    return;
+  }
+  const hits = [];
+  bonusForSchool(code).rows.forEach(row => {
+    entered.forEach(item => {
+      const bands = bandsForKind(row, item.kind).filter(band => scoreInBand(item.score, band));
+      if (!bands.length) return;
+      const width = Math.min(...bands.map(band => (band.hi === Infinity ? 1e12 : band.hi - band.lo)));
+      hits.push({
+        row,
+        kind: item.kind,
+        score: item.score,
+        width,
+        amount: bonusNumber(row.diem_cong),
+        label: bands[0].label || row.dieu_kien,
+      });
+    });
+  });
+  const byMethod = new Map();
+  hits.forEach(hit => {
+    const key = bonusMethodKey(hit.row);
+    const current = byMethod.get(key);
+    if (!current || hit.amount > current.amount || (hit.amount === current.amount && hit.width < current.width)) {
+      byMethod.set(key, hit);
+    }
+  });
+  const matched = [...byMethod.values()];
+  if (!matched.length) {
+    const typed = entered.map(item => `${item.kind} ${item.score}`).join(', ');
+    msg.innerHTML = `<div class="alert alert-warning py-2 mb-0">${escapeHtml(typed)} không nằm trong các mức điểm cộng của trường.</div>`;
+    box.innerHTML = '';
+    return;
+  }
+  const sample = matched[0].row;
+  msg.innerHTML = `<div class="alert alert-success py-2 mb-0">${escapeHtml(codeName(sample.ma_truong, sample.ten_truong))} · không cộng dồn, lấy mức cao nhất</div>`;
+  box.innerHTML = `<div class="row g-2">${matched.map(hit => `
+    <div class="col-6 col-md-4 col-lg-3">
+      <div class="calc-result-tile">
+        <div class="small text-muted">${escapeHtml(bonusMethodLabel(bonusMethodKey(hit.row)))}</div>
+        <div class="calc-est">${escapeHtml(hit.row.diem_cong || '—')}</div>
+        <div class="small">Từ ${escapeHtml(hit.kind)} ${escapeHtml(hit.score)} · khớp ${escapeHtml(hit.label || hit.row.dieu_kien || '—')}</div>
+      </div>
+    </div>`).join('')}</div>`;
+});
+
+document.getElementById('verifyBonusTable').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-bonus-source]');
+  if (!btn) return;
+  const row = shownBonus[Number(btn.dataset.bonusSource)];
+  if (!row) return;
+  openSources(
+    [codeName(row.ma_truong, row.ten_truong), row.phuong_thuc || '', row.dieu_kien || ''].filter(Boolean).join(' · '),
+    [row.nguon],
+  );
+});
+
+document.getElementById('btnFindConvert').addEventListener('click', () => {
+  const picked = selectedSchools('convertSchool');
+  const msg = document.getElementById('convertMsg');
+  if (!picked.size) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một trường.</div>';
+    return;
+  }
+  msg.innerHTML = '';
+  renderConvert(convertRows.filter(row => picked.has(String(row.ma_truong || '').toUpperCase())));
+  renderConvertCalcs(picked);
+});
+
+document.getElementById('convertCalcs').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-calc-run]');
+  if (!btn) return;
+  const card = btn.closest('[data-convert-calc]');
+  if (card) runConvertCalc(card);
+});
+
+document.getElementById('convertCalcs').addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return;
+  const input = event.target.closest('[data-calc-score]');
+  if (!input) return;
+  event.preventDefault();
+  const card = input.closest('[data-convert-calc]');
+  if (card) runConvertCalc(card);
+});
+
+document.getElementById('verifyScoreTable').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-score-source]');
+  if (!btn) return;
+  const group = shownScoreGroups[Number(btn.dataset.scoreSource)];
+  if (!group) return;
+  openSources(
+    [codeName(group.ma_truong, group.ten_truong), codeName(group.ma_nganh, group.ten_nganh), group.phuong_thuc].filter(Boolean).join(' · '),
+    group.sources,
+  );
+});
+
+document.getElementById('verifyConvertTable').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-convert-source]');
+  if (!btn) return;
+  const row = shownConvert[Number(btn.dataset.convertSource)];
+  if (!row) return;
+  openSources([codeName(row.ma_truong, row.ten_truong), row.loai || ''].filter(Boolean).join(' · '), [row.nguon]);
+});
+
+(async function loadSaved() {
+  try {
+    const res = await fetch('/api/crawl/records');
+    const data = await res.json();
+    scoreRows = (data && data.ok && data.rows) || [];
+  } catch (_) {
+    scoreRows = [];
+  }
+  window.App.setSelectOptions(document.getElementById('scoreSchool'), schoolOptions(scoreRows), '', {
+    placeholder: 'Chọn một trường',
+  });
+  try {
+    const res = await fetch('/api/quy-doi/records');
+    const data = await res.json();
+    convertRows = (data && data.ok && data.rows) || [];
+    convertCalcs = (data && data.ok && data.calculators) || [];
+  } catch (_) {
+    convertRows = [];
+    convertCalcs = [];
+  }
+  window.App.setSelectOptions(document.getElementById('convertSchool'), schoolOptions(convertRows), [], {
+    placeholder: 'Chọn trường đã thu thập',
+  });
+  try {
+    const res = await fetch('/api/crawl/bonus');
+    const data = await res.json();
+    bonusRows = (data && data.ok && data.records) || [];
+  } catch (_) {
+    bonusRows = [];
+  }
+  window.App.setSelectOptions(document.getElementById('bonusSchool'), schoolOptions(bonusRows), '', {
+    placeholder: 'Chọn một trường',
+  });
+})();
+</script>
+{% endblock %}
