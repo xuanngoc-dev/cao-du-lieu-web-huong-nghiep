@@ -43,7 +43,19 @@ from crawlers.online_crawler import OnlineAdmissionCrawler
 from crawlers.score_conversion_crawler import ScoreConversionCrawler
 from crawlers.official_site_crawler import filter_official_urls, lookup_local_school
 from exporter.excel_exporter import ExcelAdmissionExporter
-from core.models import CrawlBundle
+from dataclasses import fields as dataclass_fields
+
+from core.models import (
+    AdmissionRecord,
+    AdmissionRegulation,
+    CrawlBundle,
+    MethodConversionBundle,
+    MethodConversionImage,
+    MethodConversionNote,
+    MethodEquivalenceRow,
+    MethodRangeHint,
+    ScoreConversionRecord,
+)
 from core.conversion_calculator import (
     calculate_equivalence,
     calculate_certificate_conversion,
@@ -61,6 +73,47 @@ from core.admission_chance import (
 from core.aggregator import METHOD_COLUMN_LABELS, build_grouped_score_view
 from core.bonus_policy import summarize_certificate_bonus
 from core import dataset_store
+
+
+def _keep_other_school_rows(items, replaced: set, years: List[int]):
+    """Giữ trường khác. Với trường vừa thu thập, chỉ thay các năm được chọn."""
+    year_set = {int(y) for y in years}
+    kept = []
+    for item in items or []:
+        code = str((item or {}).get("ma_truong") or "").upper()
+        if code not in replaced:
+            kept.append(item)
+            continue
+        nam = item.get("nam")
+        try:
+            year = int(nam) if nam not in (None, "") else None
+        except (TypeError, ValueError):
+            year = None
+        if year is not None and year not in year_set:
+            kept.append(item)
+    return kept
+
+
+def _quy_doi_bundle_from_cache(cached: dict) -> MethodConversionBundle:
+    bundle = MethodConversionBundle()
+    bundle.rows = _as_models(MethodEquivalenceRow, cached.get("rows"))
+    bundle.notes = _as_models(MethodConversionNote, cached.get("notes"))
+    bundle.images = _as_models(MethodConversionImage, cached.get("images"))
+    bundle.ranges = _as_models(MethodRangeHint, cached.get("ranges"))
+    bundle.conversions = _as_models(ScoreConversionRecord, cached.get("certificate_conversions"))
+    bundle.school_results = list(cached.get("school_results") or [])
+    return bundle
+
+
+def _as_models(cls, items):
+    names = {item.name for item in dataclass_fields(cls)}
+    out = []
+    for item in items or []:
+        if isinstance(item, cls):
+            out.append(item)
+        elif isinstance(item, dict):
+            out.append(cls(**{key: value for key, value in item.items() if key in names}))
+    return out
 
 
 def _enrich_methods_for_school(code: str, quy_doi_methods: List) -> List:
@@ -375,10 +428,7 @@ def create_app() -> Flask:
         replaced = {str(code).upper() for code in codes}
 
         def keep_other(items):
-            return [
-                item for item in (items or [])
-                if str(item.get("ma_truong") or "").upper() not in replaced
-            ]
+            return _keep_other_school_rows(items, replaced, years)
 
         payload = dict(cached)
         payload["admissions"] = keep_other(cached.get("admissions"))
@@ -439,6 +489,49 @@ def create_app() -> Flask:
         except OSError:
             pass
         return payload
+
+    def _merge_last_quy_doi(payload: dict, codes: List[str]) -> dict:
+        """Thay quy đổi của trường vừa thu thập, giữ các trường còn lại."""
+        cached = app.config.get("LAST_QUY_DOI") or dataset_store.load_quy_doi(ROOT) or {}
+        replaced = {str(code).upper() for code in codes}
+
+        def code_of(item):
+            if not isinstance(item, dict):
+                return ""
+            return str(item.get("ma_truong") or item.get("code") or "").upper()
+
+        def keep(items):
+            return [item for item in (items or []) if code_of(item) not in replaced]
+
+        merged = dict(cached)
+        for key in ("rows", "notes", "images", "ranges", "certificate_conversions", "school_results"):
+            merged[key] = keep(cached.get(key))
+            merged[key].extend(payload.get(key) or [])
+        methods = {
+            code: value
+            for code, value in (cached.get("methods_by_school") or {}).items()
+            if str(code).upper() not in replaced
+        }
+        methods.update(payload.get("methods_by_school") or {})
+        merged["methods_by_school"] = methods
+        merged["method_labels"] = payload.get("method_labels") or cached.get("method_labels")
+        merged["codes"] = sorted({
+            *[str(code).upper() for code in (cached.get("codes") or [])],
+            *replaced,
+        })
+        merged["summary"] = {
+            "schools": len({code_of(item) for item in merged["school_results"] if code_of(item)}),
+            "rows": len(merged["rows"]),
+            "notes": len(merged["notes"]),
+            "images": len(merged["images"]),
+            "ranges": len(merged["ranges"]),
+            "certificates": len(merged["certificate_conversions"]),
+        }
+        merged["ok"] = True
+        for key in ("download_url", "filename"):
+            if payload.get(key):
+                merged[key] = payload[key]
+        return _store_last_quy_doi(merged)
     # ---------- API: thu thập điểm chuẩn ----------
     @app.post("/api/crawl")
     def api_crawl():
@@ -487,9 +580,16 @@ def create_app() -> Flask:
             regulations=bundle.regulations,
         )
         download_url = url_for("download_file", name=out_name)
-        admissions = _store_last_crawl(
+        admissions = _merge_last_crawl(
             bundle, years, codes,
             {"download_url": download_url, "filename": out_name, "logs": logs},
+        )
+        cached_crawl = app.config.get("LAST_CRAWL") or {}
+        ExcelAdmissionExporter(years=sorted(cached_crawl.get("years") or years)).export(
+            _as_models(AdmissionRecord, cached_crawl.get("admissions")),
+            output_path=out_path,
+            conversions=_as_models(ScoreConversionRecord, cached_crawl.get("conversions")),
+            regulations=_as_models(AdmissionRegulation, cached_crawl.get("regulations")),
         )
         trends = build_trend_series(admissions)
 
@@ -518,7 +618,7 @@ def create_app() -> Flask:
             source_urls = _source_urls_by_school(data, codes)
         except ValueError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
-        merge_existing = bool(data.get("merge", False))
+        merge_existing = bool(data.get("merge", True))
 
         @stream_with_context
         def generate():
@@ -628,6 +728,14 @@ def create_app() -> Flask:
                     codes,
                     {"download_url": download_url, "filename": out_name, "logs": logs},
                 )
+                if merge_existing:
+                    cached_crawl = app.config.get("LAST_CRAWL") or {}
+                    ExcelAdmissionExporter(years=sorted(cached_crawl.get("years") or years)).export(
+                        _as_models(AdmissionRecord, cached_crawl.get("admissions")),
+                        output_path=out_path,
+                        conversions=_as_models(ScoreConversionRecord, cached_crawl.get("conversions")),
+                        regulations=_as_models(AdmissionRegulation, cached_crawl.get("regulations")),
+                    )
                 # Không nhúng trends vào stream (payload rất nặng) — lấy sau qua /api/crawl/trends
                 yield json.dumps({
                     "type": "done",
@@ -884,7 +992,6 @@ def create_app() -> Flask:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         out_name = f"quy_doi_diem_{ts}.xlsx"
         out_path = os.path.join(app.config["OUTPUT_DIR"], out_name)
-        crawler.export_excel(bundle, output_path=out_path)
 
         payload = crawler.bundle_to_api_dict(bundle)
         payload["ok"] = True
@@ -899,8 +1006,9 @@ def create_app() -> Flask:
         payload["methods_by_school"] = methods_by_school
         payload["method_labels"] = METHOD_LABELS
         # Cache + lưu đĩa để dùng lại không cần thu thập
-        _store_last_quy_doi(payload)
-        return jsonify(payload)
+        merged_quy_doi = _merge_last_quy_doi(payload, codes)
+        crawler.export_excel(_quy_doi_bundle_from_cache(merged_quy_doi), output_path=out_path)
+        return jsonify(merged_quy_doi)
 
     @app.post("/api/quy-doi/stream")
     def api_quy_doi_stream():
@@ -1000,7 +1108,7 @@ def create_app() -> Flask:
                 payload["codes"] = codes
 
                 # 1) Lưu bộ nhớ + JSON trước — quan trọng hơn Excel
-                _store_last_quy_doi(payload)
+                _merge_last_quy_doi(payload, codes)
 
                 yield json.dumps({
                     "type": "finalize",
@@ -1014,7 +1122,11 @@ def create_app() -> Flask:
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
                     out_name = f"quy_doi_diem_{ts}.xlsx"
                     out_path = os.path.join(app.config["OUTPUT_DIR"], out_name)
-                    crawler.export_excel(bundle, output_path=out_path)
+                    cached_before_excel = app.config.get("LAST_QUY_DOI") or {}
+                    crawler.export_excel(
+                        _quy_doi_bundle_from_cache(cached_before_excel),
+                        output_path=out_path,
+                    )
                     download_url = url_for("download_file", name=out_name)
                     payload["download_url"] = download_url
                     payload["filename"] = out_name

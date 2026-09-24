@@ -48,9 +48,12 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col-md-6 col-xl-auto">
-        <button type="button" class="btn btn-teal" id="btnCollect">
-          <i class="bi bi-cloud-download"></i> Thu thập thông tin
+      <div class="col-12 col-xl-auto d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-teal" id="btnCollectScores">
+          <i class="bi bi-cloud-download"></i> Thu thập dữ liệu điểm
+        </button>
+        <button type="button" class="btn btn-outline-teal" id="btnCollectConvert">
+          <i class="bi bi-arrow-left-right"></i> Thu thập quy chế quy đổi điểm
         </button>
       </div>
     </div>
@@ -428,16 +431,28 @@ function renderSectorFilters() {
   document.getElementById(id).addEventListener('change', renderSchoolPick);
 });
 
+function setCollectBusy(on) {
+  collectBusy = on;
+  document.getElementById('btnCollectScores').disabled = on;
+  document.getElementById('btnCollectConvert').disabled = on;
+}
+
+function showCollectPane(pane) {
+  activeCollectPane = pane;
+  document.querySelectorAll('#collectPills .nav-link').forEach(el => {
+    el.classList.toggle('active', el.dataset.collectPane === pane);
+  });
+  document.getElementById('paneScores').classList.toggle('d-none', pane !== 'scores');
+  document.getElementById('paneConvert').classList.toggle('d-none', pane !== 'convert');
+  if (pane === 'convert') {
+    renderConversions(convertRows, document.getElementById('btnConvertExcel').getAttribute('href') || '');
+  }
+}
+
 document.getElementById('collectPills').addEventListener('click', (event) => {
   const btn = event.target.closest('[data-collect-pane]');
-  if (!btn) return;
-  activeCollectPane = btn.dataset.collectPane;
-  document.querySelectorAll('#collectPills .nav-link').forEach(el => {
-    el.classList.toggle('active', el === btn);
-  });
-  document.getElementById('paneScores').classList.toggle('d-none', activeCollectPane !== 'scores');
-  document.getElementById('paneConvert').classList.toggle('d-none', activeCollectPane !== 'convert');
-  if (activeCollectPane === 'convert') renderConversions(convertRows, document.getElementById('btnConvertExcel').getAttribute('href') || '');
+  if (!btn || collectBusy) return;
+  showCollectPane(btn.dataset.collectPane);
 });
 
 async function collectConversions() {
@@ -447,8 +462,8 @@ async function collectConversions() {
     msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một trường.</div>';
     return;
   }
-  collectBusy = true;
-  document.getElementById('btnCollect').disabled = true;
+  showCollectPane('convert');
+  setCollectBusy(true);
   msg.innerHTML = '';
   setProgress('run', `Đang thu thập quy đổi 0/${codes.length} trường…`, 0);
   try {
@@ -496,17 +511,17 @@ async function collectConversions() {
     msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
     setProgress('hide');
   } finally {
-    collectBusy = false;
-    document.getElementById('btnCollect').disabled = false;
+    setCollectBusy(false);
   }
 }
 
-document.getElementById('btnCollect').addEventListener('click', async () => {
+document.getElementById('btnCollectConvert').addEventListener('click', async () => {
   if (collectBusy) return;
-  if (activeCollectPane === 'convert') {
-    await collectConversions();
-    return;
-  }
+  await collectConversions();
+});
+
+document.getElementById('btnCollectScores').addEventListener('click', async () => {
+  if (collectBusy) return;
   const codes = window.App.getSelectValues(document.getElementById('schoolPick'));
   const years = selectedYears();
   const msg = document.getElementById('collectMsg');
@@ -518,15 +533,15 @@ document.getElementById('btnCollect').addEventListener('click', async () => {
     msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một năm học.</div>';
     return;
   }
-  collectBusy = true;
-  document.getElementById('btnCollect').disabled = true;
+  showCollectPane('scores');
+  setCollectBusy(true);
   msg.innerHTML = '';
   setProgress('run', `Đang thu thập 0/${codes.length} trường…`, 0);
   try {
     const res = await fetch('/api/crawl/stream', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ codes: codes.join(','), years, merge: false })
+      body: JSON.stringify({ codes: codes.join(','), years, merge: true })
     });
     if (!res.ok || !res.body) throw new Error(`Không thu thập được (HTTP ${res.status})`);
     const reader = res.body.getReader();
@@ -565,8 +580,7 @@ document.getElementById('btnCollect').addEventListener('click', async () => {
     msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
     setProgress('hide');
   } finally {
-    collectBusy = false;
-    document.getElementById('btnCollect').disabled = false;
+    setCollectBusy(false);
   }
 });
 
