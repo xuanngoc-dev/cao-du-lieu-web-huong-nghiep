@@ -97,9 +97,40 @@ def detect_admission_method(text: str) -> str:
         return "Xét tuyển tài năng"
     if "ket hop" in t:
         return "Xét tuyển kết hợp"
+    if "tuyen thang" in t or "xet tuyen thang" in t:
+        return "Xét tuyển thẳng"
     if any(k in t for k in ["thpt", "tot nghiep", "diem thi"]):
         return "Điểm thi THPT"
     return ""
+
+
+def admission_method_names(html: str) -> List[str]:
+    """Lấy tên phương thức từ tiêu đề trang phương thức tuyển sinh."""
+    if not html or "phương thức" not in html.lower() and "phuong thuc" not in strip_accents(html).lower():
+        return []
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html, "html.parser")
+    except Exception:
+        return []
+    found = []
+    seen = set()
+    for node in soup.find_all(["h2", "h3", "h4", "strong"]):
+        raw = clean_text(node.get_text(" ", strip=True))
+        if not raw or len(raw) > 120:
+            continue
+        folded = strip_accents(raw).lower()
+        if "phuong thuc tuyen sinh" in folded or folded.startswith("dai hoc"):
+            continue
+        if not re.match(r"^(xet tuyen|tuyen thang|danh gia|diem thi)", folded):
+            continue
+        name = detect_admission_method(raw) or re.sub(r"\s*\([^)]*\)\s*", " ", raw).strip()
+        name = re.sub(r"\s+\d{4}$", "", name).strip()
+        key = strip_accents(name).lower()
+        if name and key not in seen:
+            seen.add(key)
+            found.append(name)
+    return found
 
 
 def method_to_calc_id(method_name: str) -> str:

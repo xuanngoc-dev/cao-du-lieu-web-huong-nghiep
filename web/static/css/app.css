@@ -459,6 +459,15 @@ select.cn-multi-native {
   width: 100%;
   font-weight: 300;
 }
+.cn-multi:has(.cn-multi-btn.open) {
+  z-index: 1080;
+}
+#scoreUploadModal .modal-content,
+#scoreUploadModal .modal-body,
+#methodUploadModal .modal-content,
+#methodUploadModal .modal-body {
+  overflow: visible;
+}
 
 .cn-multi-btn {
   display: flex;
@@ -709,6 +718,31 @@ select.cn-multi-native {
 .table-nowrap-head thead th {
   white-space: nowrap;
   vertical-align: middle;
+}
+.method-table-scroll {
+  overflow: auto;
+  max-height: 520px;
+  -webkit-overflow-scrolling: touch;
+}
+.method-data-table thead th {
+  position: sticky;
+  background: #f8f9fa;
+  z-index: 2;
+}
+.method-data-table thead tr:first-child th {
+  top: 0;
+  z-index: 3;
+}
+.method-data-table thead tr:nth-child(2) th {
+  top: 2.05rem;
+}
+.method-data-table + .method-data-table {
+  margin-top: 1rem;
+}
+.method-data-table td.method-text {
+  max-width: 16rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 #resultTable thead th {
   position: sticky;

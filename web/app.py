@@ -40,6 +40,11 @@ from crawlers.school_directory import (
     split_addresses_by_region,
 )
 from crawlers.online_crawler import OnlineAdmissionCrawler
+from crawlers.method_catalog import (
+    METHOD_CATALOG,
+    AdmissionMethodCollector,
+    records_from_local_file,
+)
 from crawlers.score_conversion_crawler import ScoreConversionCrawler
 from crawlers.official_site_crawler import filter_official_urls, lookup_local_school
 from exporter.excel_exporter import ExcelAdmissionExporter
@@ -76,23 +81,23 @@ from core.bonus_policy import list_bonus_records, summarize_certificate_bonus
 from core import dataset_store
 
 
-def _keep_other_school_rows(items, replaced: set, years: List[int]):
-    """Giữ trường khác. Với trường vừa thu thập, chỉ thay các năm được chọn."""
-    year_set = {int(y) for y in years}
-    kept = []
-    for item in items or []:
-        code = str((item or {}).get("ma_truong") or "").upper()
-        if code not in replaced:
-            kept.append(item)
+def _upsert_records(existing, incoming, fields: tuple):
+    """Ghi đè bản ghi trùng khoá và giữ mọi bản ghi cũ không có trong lần thu mới."""
+    rows = [item for item in (existing or []) if isinstance(item, dict)]
+    index = {}
+    for position, row in enumerate(rows):
+        index.setdefault(tuple(str(row.get(field) or "") for field in fields), position)
+    for row in incoming or []:
+        if not isinstance(row, dict):
             continue
-        nam = item.get("nam")
-        try:
-            year = int(nam) if nam not in (None, "") else None
-        except (TypeError, ValueError):
-            year = None
-        if year is not None and year not in year_set:
-            kept.append(item)
-    return kept
+        key = tuple(str(row.get(field) or "") for field in fields)
+        previous = index.get(key)
+        if previous is None:
+            index[key] = len(rows)
+            rows.append(row)
+        else:
+            rows[previous] = {**rows[previous], **row}
+    return rows
 
 
 def _quy_doi_bundle_from_cache(cached: dict) -> MethodConversionBundle:
@@ -144,6 +149,9 @@ def create_app() -> Flask:
     _saved_qd = dataset_store.load_quy_doi(ROOT)
     if _saved_qd and (_saved_qd.get("rows") is not None or _saved_qd.get("images")):
         app.config["LAST_QUY_DOI"] = _saved_qd
+    _saved_methods = dataset_store.load_phuong_thuc(ROOT)
+    if _saved_methods and (_saved_methods.get("records") or []):
+        app.config["LAST_METHODS"] = _saved_methods
 
     @app.route("/")
     def index():
@@ -474,16 +482,22 @@ def create_app() -> Flask:
         cached = app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {}
         replaced = {str(code).upper() for code in codes}
 
-        def keep_other(items):
-            return _keep_other_school_rows(items, replaced, years)
-
         payload = dict(cached)
-        payload["admissions"] = keep_other(cached.get("admissions"))
-        payload["admissions"].extend(r.to_dict() for r in bundle.admissions)
-        payload["conversions"] = keep_other(cached.get("conversions"))
-        payload["conversions"].extend(c.to_dict() for c in bundle.conversions)
-        payload["regulations"] = keep_other(cached.get("regulations"))
-        payload["regulations"].extend(r.to_dict() for r in bundle.regulations)
+        payload["admissions"] = _upsert_records(
+            cached.get("admissions"),
+            [r.to_dict() for r in bundle.admissions],
+            ("ma_truong", "ma_nganh", "ten_nganh", "nam", "phuong_thuc", "to_hop"),
+        )
+        payload["conversions"] = _upsert_records(
+            cached.get("conversions"),
+            [c.to_dict() for c in bundle.conversions],
+            ("ma_truong", "loai_bang", "hang_muc", "nam", "phuong_thuc"),
+        )
+        payload["regulations"] = _upsert_records(
+            cached.get("regulations"),
+            [r.to_dict() for r in bundle.regulations],
+            ("ma_truong", "tieu_de", "phuong_thuc", "nam"),
+        )
         payload["years"] = sorted({
             *[int(y) for y in (cached.get("years") or [])],
             *[int(y) for y in years],
@@ -563,19 +577,38 @@ def create_app() -> Flask:
                 return ""
             return str(item.get("ma_truong") or item.get("code") or "").upper()
 
-        def keep(items):
-            return [item for item in (items or []) if code_of(item) not in replaced]
-
         merged = dict(cached)
-        for key in ("rows", "notes", "images", "ranges", "certificate_conversions", "school_results"):
-            merged[key] = keep(cached.get(key))
-            merged[key].extend(payload.get(key) or [])
-        methods = {
-            code: value
-            for code, value in (cached.get("methods_by_school") or {}).items()
-            if str(code).upper() not in replaced
-        }
-        methods.update(payload.get("methods_by_school") or {})
+        merged["rows"] = _upsert_records(
+            cached.get("rows"), payload.get("rows"),
+            ("ma_truong", "tieu_de_bang", "stt", "nam"),
+        )
+        merged["notes"] = _upsert_records(
+            cached.get("notes"), payload.get("notes"),
+            ("ma_truong", "tieu_de", "nam"),
+        )
+        merged["images"] = _upsert_records(
+            cached.get("images"), payload.get("images"),
+            ("ma_truong", "url_anh"),
+        )
+        merged["ranges"] = _upsert_records(
+            cached.get("ranges"), payload.get("ranges"),
+            ("ma_truong", "phuong_thuc", "nam"),
+        )
+        merged["certificate_conversions"] = _upsert_records(
+            cached.get("certificate_conversions"), payload.get("certificate_conversions"),
+            ("ma_truong", "loai_bang", "hang_muc", "nam", "phuong_thuc"),
+        )
+        merged["school_results"] = _upsert_records(
+            cached.get("school_results"), payload.get("school_results"),
+            ("code",),
+        )
+        methods = dict(cached.get("methods_by_school") or {})
+        for code, names in (payload.get("methods_by_school") or {}).items():
+            current = list(methods.get(code) or [])
+            for name in names or []:
+                if name not in current:
+                    current.append(name)
+            methods[code] = current
         merged["methods_by_school"] = methods
         merged["method_labels"] = payload.get("method_labels") or cached.get("method_labels")
         merged["codes"] = sorted({
@@ -1019,6 +1052,395 @@ def create_app() -> Flask:
         )
         return jsonify({"ok": True, "removed": len(wanted), "records": records})
 
+    def _method_payload(records, years, codes):
+        return {
+            "records": records,
+            "catalog": METHOD_CATALOG,
+            "years": years,
+            "codes": codes,
+        }
+
+    @app.get("/api/phuong-thuc/records")
+    def api_phuong_thuc_records():
+        cached = app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {}
+        return jsonify({
+            "ok": True,
+            "records": cached.get("records") or [],
+            "documents": cached.get("documents") or [],
+            "catalog": METHOD_CATALOG,
+            "years": cached.get("years") or [],
+        })
+
+    @app.post("/api/phuong-thuc/stream")
+    def api_phuong_thuc_stream():
+        """Nhận diện 6 nhóm phương thức tuyển sinh trên website trường, trước khi lấy điểm."""
+        codes, years, _data = _parse_crawl_request()
+        if not codes:
+            return jsonify({"ok": False, "error": "Chưa có mã trường hợp lệ."}), 400
+        if not years:
+            return jsonify({"ok": False, "error": "Chọn ít nhất 1 năm."}), 400
+        saved_sites, saved_urls = _saved_crawl_targets(codes)
+        crawler = OnlineAdmissionCrawler()
+
+        @stream_with_context
+        def generate():
+            collector = AdmissionMethodCollector()
+            incoming = []
+            logs = []
+            yield json.dumps({
+                "type": "start",
+                "total": len(codes),
+                "years": years,
+            }, ensure_ascii=False) + "\n"
+            for index, code in enumerate(codes, start=1):
+                info = crawler._school_for_official_crawl(code) or {}
+                school_name = info.get("name") or code
+                website = saved_sites.get(code) or info.get("website") or ""
+                try:
+                    part = collector.collect(
+                        school_code=code,
+                        school_name=school_name,
+                        website=website,
+                        years=years,
+                        delay=0.2,
+                        trusted_urls=saved_urls.get(code),
+                    )
+                    incoming.extend(part.get("records") or [])
+                    found = ", ".join(part.get("found") or []) or "không thấy"
+                    program_count = int(part.get("programs") or 0)
+                    msg = f"✓ [{index}/{len(codes)}] {code}: {program_count} ngành — {found}"
+                    if part.get("note"):
+                        msg += f" — {part['note']}"
+                    logs.append(msg)
+                    yield json.dumps({
+                        "type": "school",
+                        "index": index,
+                        "total": len(codes),
+                        "code": code,
+                        "ok": bool(part.get("ok")),
+                        "found": part.get("found") or [],
+                        "programs": int(part.get("programs") or 0),
+                        "log": msg,
+                    }, ensure_ascii=False) + "\n"
+                except Exception as exc:
+                    msg = f"✗ [{index}/{len(codes)}] {code}: {exc}"
+                    logs.append(msg)
+                    yield json.dumps({
+                        "type": "school",
+                        "index": index,
+                        "total": len(codes),
+                        "code": code,
+                        "ok": False,
+                        "error": str(exc),
+                        "log": msg,
+                    }, ensure_ascii=False) + "\n"
+
+            cached = app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {}
+            replaced = {str(code).upper() for code in codes}
+            year_set = {int(year) for year in years}
+            kept = [
+                row for row in (cached.get("records") or [])
+                if str(row.get("ma_truong") or "").upper() not in replaced
+                or int(row.get("nam") or 0) not in year_set
+            ]
+            records = kept + incoming
+            payload = _method_payload(
+                records,
+                sorted({*[int(y) for y in (cached.get("years") or [])], *years}),
+                sorted({*[str(c).upper() for c in (cached.get("codes") or [])], *replaced}),
+            )
+            payload["logs"] = logs
+            app.config["LAST_METHODS"] = payload
+            try:
+                dataset_store.save_phuong_thuc(ROOT, payload)
+            except OSError:
+                pass
+            yield json.dumps({
+                "type": "done",
+                "ok": True,
+                "records": records,
+                "catalog": METHOD_CATALOG,
+            }, ensure_ascii=False) + "\n"
+
+        return Response(
+            generate(),
+            mimetype="application/x-ndjson",
+            headers={"Cache-Control": "no-cache, no-store", "X-Accel-Buffering": "no"},
+        )
+
+    def _delete_method_files(documents):
+        base = os.path.realpath(app.config["UPLOADS_DIR"])
+        for doc in documents or []:
+            code = re.sub(r"[^A-Z0-9_-]", "", str(doc.get("ma_truong") or "").upper())
+            name = os.path.basename(str(doc.get("stored_name") or ""))
+            if not code or not name.startswith("pt_"):
+                continue
+            path = os.path.realpath(os.path.join(base, code, name))
+            if os.path.commonpath([base, path]) != base or not os.path.isfile(path):
+                continue
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
+    @app.post("/api/phuong-thuc/delete")
+    def api_phuong_thuc_delete():
+        data = request.get_json(silent=True) or {}
+        raw_keys = data.get("keys") or []
+        wanted = set()
+        wanted_years = set()
+        for item in raw_keys:
+            if isinstance(item, dict):
+                school = str(item.get("ma_truong") or "").upper()
+                year = int(item.get("nam") or 0)
+                code = str(item.get("ma_xet_tuyen") or "")
+                major = str(item.get("ma_nganh") or "")
+                name = str(item.get("ten_nganh") or "")
+                if code or major or name:
+                    wanted.add((school, year, code, major, name))
+                else:
+                    wanted_years.add((school, year))
+            elif isinstance(item, str) and "|" in item:
+                parts = item.split("|")
+                school = parts[0].upper()
+                year = int(parts[1] or 0) if len(parts) > 1 else 0
+                if len(parts) >= 5:
+                    wanted.add((school, year, parts[2], parts[3], parts[4]))
+                else:
+                    wanted_years.add((school, year))
+        drop_docs = []
+        for item in data.get("documents") or []:
+            if not isinstance(item, dict):
+                continue
+            school = str(item.get("ma_truong") or "").upper()
+            stored = os.path.basename(str(item.get("stored_name") or ""))
+            try:
+                year = int(item.get("nam") or 0)
+            except (TypeError, ValueError):
+                year = 0
+            if school and stored:
+                drop_docs.append((school, year, stored))
+        if not wanted and not wanted_years and not drop_docs:
+            return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
+        cached = dict(app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {})
+
+        def _keep(row):
+            school = str(row.get("ma_truong") or "").upper()
+            year = int(row.get("nam") or 0)
+            if (school, year) in wanted_years:
+                return False
+            identity = (
+                school,
+                year,
+                str(row.get("ma_xet_tuyen") or ""),
+                str(row.get("ma_nganh") or ""),
+                str(row.get("ten_nganh") or ""),
+            )
+            return identity not in wanted
+
+        records = [row for row in (cached.get("records") or []) if _keep(row)]
+        documents = list(cached.get("documents") or [])
+        removed_docs = []
+        if drop_docs:
+            chosen = set(drop_docs)
+            kept_docs = []
+            for doc in documents:
+                school = str(doc.get("ma_truong") or "").upper()
+                stored = os.path.basename(str(doc.get("stored_name") or ""))
+                try:
+                    year = int(doc.get("nam") or 0)
+                except (TypeError, ValueError):
+                    year = 0
+                if (school, year, stored) in chosen:
+                    removed_docs.append(doc)
+                else:
+                    kept_docs.append(doc)
+            documents = kept_docs
+            removed_names = {os.path.basename(str(doc.get("stored_name") or "")) for doc in removed_docs}
+            records = [
+                row for row in records
+                if not any(
+                    name and name in str(row.get("nguon") or "")
+                    for name in removed_names
+                )
+            ]
+            emptied = set()
+            for school, year, _stored in drop_docs:
+                still = any(
+                    str(doc.get("ma_truong") or "").upper() == school and int(doc.get("nam") or 0) == year
+                    for doc in documents
+                )
+                if not still:
+                    emptied.add((school, year))
+            if emptied:
+                records = [
+                    row for row in records
+                    if (str(row.get("ma_truong") or "").upper(), int(row.get("nam") or 0)) not in emptied
+                ]
+        live_pairs = {
+            (str(row.get("ma_truong") or "").upper(), int(row.get("nam") or 0))
+            for row in records
+        }
+        orphan_docs = [
+            doc for doc in documents
+            if (str(doc.get("ma_truong") or "").upper(), int(doc.get("nam") or 0)) not in live_pairs
+            and any(
+                str(row.get("ma_truong") or "").upper() == str(doc.get("ma_truong") or "").upper()
+                and int(row.get("nam") or 0) == int(doc.get("nam") or 0)
+                for row in (cached.get("records") or [])
+            )
+        ]
+        if orphan_docs:
+            removed_docs.extend(orphan_docs)
+            gone = {
+                (
+                    str(doc.get("ma_truong") or "").upper(),
+                    int(doc.get("nam") or 0),
+                    os.path.basename(str(doc.get("stored_name") or "")),
+                )
+                for doc in orphan_docs
+            }
+            documents = [
+                doc for doc in documents
+                if (
+                    str(doc.get("ma_truong") or "").upper(),
+                    int(doc.get("nam") or 0),
+                    os.path.basename(str(doc.get("stored_name") or "")),
+                ) not in gone
+            ]
+        _delete_method_files(removed_docs)
+        cached["records"] = records
+        cached["documents"] = documents
+        cached["catalog"] = METHOD_CATALOG
+        app.config["LAST_METHODS"] = cached
+        try:
+            dataset_store.save_phuong_thuc(ROOT, cached)
+        except OSError:
+            pass
+        return jsonify({
+            "ok": True,
+            "removed": len(wanted),
+            "records": records,
+            "documents": cached.get("documents") or [],
+            "catalog": METHOD_CATALOG,
+        })
+
+    @app.post("/api/phuong-thuc/upload")
+    def api_phuong_thuc_upload():
+        """Tải đề án hoặc bảng ngành theo một trường và một năm học."""
+        if (request.content_length or 0) > 100 * 1024 * 1024:
+            return jsonify({"ok": False, "error": "Tổng dung lượng vượt quá 100 MB."}), 413
+        code = (request.form.get("code") or "").strip().upper()
+        try:
+            year = int(request.form.get("year") or 0)
+        except ValueError:
+            return jsonify({"ok": False, "error": "Năm học không hợp lệ."}), 400
+        if not code or year < 2000 or year > 2100:
+            return jsonify({"ok": False, "error": "Thiếu mã trường hoặc năm học không hợp lệ."}), 400
+        files = [item for item in request.files.getlist("files") if item and item.filename]
+        if not files:
+            return jsonify({"ok": False, "error": "Chưa chọn tài liệu."}), 400
+        if len(files) > 20:
+            return jsonify({"ok": False, "error": "Chỉ được tải tối đa 20 tài liệu mỗi lần."}), 400
+        schools_data = dataset_store.load_schools(ROOT) or {}
+        school = next(
+            (
+                item for item in (schools_data.get("schools") or [])
+                if str(item.get("code") or "").upper() == code
+            ),
+            lookup_local_school(code),
+        )
+        if not school:
+            return jsonify({"ok": False, "error": f"Không tìm thấy trường {code}."}), 404
+        school_name = school.get("name") or school.get("short_name") or code
+        allowed = {".xlsx", ".xls", ".csv", ".pdf", ".docx", ".html", ".htm", ".json"}
+        upload_dir = os.path.join(app.config["UPLOADS_DIR"], code)
+        os.makedirs(upload_dir, exist_ok=True)
+        documents = []
+        incoming = []
+        errors = []
+        for uploaded in files:
+            original_name = os.path.basename(uploaded.filename)
+            ext = os.path.splitext(original_name)[1].lower()
+            if ext not in allowed:
+                errors.append(f"{original_name}: định dạng không được hỗ trợ")
+                continue
+            safe_original = secure_filename(original_name)
+            if not safe_original:
+                errors.append(f"{original_name}: tên file không hợp lệ")
+                continue
+            stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            stored_name = f"pt_{year}_{stamp}_{safe_original}"
+            path = os.path.join(upload_dir, stored_name)
+            uploaded.save(path)
+            size = os.path.getsize(path)
+            if size > 20 * 1024 * 1024:
+                os.unlink(path)
+                errors.append(f"{original_name}: vượt quá 20 MB")
+                continue
+            source_url = url_for(
+                "download_school_document",
+                code=code,
+                name=stored_name,
+            )
+            try:
+                parsed = records_from_local_file(
+                    path, code, school_name, year, source_url, original_name
+                )
+            except Exception as exc:
+                errors.append(f"{original_name}: không đọc được ({exc})")
+                parsed = []
+            incoming.extend(parsed)
+            if not parsed:
+                errors.append(f"{original_name}: không thấy chương trình đào tạo")
+            documents.append({
+                "ma_truong": code,
+                "ten_truong": school_name,
+                "nam": year,
+                "filename": original_name,
+                "stored_name": stored_name,
+                "source_url": source_url,
+                "size": size,
+                "programs": len(parsed),
+                "uploaded_at": datetime.now().isoformat(timespec="seconds"),
+            })
+        if not incoming:
+            detail = "; ".join(errors) or "Không tìm thấy chương trình đào tạo trong tài liệu."
+            return jsonify({"ok": False, "error": detail}), 400
+        cached = dict(app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {})
+        records = _upsert_records(
+            cached.get("records"),
+            incoming,
+            ("ma_truong", "nam", "ma_xet_tuyen", "ma_nganh", "ten_nganh"),
+        )
+        kept_docs = [
+            item for item in (cached.get("documents") or [])
+            if not (
+                str(item.get("ma_truong") or "").upper() == code
+                and int(item.get("nam") or 0) == year
+                and item.get("filename") in {doc["filename"] for doc in documents}
+            )
+        ]
+        payload = _method_payload(
+            records,
+            sorted({*[int(item) for item in (cached.get("years") or []) if str(item).isdigit() or isinstance(item, int)], year}),
+            sorted({*[str(item).upper() for item in (cached.get("codes") or [])], code}),
+        )
+        payload["documents"] = kept_docs + documents
+        app.config["LAST_METHODS"] = payload
+        try:
+            dataset_store.save_phuong_thuc(ROOT, payload)
+        except OSError:
+            pass
+        return jsonify({
+            "ok": True,
+            "files": len(documents),
+            "programs": len(incoming),
+            "records": records,
+            "documents": payload["documents"],
+            "errors": errors,
+        })
+
     @app.post("/api/crawl/danh-gia")
     def api_crawl_danh_gia():
         """Đánh giá cơ hội trúng tuyển (thống kê + AI miễn phí)."""
@@ -1449,6 +1871,8 @@ def create_app() -> Flask:
     @app.get("/api/schools/saved")
     def api_schools_saved():
         data = dataset_store.load_schools(ROOT)
+        if not data or not (data.get("schools") or []):
+            data = dataset_store.load_json(os.path.join(ROOT, "config", "schools_all.json"))
         if not data or not (data.get("schools") or []):
             return jsonify({"ok": False, "error": "Chưa có danh sách trường đã lưu."}), 404
         schools = []
@@ -1989,11 +2413,28 @@ def create_app() -> Flask:
             int(row["nam"]) for row in rows
             if row.get("nam") is not None
         })
+        methods_by_school: Dict[str, List[str]] = {}
+
+        def remember_method(code: str, name: str):
+            school_code = str(code or "").strip().upper()
+            method_name = str(name or "").strip()
+            if not school_code or not method_name:
+                return
+            bucket = methods_by_school.setdefault(school_code, [])
+            if method_name not in bucket:
+                bucket.append(method_name)
+
+        for item in cached.get("admissions") or []:
+            remember_method(item.get("ma_truong"), item.get("phuong_thuc"))
+        for item in cached.get("regulations") or []:
+            if str(item.get("tieu_de") or "") == "Phương thức tuyển sinh":
+                remember_method(item.get("ma_truong"), item.get("phuong_thuc"))
         return jsonify({
             "ok": True,
             "total": len(rows),
             "years": years,
             "rows": rows,
+            "methods_by_school": methods_by_school,
             "download_url": cached.get("download_url") or "",
         })
 

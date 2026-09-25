@@ -51,6 +51,7 @@ _NUM_MAJOR_RE = re.compile(r"\d{6,8}")
 _POS_HINTS = (
     ("diem chuan", 9),
     ("diem trung tuyen", 9),
+    ("phuong thuc tuyen sinh", 9),
     ("de an tuyen sinh", 8),
     ("thong tin tuyen sinh", 8),
     ("phuong an tuyen sinh", 7),
@@ -644,13 +645,19 @@ class OfficialSiteCrawler:
                 parsed = urlparse(absolute)
             if parsed.scheme not in ("http", "https"):
                 continue
-            if not _same_org(absolute, org_host):
-                continue
             if _SKIP_EXT_RE.search(parsed.path or ""):
                 continue
             label = clean_text(anchor.get_text(" ", strip=True))
             text = _blob(label, absolute)
+            method_link = "phuong thuc tuyen sinh" in text
+            if not _same_org(absolute, org_host):
+                link_org = _registrable_host(parsed.netloc)
+                base_org = _registrable_host(org_host)
+                if not (method_link and link_org and link_org == base_org):
+                    continue
             score = _score_text(text, years) + _host_bonus(absolute)
+            if method_link:
+                score = max(score, 28)
             if _DOC_RE.search(absolute) and page_score >= 4:
                 score = max(score, page_score)
                 text = _blob(label, absolute, page_url, page_title)
@@ -712,6 +719,20 @@ class OfficialSiteCrawler:
         if page_year and page_year not in years:
             return 0
         source = f"Website trường: {res.url}"
+        from crawlers.dean_extractor import admission_method_names
+        from core.models import AdmissionRegulation
+        for method_name in admission_method_names(res.text or ""):
+            bundle.regulations.append(
+                AdmissionRegulation(
+                    ma_truong=school_code,
+                    ten_truong=school_name,
+                    tieu_de="Phương thức tuyển sinh",
+                    noi_dung=method_name,
+                    phuong_thuc=method_name,
+                    nam=page_year or (max(years) if years else None),
+                    nguon=source,
+                )
+            )
         admissions, conversions, regulations = self.dean.extract(
             html=res.text,
             school_code=school_code,

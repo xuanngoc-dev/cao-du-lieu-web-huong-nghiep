@@ -139,6 +139,10 @@ def quy_doi_latest_path(root: str) -> str:
     return os.path.join(datasets_dir(root), "quy_doi_latest.json")
 
 
+def phuong_thuc_latest_path(root: str) -> str:
+    return os.path.join(datasets_dir(root), "phuong_thuc_latest.json")
+
+
 def schools_json_path(root: str) -> str:
     return os.path.join(output_dir(root), "danh_sach_ma_truong.json")
 
@@ -188,6 +192,20 @@ def save_quy_doi(
 
 def load_quy_doi(root: str, path: Optional[str] = None) -> Optional[Dict[str, Any]]:
     return load_json(path or quy_doi_latest_path(root))
+
+
+def save_phuong_thuc(root: str, payload: Dict[str, Any]) -> Dict[str, str]:
+    """Lưu danh mục phương thức tuyển sinh đã nhận diện theo trường và năm."""
+    data = dict(payload)
+    data["_saved_at"] = datetime.now().isoformat(timespec="seconds")
+    data["_kind"] = "phuong_thuc"
+    latest = phuong_thuc_latest_path(root)
+    _atomic_write_json(latest, data)
+    return {"latest": latest}
+
+
+def load_phuong_thuc(root: str, path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    return load_json(path or phuong_thuc_latest_path(root))
 
 
 def load_schools(root: str) -> Optional[Dict[str, Any]]:
