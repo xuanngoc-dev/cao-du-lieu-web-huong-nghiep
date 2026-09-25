@@ -2401,6 +2401,7 @@ def create_app() -> Flask:
                 "ma_truong": item.get("ma_truong") or "",
                 "ten_truong": item.get("ten_truong") or "",
                 "nam": item.get("nam"),
+                "ma_xet_tuyen": item.get("ma_xet_tuyen") or "",
                 "ma_nganh": item.get("ma_nganh") or "",
                 "ten_nganh": item.get("ten_nganh") or "",
                 "phuong_thuc": item.get("phuong_thuc") or "",
@@ -2441,9 +2442,168 @@ def create_app() -> Flask:
     def _record_key(item: dict) -> tuple:
         return (
             str(item.get("ma_truong") or "").strip().upper(),
+            str(item.get("ma_xet_tuyen") or "").strip().upper(),
             str(item.get("ma_nganh") or item.get("ten_nganh") or "").strip(),
             str(item.get("phuong_thuc") or "").strip(),
         )
+
+    def _score_number(value):
+        if value is None or value == "":
+            return None
+        if isinstance(value, bool):
+            raise ValueError("Điểm không hợp lệ.")
+        text = str(value).strip().replace(",", ".")
+        if not text:
+            return None
+        number = float(text)
+        if number < 0 or number > 200:
+            raise ValueError("Điểm nằm ngoài khoảng cho phép.")
+        return round(number, 2)
+
+    def _major_for_admission_code(school_code: str, year: int, admission_code: str):
+        cached = app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {}
+        wanted = admission_code.strip().upper()
+        matches = [
+            row for row in (cached.get("records") or [])
+            if str(row.get("ma_truong") or "").strip().upper() == school_code
+            and str(row.get("ma_xet_tuyen") or "").strip().upper() == wanted
+        ]
+        exact = next((row for row in matches if int(row.get("nam") or 0) == year), None)
+        return exact or (matches[0] if matches else None)
+
+    @app.post("/api/crawl/records/import")
+    def api_crawl_records_import():
+        """Nhập điểm chuẩn JSON cho đúng một trường và một năm học."""
+        data = request.get_json(silent=True) or {}
+        code = str(data.get("code") or "").strip().upper()
+        try:
+            year = int(data.get("year") or 0)
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "Năm học không hợp lệ."}), 400
+        if not code or year < 2000 or year > 2100:
+            return jsonify({"ok": False, "error": "Hãy chọn một trường và một năm học."}), 400
+        raw_rows = data.get("rows")
+        if isinstance(raw_rows, dict):
+            raw_rows = next(
+                (
+                    raw_rows.get(key)
+                    for key in ("danh_sach", "records", "data", "diem")
+                    if isinstance(raw_rows.get(key), list)
+                ),
+                [raw_rows],
+            )
+        if not isinstance(raw_rows, list) or not raw_rows:
+            return jsonify({"ok": False, "error": "Dữ liệu phải là danh sách điểm của một trường, một năm."}), 400
+
+        schools_data = dataset_store.load_schools(ROOT) or {}
+        school = next(
+            (
+                item for item in (schools_data.get("schools") or [])
+                if str(item.get("code") or "").upper() == code
+            ),
+            lookup_local_school(code),
+        )
+        if not school:
+            return jsonify({"ok": False, "error": f"Không tìm thấy trường {code}."}), 404
+        school_name = school.get("name") or school.get("short_name") or code
+        collected_at = datetime.now().isoformat(timespec="seconds")
+        source = "Nhập dữ liệu điểm"
+        incoming = []
+        missing = []
+
+        def add_score(admission_code, major_code, major_name, method, thpt_score, method_score):
+            incoming.append({
+                "ma_truong": code,
+                "ten_truong": school_name,
+                "ma_xet_tuyen": admission_code,
+                "ma_nganh": major_code,
+                "ten_nganh": major_name,
+                "nam": year,
+                "phuong_thuc": method,
+                "diem_chuan": thpt_score,
+                "diem_chuan_ptxt": method_score,
+                "chi_tieu": None,
+                "nguon": source,
+                "thu_thap_luc": collected_at,
+            })
+
+        try:
+            for index, item in enumerate(raw_rows, start=1):
+                if not isinstance(item, dict):
+                    raise ValueError(f"Dòng {index} không đúng định dạng.")
+                admission_code = str(item.get("Ma_xet_tuyen") or item.get("ma_xet_tuyen") or "").strip()
+                if not admission_code:
+                    raise ValueError(f"Dòng {index} thiếu Ma_xet_tuyen.")
+                major = _major_for_admission_code(code, year, admission_code)
+                if major:
+                    major_code = str(major.get("ma_nganh") or "").strip() or admission_code
+                    major_name = str(major.get("ten_nganh") or major.get("ten_chuong_trinh") or "").strip()
+                else:
+                    major_code = admission_code
+                    major_name = ""
+                    missing.append(admission_code)
+                thpt = _score_number(item.get("Diem_chuan_THPT", item.get("diem_chuan_thpt")))
+                if thpt is not None:
+                    add_score(admission_code, major_code, major_name, "THPT", thpt, None)
+                methods = item.get("phuong_thuc") or []
+                if methods and not isinstance(methods, list):
+                    raise ValueError(f"Dòng {admission_code}: phuong_thuc phải là danh sách.")
+                for method in methods:
+                    if not isinstance(method, dict):
+                        raise ValueError(f"Dòng {admission_code}: phương thức không đúng định dạng.")
+                    name = str(method.get("ten") or method.get("ma") or "").strip()
+                    if not name:
+                        raise ValueError(f"Dòng {admission_code}: thiếu tên phương thức.")
+                    add_score(
+                        admission_code,
+                        major_code,
+                        major_name,
+                        name,
+                        None,
+                        _score_number(method.get("diem")),
+                    )
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        if not incoming:
+            return jsonify({"ok": False, "error": "Không có điểm nào để lưu."}), 400
+
+        cached = dict(app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {})
+        kept = [
+            row for row in (cached.get("admissions") or [])
+            if not (
+                str(row.get("ma_truong") or "").strip().upper() == code
+                and int(row.get("nam") or 0) == year
+                and str(row.get("nguon") or "") == source
+            )
+        ]
+        admissions = _upsert_records(
+            kept,
+            incoming,
+            ("ma_truong", "nam", "ma_xet_tuyen", "phuong_thuc"),
+        )
+        years = sorted({
+            int(item["nam"]) for item in admissions
+            if item.get("nam") is not None
+        })
+        codes = sorted({
+            str(item.get("ma_truong") or "").strip().upper()
+            for item in admissions
+            if item.get("ma_truong")
+        })
+        cached["admissions"] = admissions
+        cached["years"] = years
+        cached["codes"] = codes
+        app.config["LAST_CRAWL"] = cached
+        try:
+            dataset_store.save_admissions(ROOT, cached)
+        except OSError:
+            pass
+        return jsonify({
+            "ok": True,
+            "rows": len(incoming),
+            "majors": len({row["ma_xet_tuyen"] for row in incoming}),
+            "missing": missing,
+        })
 
     @app.post("/api/crawl/records/delete")
     def api_crawl_records_delete():
@@ -2452,15 +2612,33 @@ def create_app() -> Flask:
         raw_keys = data.get("keys") or []
         if not isinstance(raw_keys, list) or not raw_keys:
             return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
-        drop = {_record_key(item) for item in raw_keys if isinstance(item, dict)}
-        drop.discard(("", "", ""))
-        if not drop:
+        drop_years = {}
+        for item in raw_keys:
+            if not isinstance(item, dict):
+                continue
+            key = _record_key(item)
+            if key == ("", "", "", ""):
+                continue
+            try:
+                year = int(item.get("nam") or 0)
+            except (TypeError, ValueError):
+                year = 0
+            drop_years.setdefault(key, set()).add(year)
+        if not drop_years:
             return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
+
+        def _keep_admission(item):
+            years_for_key = drop_years.get(_record_key(item))
+            if not years_for_key:
+                return True
+            if 0 in years_for_key:
+                return False
+            return int(item.get("nam") or 0) not in years_for_key
 
         cached = dict(app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {})
         admissions = [
             item for item in (cached.get("admissions") or [])
-            if _record_key(item) not in drop
+            if _keep_admission(item)
         ]
         years = sorted({
             int(item["nam"]) for item in admissions
@@ -2486,6 +2664,7 @@ def create_app() -> Flask:
                 "ma_truong": item.get("ma_truong") or "",
                 "ten_truong": item.get("ten_truong") or "",
                 "nam": item.get("nam"),
+                "ma_xet_tuyen": item.get("ma_xet_tuyen") or "",
                 "ma_nganh": item.get("ma_nganh") or "",
                 "ten_nganh": item.get("ten_nganh") or "",
                 "phuong_thuc": item.get("phuong_thuc") or "",
@@ -2495,7 +2674,7 @@ def create_app() -> Flask:
             })
         return jsonify({
             "ok": True,
-            "removed": len(drop),
+            "removed": len(drop_years),
             "total": len(rows),
             "years": years,
             "rows": rows,

@@ -150,12 +150,17 @@
 <div class="card panel-card mb-3">
   <div class="card-body">
     <div class="row g-2 align-items-end">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label small mb-1" for="resultSchool">Trường</label>
         <select id="resultSchool" class="form-select form-select-sm js-multi-select" multiple
           data-placeholder="Tất cả trường"></select>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-2">
+        <label class="form-label small mb-1" for="resultYear">Năm học</label>
+        <select id="resultYear" class="form-select form-select-sm js-multi-select"
+          data-placeholder="Chọn năm"></select>
+      </div>
+      <div class="col-md-3">
         <label class="form-label small mb-1" for="resultMajor">Ngành tuyển sinh</label>
         <select id="resultMajor" class="form-select form-select-sm js-multi-select" multiple
           data-placeholder="Tất cả ngành"></select>
@@ -168,7 +173,7 @@
       <div class="col-12">
         <div class="form-check mb-0">
           <input class="form-check-input" type="checkbox" id="resultMissingScore">
-          <label class="form-check-label small" for="resultMissingScore">Chỉ hiện bản ghi không có điểm chuẩn ở mọi năm</label>
+          <label class="form-check-label small" for="resultMissingScore">Chỉ hiện ngành chưa có điểm chuẩn trong năm đang xem</label>
         </div>
       </div>
     </div>
@@ -364,23 +369,23 @@
     <div class="modal-content">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title h5 mb-1" id="scoreUploadModalLabel">Tải tài liệu tính điểm chuẩn</h2>
-          <div class="small text-muted" id="scoreUploadSchool"></div>
+          <h2 class="modal-title h5 mb-1" id="scoreUploadModalLabel">Nhập dữ liệu điểm</h2>
+          <div class="small text-muted" id="scoreUploadSchool">Mỗi lần chỉ nhập một trường trong một năm học.</div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
       </div>
       <div class="modal-body">
-        <p class="small text-muted">Chọn nhiều năm cùng lúc. Mỗi năm có phương thức và tài liệu riêng.</p>
+        <p class="small text-muted mb-3">Mã xét tuyển được đối chiếu với phương thức xét tuyển của trường để hiện tên ngành.</p>
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label" for="scoreUploadSchoolSelect">Trường</label>
             <select class="form-select form-select-sm js-multi-select" id="scoreUploadSchoolSelect"
-              data-placeholder="Chọn trường"></select>
+              data-placeholder="Chọn một trường"></select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="scoreUploadYear">Năm tuyển sinh</label>
-            <select class="form-select form-select-sm js-multi-select" id="scoreUploadYear" multiple
-              data-placeholder="Chọn năm tuyển sinh">
+            <label class="form-label" for="scoreUploadYear">Năm học</label>
+            <select class="form-select form-select-sm js-multi-select" id="scoreUploadYear"
+              data-placeholder="Chọn một năm học">
               <option value="2026">2026</option>
               <option value="2025">2025</option>
               <option value="2024">2024</option>
@@ -390,7 +395,22 @@
             </select>
           </div>
         </div>
-        <div class="d-flex flex-column gap-3 mt-3" id="scoreUploadYearBlocks"></div>
+        <div class="mt-3">
+          <label class="form-label" for="scoreUploadJson">Dữ liệu điểm</label>
+          <textarea class="form-control font-monospace small" id="scoreUploadJson" rows="12" spellcheck="false" placeholder='[
+  {
+    "STT": 1,
+    "Ma_xet_tuyen": "IT-E10",
+    "Diem_chuan_THPT": 29.54,
+    "phuong_thuc": [
+      { "ten": "XTTN_1_2", "diem": 96.75 },
+      { "ten": "XTTN_1_3", "diem": 96.09 },
+      { "ten": "TSA", "diem": 82.12 }
+    ]
+  }
+]'></textarea>
+          <div class="form-text">Dán một danh sách JSON. Mỗi mã xét tuyển là một ngành của trường đã chọn.</div>
+        </div>
         <div class="d-none mt-3" id="scoreUploadProgress">
           <div class="d-flex justify-content-between small mb-1">
             <span id="scoreUploadStatus">Đang xử lý…</span>
@@ -405,7 +425,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="scoreUploadClose">Đóng</button>
         <button type="button" class="btn btn-primary" id="scoreUploadStart">
-          <i class="bi bi-upload"></i> Phân tích và cập nhật điểm
+          <i class="bi bi-upload"></i> Cập nhật điểm
         </button>
       </div>
     </div>
@@ -514,15 +534,47 @@ function sourceUrls(texts) {
 function resultKey(group) {
   return [
     group.ma_truong || '',
+    group.ma_xet_tuyen || '',
     group.ma_nganh || group.ten_nganh || '',
-    group.phuong_thuc || '',
   ].join('|');
 }
 
-function editCell(key, year, field, value) {
+function selectedResultYear() {
+  return Number(window.App.getSelectValues(document.getElementById('resultYear'))[0]) || 0;
+}
+
+function scoreMethodOrder(names) {
+  const list = [...new Set((names || []).map(name => String(name || '').trim()).filter(Boolean))];
+  const preferred = ['THPT', 'Điểm thi THPT'];
+  return [
+    ...preferred.filter(name => list.includes(name)),
+    ...list.filter(name => !preferred.includes(name)),
+  ];
+}
+
+function majorByAdmissionCode(school, year, code) {
+  const wanted = String(code || '').trim().toUpperCase();
+  const schoolCode = String(school || '').trim().toUpperCase();
+  if (!wanted || !schoolCode) return null;
+  const matches = methodRows.filter(row =>
+    String(row.ma_truong || '').trim().toUpperCase() === schoolCode
+    && String(row.ma_xet_tuyen || '').trim().toUpperCase() === wanted
+  );
+  return matches.find(row => String(row.nam || '') === String(year || '')) || matches[0] || null;
+}
+
+function scoreMajorLabel(group) {
+  const hit = majorByAdmissionCode(group.ma_truong, selectedResultYear(), group.ma_xet_tuyen)
+    || majorByAdmissionCode(group.ma_truong, '', group.ma_xet_tuyen);
+  const code = group.ma_xet_tuyen || group.ma_nganh;
+  const name = (hit && (hit.ten_nganh || hit.ten_chuong_trinh)) || group.ten_nganh || '';
+  return codeName(code, name);
+}
+
+function editCell(key, year, method, value) {
   const shown = value == null || value === '' ? '—' : value;
   const stored = value == null || value === '' ? '' : value;
-  return `<td class="text-center result-edit" data-key="${escapeHtml(key)}" data-year="${year}" data-field="${field}" data-value="${escapeHtml(stored)}" title="Nhấp đúp để sửa">${escapeHtml(shown)}</td>`;
+  return `<td class="text-center result-edit" data-key="${escapeHtml(key)}" data-year="${year}" data-method="${escapeHtml(method)}" data-field="diem" data-value="${escapeHtml(stored)}" title="Nhấp đúp để sửa">${escapeHtml(shown)}</td>`;
 }
 
 function parseEditValue(field, raw) {
@@ -585,16 +637,27 @@ function refreshResultMethods() {
 function syncResultFilters(rows) {
   const schools = new Map();
   const majors = new Map();
+  const years = new Set();
   (rows || []).forEach(row => {
     const school = String(row.ma_truong || '').trim();
     if (school) schools.set(school, codeName(school, row.ten_truong));
     const major = String(row.ma_nganh || row.ten_nganh || '').trim();
     if (major) majors.set(major, codeName(row.ma_nganh, row.ten_nganh));
+    if (row.nam) years.add(String(row.nam));
   });
   const keep = (id) => window.App.getSelectValues(document.getElementById(id));
+  const yearList = [...years].sort((a, b) => Number(b) - Number(a));
+  const currentYear = String(selectedResultYear() || '');
+  const chosenYear = yearList.includes(currentYear) ? currentYear : (yearList[0] || '');
   window.App.setSelectOptions(document.getElementById('resultSchool'), resultOptionHtml([...schools]), keep('resultSchool'), {
     placeholder: 'Tất cả trường',
   });
+  window.App.setSelectOptions(
+    document.getElementById('resultYear'),
+    yearList.map(year => `<option value="${escapeHtml(year)}">${escapeHtml(year)}</option>`).join(''),
+    chosenYear,
+    { placeholder: 'Chọn năm' },
+  );
   window.App.setSelectOptions(document.getElementById('resultMajor'), resultOptionHtml([...majors]), keep('resultMajor'), {
     placeholder: 'Tất cả ngành',
   });
@@ -605,7 +668,9 @@ function filteredResultRows() {
   const schools = new Set(checkedValues('resultSchool'));
   const majors = new Set(checkedValues('resultMajor'));
   const methods = new Set(checkedValues('resultMethod'));
+  const year = selectedResultYear();
   return resultRows.filter(row => {
+    if (year && Number(row.nam) !== year) return false;
     if (schools.size && !schools.has(String(row.ma_truong || '').trim())) return false;
     const major = String(row.ma_nganh || row.ten_nganh || '').trim();
     if (majors.size && !majors.has(major)) return false;
@@ -623,40 +688,35 @@ function renderResults(rows, downloadUrl, years, methods) {
     syncResultFilters(resultRows);
   }
   const source = filteredResultRows();
-  const yearList = (resultYears && resultYears.length)
-    ? resultYears
-    : [...new Set(source.map(r => Number(r.nam)).filter(Boolean))].sort((a, b) => a - b);
+  const year = selectedResultYear();
+  const methodNames = scoreMethodOrder(source.map(row => row.phuong_thuc));
   const head = document.getElementById('resultHead');
-  const span = yearList.length ? ' rowspan="2"' : '';
-  const groupHeads = yearList.length
-    ? `<th class="text-center" colspan="${yearList.length}">Điểm chuẩn</th><th class="text-center" colspan="${yearList.length}">Chỉ tiêu</th>`
-    : '';
-  const yearHeads = yearList.length
-    ? `<tr>${yearList.map(year => `<th class="text-center">${year}</th>`).join('')}${yearList.map(year => `<th class="text-center">${year}</th>`).join('')}</tr>`
-    : '';
+  const span = ' rowspan="2"';
+  const methodHeads = methodNames.length
+    ? methodNames.map(name => `<th class="text-center">${escapeHtml(name)}</th>`).join('')
+    : '<th class="text-center">—</th>';
   head.innerHTML = `<tr>
     <th class="text-center"${span}><input class="form-check-input" type="checkbox" id="resultCheckAll" aria-label="Chọn tất cả dòng kết quả"></th>
-    <th${span}>#</th><th${span}>Trường</th><th${span}>Ngành tuyển sinh</th><th${span}>Phương thức</th>
-    ${groupHeads}
-    <th${span}>Nguồn</th><th${span}>Thời gian thu thập</th><th${span}>Thao tác</th>
-  </tr>${yearHeads}`;
+    <th${span}>#</th><th${span}>Trường</th><th${span}>Ngành tuyển sinh</th>
+    <th class="text-center" colspan="${methodNames.length || 1}">Điểm chuẩn${year ? ` ${year}` : ''}</th>
+    <th${span}>Thời gian thu thập</th><th${span}>Thao tác</th>
+  </tr><tr>${methodHeads}</tr>`;
 
   const groups = new Map();
   source.forEach(row => {
     const key = [
       row.ma_truong || '',
+      row.ma_xet_tuyen || '',
       row.ma_nganh || row.ten_nganh || '',
-      row.phuong_thuc || '',
     ].join('|');
     if (!groups.has(key)) {
       groups.set(key, {
         ma_truong: row.ma_truong || '',
         ten_truong: row.ten_truong || '',
+        ma_xet_tuyen: row.ma_xet_tuyen || '',
         ma_nganh: row.ma_nganh || '',
         ten_nganh: row.ten_nganh || '',
-        phuong_thuc: row.phuong_thuc || '',
-        byYear: {},
-        sources: [],
+        byMethod: {},
         thu_thap_luc: '',
       });
     }
@@ -664,21 +724,16 @@ function renderResults(rows, downloadUrl, years, methods) {
     if (row.thu_thap_luc && String(row.thu_thap_luc) > group.thu_thap_luc) {
       group.thu_thap_luc = String(row.thu_thap_luc);
     }
-    const year = Number(row.nam);
-    if (year) {
-      const cell = group.byYear[year] || { diem: null, chi_tieu: null };
-      if (row.diem_chuan != null && row.diem_chuan !== '') cell.diem = row.diem_chuan;
-      if (row.chi_tieu != null && row.chi_tieu !== '') cell.chi_tieu = row.chi_tieu;
-      group.byYear[year] = cell;
-    }
-    if (row.nguon && !group.sources.includes(row.nguon)) group.sources.push(row.nguon);
+    const method = String(row.phuong_thuc || '').trim();
+    if (method && row.diem_chuan != null && row.diem_chuan !== '') group.byMethod[method] = row.diem_chuan;
+    else if (method && group.byMethod[method] == null) group.byMethod[method] = null;
   });
 
   const missingOnly = document.getElementById('resultMissingScore').checked;
   const list = [...groups.values()].filter(group => {
     if (!missingOnly) return true;
-    return !yearList.some(year => {
-      const score = (group.byYear[year] || {}).diem;
+    return !methodNames.some(name => {
+      const score = group.byMethod[name];
       return score != null && score !== '';
     });
   });
@@ -690,20 +745,16 @@ function renderResults(rows, downloadUrl, years, methods) {
   document.querySelector('#resultTable tbody').innerHTML = list.map((group, i) => {
     const key = resultKey(group);
     const checked = selectedResultKeys.has(key) ? 'checked' : '';
+    const scoreCells = methodNames.length
+      ? methodNames.map(name => editCell(key, year, name, group.byMethod[name])).join('')
+      : '<td class="text-center text-muted">—</td>';
     return `
     <tr>
       <td class="text-center"><input class="form-check-input result-pick" type="checkbox" data-key="${escapeHtml(key)}" aria-label="Chọn dòng ${i + 1}" ${checked}></td>
       <td class="text-muted">${i + 1}</td>
       <td class="text-nowrap">${escapeHtml(codeName(group.ma_truong, group.ten_truong))}</td>
-      <td class="result-major">${escapeHtml(codeName(group.ma_nganh, group.ten_nganh))}</td>
-      <td>${escapeHtml(group.phuong_thuc || '—')}</td>
-      ${yearList.map(year => editCell(key, year, 'diem', (group.byYear[year] || {}).diem)).join('')}
-      ${yearList.map(year => editCell(key, year, 'chi_tieu', (group.byYear[year] || {}).chi_tieu)).join('')}
-      <td class="text-nowrap">
-        ${sourceUrls(group.sources).length
-          ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-source-result="${escapeHtml(key)}">Chi tiết</button>`
-          : '—'}
-      </td>
+      <td class="result-major">${escapeHtml(scoreMajorLabel(group))}</td>
+      ${scoreCells}
       <td class="text-nowrap">${escapeHtml(formatCollectedAt(group.thu_thap_luc))}</td>
       <td class="text-nowrap">
         <button type="button" class="btn btn-outline-danger btn-sm" data-delete-result="${escapeHtml(key)}" title="Xoá dòng này">
@@ -712,9 +763,8 @@ function renderResults(rows, downloadUrl, years, methods) {
       </td>
     </tr>`;
   }).join('');
-  const filteredNote = source.length === resultRows.length ? '' : ` / ${resultRows.length}`;
   document.getElementById('resultInfo').textContent = list.length
-    ? `${list.length}${filteredNote} ngành × phương thức`
+    ? `${list.length} ngành${year ? ` · năm ${year}` : ''}`
     : (resultRows.length ? 'Không có dòng khớp bộ lọc' : 'Chưa có kết quả');
   updateResultSelect();
   const excel = document.getElementById('btnExcel');
@@ -813,7 +863,7 @@ document.getElementById('resultSchool').addEventListener('change', () => {
   refreshResultMethods();
   renderResults();
 });
-['resultMajor', 'resultMethod'].forEach(id => {
+['resultYear', 'resultMajor', 'resultMethod'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => renderResults());
 });
 document.getElementById('resultMissingScore').addEventListener('change', () => renderResults());
@@ -1828,15 +1878,19 @@ async function deleteResultKeys(keys) {
   const label = unique.length === 1 ? 'dòng đã chọn' : `${unique.length} dòng đã chọn`;
   const accepted = await confirmDeleteResults(`Xoá ${label} khỏi dữ liệu đã tải?`);
   if (!accepted) return;
-  const payload = unique.map(key => {
+  const payload = unique.flatMap(key => {
     const group = resultGroups.find(item => resultKey(item) === key);
-    return group ? {
+    if (!group) return [];
+    const methods = Object.keys(group.byMethod || {});
+    return (methods.length ? methods : ['']).map(method => ({
       ma_truong: group.ma_truong,
+      ma_xet_tuyen: group.ma_xet_tuyen,
       ma_nganh: group.ma_nganh,
       ten_nganh: group.ten_nganh,
-      phuong_thuc: group.phuong_thuc,
-    } : null;
-  }).filter(Boolean);
+      phuong_thuc: method,
+      nam: selectedResultYear(),
+    }));
+  });
   const msg = document.getElementById('collectMsg');
   try {
     const res = await fetch('/api/crawl/records/delete', {
@@ -1900,15 +1954,17 @@ async function saveEditedCell(td, raw) {
   if (!group) throw new Error('Không tìm thấy dòng cần sửa.');
   const field = td.dataset.field;
   const year = Number(td.dataset.year);
+  const method = td.dataset.method || '';
   const value = parseEditValue(field, raw);
   const res = await fetch('/api/crawl/records/update', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
       ma_truong: group.ma_truong,
+      ma_xet_tuyen: group.ma_xet_tuyen,
       ma_nganh: group.ma_nganh,
       ten_nganh: group.ten_nganh,
-      phuong_thuc: group.phuong_thuc,
+      phuong_thuc: method,
       nam: year,
       field,
       value,
@@ -1916,8 +1972,7 @@ async function saveEditedCell(td, raw) {
   });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Không lưu được');
-  if (!group.byYear[year]) group.byYear[year] = {};
-  group.byYear[year][field] = value;
+  group.byMethod[method] = value;
   showEditedCell(td, value);
 }
 
@@ -2000,38 +2055,6 @@ document.getElementById('btnDeleteResults').addEventListener('click', () => {
 
 let scoreUploadCode = '';
 
-const SCORE_UPLOAD_METHODS = [
-  'Điểm thi THPT',
-  'Xét học bạ THPT',
-  'Xét học bạ kết hợp',
-  'ĐGNL HSA',
-  'ĐGNL V-ACT',
-  'ĐGTD TSA',
-  'Đánh giá năng lực (ĐGNL)',
-  'ĐGNL ĐHQGHN',
-  'Xét tuyển kết hợp',
-  'Xét tuyển tài năng',
-  'Chứng chỉ quốc tế',
-  'Điểm chuẩn',
-];
-
-function scoreUploadMethodHtml(code) {
-  const seen = new Set(SCORE_UPLOAD_METHODS);
-  const school = String(code || '').trim().toUpperCase();
-  (methodsBySchool[school] || []).forEach(name => {
-    if (name && /[A-Za-zÀ-ỹ]/.test(name)) seen.add(name);
-  });
-  (resultRows || []).forEach(row => {
-    if (school && String(row.ma_truong || '').trim().toUpperCase() !== school) return;
-    const method = String(row.phuong_thuc || '').trim();
-    if (method && /[A-Za-zÀ-ỹ]/.test(method)) seen.add(method);
-  });
-  return [...seen]
-    .sort((a, b) => a.localeCompare(b, 'vi'))
-    .map(method => `<option value="${escapeHtml(method)}">${escapeHtml(method)}</option>`)
-    .join('');
-}
-
 function fillScoreUploadSchools(preferred) {
   const select = document.getElementById('scoreUploadSchoolSelect');
   const options = new Map();
@@ -2057,61 +2080,8 @@ function fillScoreUploadSchools(preferred) {
   caption.textContent = chosen ? chosen.textContent : '';
 }
 
-function refreshScoreUploadMethods() {
-  document.querySelectorAll('#scoreUploadYearBlocks [data-upload-year] select').forEach(select => {
-    const current = window.App.getSelectValues(select)[0] || 'Điểm thi THPT';
-    window.App.setSelectOptions(select, scoreUploadMethodHtml(scoreUploadCode), current, {
-      placeholder: 'Chọn phương thức',
-    });
-  });
-}
-
-function syncScoreUploadYearBlocks() {
-  const host = document.getElementById('scoreUploadYearBlocks');
-  const years = checkedValues('scoreUploadYear')
-    .map(value => String(value))
-    .sort((a, b) => Number(b) - Number(a));
-  const keep = new Set(years);
-  [...host.querySelectorAll('[data-upload-year]')].forEach(block => {
-    if (!keep.has(block.dataset.uploadYear)) block.remove();
-  });
-  if (!years.length) {
-    host.innerHTML = '<p class="small text-muted mb-0">Chọn năm tuyển sinh để nhập phương thức và tài liệu của từng năm.</p>';
-    return;
-  }
-  const hint = host.querySelector('p');
-  if (hint) hint.remove();
-  years.forEach(year => {
-    let block = host.querySelector(`[data-upload-year="${year}"]`);
-    if (!block) {
-      host.insertAdjacentHTML('beforeend', `
-        <div class="border rounded p-3" data-upload-year="${escapeHtml(year)}">
-          <div class="fw-semibold mb-2">Năm ${escapeHtml(year)}</div>
-          <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-              <label class="form-label" for="scoreUploadMethod${year}">Phương thức xét tuyển</label>
-              <select class="form-select form-select-sm js-multi-select" id="scoreUploadMethod${year}"
-                data-placeholder="Chọn phương thức"></select>
-            </div>
-            <div class="col-md-7">
-              <label class="form-label" for="scoreUploadFiles${year}">Tài liệu năm ${escapeHtml(year)}</label>
-              <input class="form-control" type="file" id="scoreUploadFiles${year}" multiple accept=".xlsx,.xls,.csv,.pdf,.docx,.jpg,.jpeg,.png,.webp,.html,.htm">
-            </div>
-          </div>
-        </div>`);
-      block = host.querySelector(`[data-upload-year="${year}"]`);
-      const method = block.querySelector('select');
-      window.App.setSelectOptions(method, scoreUploadMethodHtml(scoreUploadCode), 'Điểm thi THPT', {
-        placeholder: 'Chọn phương thức',
-      });
-    }
-    host.appendChild(block);
-  });
-}
-
 function openScoreUpload() {
   const selected = checkedValues('resultSchool');
-  document.getElementById('scoreUploadYearBlocks').innerHTML = '';
   document.getElementById('scoreUploadProgress').classList.add('d-none');
   const result = document.getElementById('scoreUploadResult');
   result.className = 'alert d-none mt-3 mb-0';
@@ -2122,7 +2092,6 @@ function openScoreUpload() {
   const yearWidget = window.App.getMultiSelect(yearSelect);
   if (yearWidget) yearWidget.setValues([preferredYear]);
   else yearSelect.value = preferredYear;
-  syncScoreUploadYearBlocks();
   document.getElementById('scoreUploadStart').disabled = false;
   document.getElementById('scoreUploadClose').disabled = false;
   bootstrap.Modal.getOrCreateInstance(document.getElementById('scoreUploadModal')).show();
@@ -2134,11 +2103,10 @@ document.getElementById('scoreUploadSchoolSelect').addEventListener('change', ()
   const select = document.getElementById('scoreUploadSchoolSelect');
   scoreUploadCode = select.value || '';
   const chosen = [...select.selectedOptions][0];
-  document.getElementById('scoreUploadSchool').textContent = chosen ? chosen.textContent : '';
-  refreshScoreUploadMethods();
+  document.getElementById('scoreUploadSchool').textContent = chosen
+    ? `${chosen.textContent} · mỗi lần nhập một năm học`
+    : 'Mỗi lần chỉ nhập một trường trong một năm học.';
 });
-
-document.getElementById('scoreUploadYear').addEventListener('change', () => syncScoreUploadYearBlocks());
 
 function setScoreUploadProgress(pct, status) {
   const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
@@ -2150,76 +2118,61 @@ function setScoreUploadProgress(pct, status) {
   bar.textContent = `${p}%`;
 }
 
-function scoreUploadJobs() {
-  return [...document.querySelectorAll('#scoreUploadYearBlocks [data-upload-year]')].map(block => {
-    const year = block.dataset.uploadYear;
-    const method = window.App.getSelectValues(block.querySelector('select'))[0] || '';
-    const files = [...block.querySelector('input[type="file"]').files];
-    return { year, method, files };
-  });
-}
-
 document.getElementById('scoreUploadStart').addEventListener('click', async () => {
   const result = document.getElementById('scoreUploadResult');
-  const jobs = scoreUploadJobs();
+  const year = checkedValues('scoreUploadYear')[0] || '';
+  const raw = document.getElementById('scoreUploadJson').value.trim();
   if (!scoreUploadCode) {
     result.className = 'alert alert-warning mt-3 mb-0';
-    result.textContent = 'Hãy chọn trường.';
+    result.textContent = 'Hãy chọn một trường.';
     return;
   }
-  if (!jobs.length) {
+  if (!year) {
     result.className = 'alert alert-warning mt-3 mb-0';
-    result.textContent = 'Hãy chọn ít nhất một năm tuyển sinh.';
+    result.textContent = 'Hãy chọn một năm học.';
     return;
   }
-  const missing = jobs.find(job => !job.method || !job.files.length);
-  if (missing) {
+  if (!raw) {
     result.className = 'alert alert-warning mt-3 mb-0';
-    result.textContent = missing.method
-      ? `Năm ${missing.year} chưa chọn file tài liệu.`
-      : `Năm ${missing.year} chưa chọn phương thức.`;
+    result.textContent = 'Hãy dán dữ liệu điểm.';
     return;
   }
-  const tooLarge = jobs.flatMap(job => job.files).find(file => file.size > 20 * 1024 * 1024);
-  if (tooLarge) {
+  let rows;
+  try {
+    rows = JSON.parse(raw);
+  } catch (_) {
     result.className = 'alert alert-warning mt-3 mb-0';
-    result.textContent = `${tooLarge.name} vượt quá 20 MB.`;
+    result.textContent = 'Dữ liệu không phải JSON hợp lệ.';
     return;
   }
   document.getElementById('scoreUploadStart').disabled = true;
   document.getElementById('scoreUploadClose').disabled = true;
   result.className = 'alert d-none mt-3 mb-0';
-  let filesRead = 0;
-  let admissions = 0;
-  const errors = [];
+  setScoreUploadProgress(30, 'Đang lưu điểm…');
   try {
-    for (let index = 0; index < jobs.length; index += 1) {
-      const job = jobs[index];
-      setScoreUploadProgress((index / jobs.length) * 80, `Đang xử lý năm ${job.year} (${index + 1}/${jobs.length})…`);
-      const form = new FormData();
-      form.append('code', scoreUploadCode);
-      form.append('year', job.year);
-      form.append('method', job.method);
-      job.files.forEach(file => form.append('files', file));
-      const res = await fetch('/api/schools/upload-documents', { method: 'POST', body: form });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || `Không phân tích được tài liệu năm ${job.year}`);
-      filesRead += data.files || 0;
-      admissions += data.admissions || 0;
-      (data.errors || []).forEach(message => errors.push(`Năm ${job.year}: ${message}`));
-    }
-    setScoreUploadProgress(90, 'Đang cập nhật điểm chuẩn…');
+    const res = await fetch('/api/crawl/records/import', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ code: scoreUploadCode, year: Number(year), rows }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Không lưu được dữ liệu điểm');
+    setScoreUploadProgress(80, 'Đang cập nhật bảng điểm…');
     const saved = await fetch('/api/crawl/records');
     const table = await saved.json();
     if (table.ok) {
       renderResults(table.rows || [], table.download_url || resultDownloadUrl, table.years || resultYears, table.methods_by_school || {});
     }
     setScoreUploadProgress(100, 'Đã cập nhật điểm chuẩn');
-    const warning = errors.length ? `<div class="mt-1">${escapeHtml(errors.join('; '))}</div>` : '';
+    const missing = (data.missing || []).filter((code, index, list) => list.indexOf(code) === index);
+    const warning = missing.length
+      ? `<div class="mt-1">Chưa có tên ngành cho mã: ${escapeHtml(missing.join(', '))}. Hãy nhập phương thức xét tuyển của trường trước.</div>`
+      : '';
     result.className = 'alert alert-success mt-3 mb-0';
-    result.innerHTML = `Đã xử lý <b>${jobs.length}</b> năm, đọc <b>${filesRead}</b> tài liệu, thêm <b>${admissions}</b> dòng điểm theo ngành và phương thức.${warning}`;
+    result.innerHTML = `Đã lưu <b>${data.majors || 0}</b> ngành, <b>${data.rows || 0}</b> dòng điểm cho ${escapeHtml(scoreUploadCode)} năm ${escapeHtml(year)}.${warning}`;
+    showCollectPane('scores');
   } catch (e) {
-    setScoreUploadProgress(100, 'Không phân tích được');
+    setScoreUploadProgress(100, 'Không lưu được');
     result.className = 'alert alert-danger mt-3 mb-0';
     result.textContent = e.message;
   } finally {
@@ -2376,7 +2329,10 @@ document.getElementById('btnDeleteConvert').addEventListener('click', () => {
     const saved = await fetch('/api/phuong-thuc/records');
     if (!saved.ok) return;
     const data = await saved.json();
-    if (data.ok) renderMethods(data.records || [], data.documents || []);
+    if (data.ok) {
+      renderMethods(data.records || [], data.documents || []);
+      if (resultRows.length) renderResults();
+    }
   } catch (_) {}
 })();
 </script>

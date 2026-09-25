@@ -18,6 +18,7 @@ class AdmissionRecord:
     ma_nganh: str                           # Mã ngành tuyển sinh (VD: 7480201 hoặc IT1)
     ten_nganh: str                          # Tên ngành học (VD: Công nghệ thông tin)
     nam: int                                # Năm tuyển sinh (2021 - 2026)
+    ma_xet_tuyen: str = ""                  # Mã xét tuyển trong đề án (VD: IT-E10)
     to_hop: str = ""                        # Tổ hợp môn xét tuyển (VD: A00, A01, D01)
     chi_tieu: Optional[int] = None          # Chỉ tiêu tuyển sinh
     so_nguyen_vong: Optional[int] = None    # Số lượng hồ sơ/nguyện vọng đăng ký
