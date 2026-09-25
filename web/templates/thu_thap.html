@@ -483,27 +483,7 @@ let bonusRows = [];
 let methodRows = [];
 let methodDocuments = [];
 let methodGroups = {};
-const OFFICIAL_METHODS = [
-  {ma: '100', ten: 'Xét kết quả thi tốt nghiệp THPT'},
-  {ma: '200', ten: 'Xét kết quả học tập cấp THPT (học bạ)'},
-  {ma: '301', ten: 'Xét tuyển thẳng theo quy định của Quy chế tuyển sinh (Điều 8)'},
-  {ma: '401', ten: 'Thi đánh giá năng lực, đánh giá tư duy do CSĐT tự tổ chức để xét tuyển'},
-  {ma: '402', ten: 'Sử dụng kết quả thi đánh giá năng lực, đánh giá tư duy do đơn vị khác tổ chức để xét tuyển'},
-  {ma: '403', ten: 'Thi văn hóa do CSĐT tổ chức để xét tuyển'},
-  {ma: '404', ten: 'Sử dụng kết quả thi văn hóa do CSĐT khác tổ chức để xét tuyển'},
-  {ma: '405', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với điểm thi năng khiếu để xét tuyển'},
-  {ma: '406', ten: 'Kết hợp kết quả học tập cấp THPT với điểm thi năng khiếu để xét tuyển'},
-  {ma: '407', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với kết quả học tập cấp THPT để xét tuyển'},
-  {ma: '409', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với chứng chỉ quốc tế để xét tuyển'},
-  {ma: '410', ten: 'Kết hợp kết quả học tập cấp THPT với chứng chỉ quốc tế để xét tuyển'},
-  {ma: '411', ten: 'Xét tuyển thí sinh tốt nghiệp THPT nước ngoài'},
-  {ma: '413', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với phỏng vấn để xét tuyển'},
-  {ma: '414', ten: 'Kết hợp kết quả học tập cấp THPT với phỏng vấn để xét tuyển'},
-  {ma: '415', ten: 'Sử dụng chứng chỉ quốc tế SAT hoặc chứng chỉ quốc tế khác đủ điều kiện để xét tuyển'},
-  {ma: '416', ten: 'Kỳ thi V-SAT'},
-  {ma: '417', ten: 'Sử dụng kết quả Kỳ thi V-SAT do đơn vị khác tổ chức để xét tuyển'},
-  {ma: '500', ten: 'Sử dụng phương thức khác'},
-];
+const OFFICIAL_METHODS = window.App.OFFICIAL_METHODS;
 const METHOD_ORDER = ['thpt', 'hoc_ba', 'dgnl', 'ket_hop', 'xttn_bo', 'xttn_truong'];
 const METHOD_LABELS = {
   thpt: 'Xét tuyển bằng kết quả Kỳ thi tốt nghiệp THPT',
@@ -582,12 +562,40 @@ function selectedResultYear() {
   return Number(window.App.getSelectValues(document.getElementById('resultYear'))[0]) || 0;
 }
 
-function scoreMethodOrder(names) {
-  const list = [...new Set((names || []).map(name => String(name || '').trim()).filter(Boolean))];
-  const preferred = ['THPT', 'Điểm thi THPT'];
+function scoreMethodMatches(row, selected) {
+  if (!selected.size) return true;
+  const name = String(row.phuong_thuc || '').trim();
+  if (!name) return false;
+  if (selected.has(name)) return true;
+  return methodGroupCodes(row.ma_truong, row.nam, name).some(code => selected.has(code));
+}
+
+function scoreHeaderNote(name, rows, year) {
+  const schools = [...new Set((rows || [])
+    .filter(row => String(row.phuong_thuc || '').trim() === name)
+    .map(row => String(row.ma_truong || '').trim().toUpperCase())
+    .filter(Boolean))];
+  if (schools.length === 1) return {note: methodColumnNote(name, schools[0], year), school: schools[0]};
+  const notes = schools.map(school => methodColumnNote(name, school, year));
+  const titles = [...new Set(notes.map(note => note.title))];
+  return {
+    note: {kind: titles.length === 1 ? notes[0].kind : 'mixed', title: titles.join(' | ') || name},
+    school: '',
+  };
+}
+
+function scoreColumnNames(rows) {
+  const selected = new Set(checkedValues('resultMethod'));
+  const names = [];
+  (rows || []).forEach(row => {
+    const name = String(row.phuong_thuc || '').trim();
+    if (!name || names.includes(name) || !scoreMethodMatches(row, selected)) return;
+    names.push(name);
+  });
+  const officialOrder = OFFICIAL_METHODS.map(item => item.ma);
   return [
-    ...preferred.filter(name => list.includes(name)),
-    ...list.filter(name => !preferred.includes(name)),
+    ...officialOrder.filter(code => names.includes(code)),
+    ...names.filter(name => !officialMethod(name)).sort((a, b) => a.localeCompare(b, 'vi')),
   ];
 }
 
@@ -610,10 +618,11 @@ function scoreMajorLabel(group) {
   return codeName(code, name);
 }
 
-function editCell(key, year, method, value) {
+function editCell(key, year, method, value, title) {
   const shown = value == null || value === '' ? '—' : value;
   const stored = value == null || value === '' ? '' : value;
-  return `<td class="text-center result-edit" data-key="${escapeHtml(key)}" data-year="${year}" data-method="${escapeHtml(method)}" data-field="diem" data-value="${escapeHtml(stored)}" title="Nhấp đúp để sửa">${escapeHtml(shown)}</td>`;
+  const hint = title || 'Nhấp đúp để sửa';
+  return `<td class="text-center result-edit" data-key="${escapeHtml(key)}" data-year="${year}" data-method="${escapeHtml(method)}" data-field="diem" data-value="${escapeHtml(stored)}" title="${escapeHtml(hint)}">${escapeHtml(shown)}</td>`;
 }
 
 function parseEditValue(field, raw) {
@@ -647,30 +656,14 @@ function resultOptionHtml(pairs) {
 }
 
 function refreshResultMethods() {
-  const selectedSchools = checkedValues('resultSchool');
-  const schools = selectedSchools.length
-    ? selectedSchools
-    : [...new Set([
-      ...Object.keys(methodsBySchool),
-      ...resultRows.map(row => String(row.ma_truong || '').trim()).filter(Boolean),
-    ])];
-  const methods = new Map();
-  schools.forEach(code => {
-    (methodsBySchool[code] || []).forEach(name => {
-      if (name) methods.set(name, name);
-    });
-    resultRows.forEach(row => {
-      if (String(row.ma_truong || '').trim() !== code) return;
-      const name = String(row.phuong_thuc || '').trim();
-      if (name) methods.set(name, name);
-    });
+  const methodHtml = OFFICIAL_METHODS
+    .map(item => `<option value="${escapeHtml(item.ma)}">${escapeHtml(item.ma)} — ${escapeHtml(item.ten)}</option>`)
+    .join('');
+  const keep = window.App.getSelectValues(document.getElementById('resultMethod'))
+    .filter(code => officialMethod(code));
+  window.App.setSelectOptions(document.getElementById('resultMethod'), methodHtml, keep, {
+    placeholder: 'Tất cả phương thức',
   });
-  window.App.setSelectOptions(
-    document.getElementById('resultMethod'),
-    resultOptionHtml([...methods]),
-    window.App.getSelectValues(document.getElementById('resultMethod')).filter(name => methods.has(name)),
-    { placeholder: 'Tất cả phương thức' },
-  );
 }
 
 function syncResultFilters(rows) {
@@ -713,7 +706,7 @@ function filteredResultRows() {
     if (schools.size && !schools.has(String(row.ma_truong || '').trim())) return false;
     const major = String(row.ma_nganh || row.ten_nganh || '').trim();
     if (majors.size && !majors.has(major)) return false;
-    if (methods.size && !methods.has(String(row.phuong_thuc || '').trim())) return false;
+    if (!scoreMethodMatches(row, methods)) return false;
     return true;
   });
 }
@@ -728,11 +721,17 @@ function renderResults(rows, downloadUrl, years, methods) {
   }
   const source = filteredResultRows();
   const year = selectedResultYear();
-  const methodNames = scoreMethodOrder(source.map(row => row.phuong_thuc));
+  const methodNames = scoreColumnNames(source);
   const head = document.getElementById('resultHead');
   const span = ' rowspan="2"';
   const methodHeads = methodNames.length
-    ? methodNames.map(name => `<th class="text-center">${escapeHtml(name)}</th>`).join('')
+    ? methodNames.map(name => {
+      const header = scoreHeaderNote(name, source, year);
+      if (header.note.kind === 'official' || !header.school) {
+        return `<th class="text-center" title="${escapeHtml(header.note.title)}">${escapeHtml(name)}</th>`;
+      }
+      return `<th class="text-center"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-method-group="${escapeHtml(name)}" data-group-school="${escapeHtml(header.school)}" data-group-year="${escapeHtml(year)}" title="${escapeHtml(header.note.title)}">${escapeHtml(name)}</button></th>`;
+    }).join('')
     : '<th class="text-center">—</th>';
   head.innerHTML = `<tr>
     <th class="text-center"${span}><input class="form-check-input" type="checkbox" id="resultCheckAll" aria-label="Chọn tất cả dòng kết quả"></th>
@@ -756,6 +755,7 @@ function renderResults(rows, downloadUrl, years, methods) {
         ma_nganh: row.ma_nganh || '',
         ten_nganh: row.ten_nganh || '',
         byMethod: {},
+        rawMethods: [],
         thu_thap_luc: '',
       });
     }
@@ -764,8 +764,12 @@ function renderResults(rows, downloadUrl, years, methods) {
       group.thu_thap_luc = String(row.thu_thap_luc);
     }
     const method = String(row.phuong_thuc || '').trim();
-    if (method && row.diem_chuan != null && row.diem_chuan !== '') group.byMethod[method] = row.diem_chuan;
-    else if (method && group.byMethod[method] == null) group.byMethod[method] = null;
+    if (!method || !methodNames.includes(method)) return;
+    if (!group.rawMethods.includes(method)) group.rawMethods.push(method);
+    const cell = group.byMethod[method] || {diem: null, sources: []};
+    if (!cell.sources.includes(method)) cell.sources.push(method);
+    if (row.diem_chuan != null && row.diem_chuan !== '') cell.diem = row.diem_chuan;
+    group.byMethod[method] = cell;
   });
 
   const list = [...groups.values()];
@@ -778,7 +782,10 @@ function renderResults(rows, downloadUrl, years, methods) {
     const key = resultKey(group);
     const checked = selectedResultKeys.has(key) ? 'checked' : '';
     const scoreCells = methodNames.length
-      ? methodNames.map(name => editCell(key, year, name, group.byMethod[name])).join('')
+      ? methodNames.map(code => {
+        const cell = group.byMethod[code] || {diem: null, sources: []};
+        return editCell(key, year, code, cell.diem, methodColumnNote(code, group.ma_truong, year).title);
+      }).join('')
       : '<td class="text-center text-muted">—</td>';
     return `
     <tr>
@@ -1233,11 +1240,48 @@ function officialMethod(name) {
   return OFFICIAL_METHODS.find(item => item.ma === String(name || '').trim()) || null;
 }
 
-function methodGroupCodes(school, year, name) {
+function readGroupCodes(school, year, name) {
   const schoolGroups = methodGroups[String(school || '').trim().toUpperCase()] || {};
   const yearGroups = schoolGroups[String(year || '')] || {};
   const codes = yearGroups[name];
   return Array.isArray(codes) ? codes.filter(code => officialMethod(code)) : [];
+}
+
+function methodNamesForSchool(school, year) {
+  const schoolCode = String(school || '').trim().toUpperCase();
+  const yearText = String(year || '');
+  const names = [];
+  methodRows.forEach(row => {
+    if (String(row.ma_truong || '').trim().toUpperCase() !== schoolCode) return;
+    if (yearText && String(row.nam || '') !== yearText) return;
+    methodItems(row).forEach(item => {
+      const name = String(item.ten || item.id || '').trim();
+      if (name && !isTmuAllMethod(name) && !names.includes(name)) names.push(name);
+    });
+  });
+  return names;
+}
+
+function aliasMethodName(school, year, name) {
+  const label = String(name || '').trim();
+  if (!label || officialMethod(label)) return '';
+  const methods = methodNamesForSchool(school, year).filter(item => item !== label);
+  const byParen = methods.filter(item => {
+    const match = item.match(/\(([^)]+)\)\s*$/);
+    const code = match ? match[1].trim() : '';
+    return code && (label === code || label.startsWith(`${code}_`));
+  });
+  if (byParen.length === 1) return byParen[0];
+  const token = new RegExp(`(?:^|\\s)${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:$|\\s)`, 'i');
+  const byToken = methods.filter(item => token.test(item));
+  return byToken.length === 1 ? byToken[0] : '';
+}
+
+function methodGroupCodes(school, year, name) {
+  const direct = readGroupCodes(school, year, name);
+  if (direct.length) return direct;
+  const alias = aliasMethodName(school, year, name);
+  return alias ? readGroupCodes(school, year, alias) : [];
 }
 
 function methodColumnNote(name, school, year) {
@@ -1689,6 +1733,7 @@ document.getElementById('methodGroupSave').addEventListener('click', async () =>
     if (!res.ok || !data.ok) throw new Error(data.error || 'Không lưu được tổ hợp');
     methodGroups = data.nhom_phuong_thuc || {};
     renderMethods(methodRows, methodDocuments);
+    if (resultRows.length) renderResults();
     bootstrap.Modal.getInstance(document.getElementById('methodGroupModal'))?.hide();
   } catch (e) {
     result.className = 'alert alert-danger mt-3 mb-0';
@@ -1696,6 +1741,12 @@ document.getElementById('methodGroupSave').addEventListener('click', async () =>
   } finally {
     document.getElementById('methodGroupSave').disabled = false;
   }
+});
+
+document.getElementById('resultHead').addEventListener('click', (event) => {
+  const group = event.target.closest('[data-method-group]');
+  if (!group) return;
+  openMethodGroup(group.dataset.methodGroup, group.dataset.groupSchool, group.dataset.groupYear);
 });
 
 document.getElementById('methodTables').addEventListener('click', (event) => {
@@ -2011,7 +2062,9 @@ async function deleteResultKeys(keys) {
   const payload = unique.flatMap(key => {
     const group = resultGroups.find(item => resultKey(item) === key);
     if (!group) return [];
-    const methods = Object.keys(group.byMethod || {});
+    const methods = group.rawMethods && group.rawMethods.length
+      ? group.rawMethods
+      : Object.keys(group.byMethod || {});
     return (methods.length ? methods : ['']).map(method => ({
       ma_truong: group.ma_truong,
       ma_xet_tuyen: group.ma_xet_tuyen,
@@ -2102,7 +2155,10 @@ async function saveEditedCell(td, raw) {
   });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Không lưu được');
-  group.byMethod[method] = value;
+  const cell = group.byMethod[method] || {diem: null, sources: []};
+  cell.diem = value;
+  if (!cell.sources.includes(method)) cell.sources.push(method);
+  group.byMethod[method] = cell;
   showEditedCell(td, value);
 }
 

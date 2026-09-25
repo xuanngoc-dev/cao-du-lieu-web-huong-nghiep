@@ -1,6 +1,27 @@
 /* Shared helpers for Bootstrap UI */
 window.App = {
   STORAGE_KEY: 'huong_nghiep_school_codes',
+  OFFICIAL_METHODS: [
+    {ma: '100', ten: 'Xét kết quả thi tốt nghiệp THPT'},
+    {ma: '200', ten: 'Xét kết quả học tập cấp THPT (học bạ)'},
+    {ma: '301', ten: 'Xét tuyển thẳng theo quy định của Quy chế tuyển sinh (Điều 8)'},
+    {ma: '401', ten: 'Thi đánh giá năng lực, đánh giá tư duy do CSĐT tự tổ chức để xét tuyển'},
+    {ma: '402', ten: 'Sử dụng kết quả thi đánh giá năng lực, đánh giá tư duy do đơn vị khác tổ chức để xét tuyển'},
+    {ma: '403', ten: 'Thi văn hóa do CSĐT tổ chức để xét tuyển'},
+    {ma: '404', ten: 'Sử dụng kết quả thi văn hóa do CSĐT khác tổ chức để xét tuyển'},
+    {ma: '405', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với điểm thi năng khiếu để xét tuyển'},
+    {ma: '406', ten: 'Kết hợp kết quả học tập cấp THPT với điểm thi năng khiếu để xét tuyển'},
+    {ma: '407', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với kết quả học tập cấp THPT để xét tuyển'},
+    {ma: '409', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với chứng chỉ quốc tế để xét tuyển'},
+    {ma: '410', ten: 'Kết hợp kết quả học tập cấp THPT với chứng chỉ quốc tế để xét tuyển'},
+    {ma: '411', ten: 'Xét tuyển thí sinh tốt nghiệp THPT nước ngoài'},
+    {ma: '413', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với phỏng vấn để xét tuyển'},
+    {ma: '414', ten: 'Kết hợp kết quả học tập cấp THPT với phỏng vấn để xét tuyển'},
+    {ma: '415', ten: 'Sử dụng chứng chỉ quốc tế SAT hoặc chứng chỉ quốc tế khác đủ điều kiện để xét tuyển'},
+    {ma: '416', ten: 'Kỳ thi V-SAT'},
+    {ma: '417', ten: 'Sử dụng kết quả Kỳ thi V-SAT do đơn vị khác tổ chức để xét tuyển'},
+    {ma: '500', ten: 'Sử dụng phương thức khác'},
+  ],
 
   saveCodes(text) {
     try { localStorage.setItem(this.STORAGE_KEY, text || ''); } catch (e) {}
