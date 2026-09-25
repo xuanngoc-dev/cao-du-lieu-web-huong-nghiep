@@ -885,7 +885,9 @@ def _json_program_rows(path: str) -> List[Dict[str, object]]:
                 applied is False or str(applied).strip().lower() in {"false", "0", "khong", "không"}
             )
             name = clean_text(str(method.get("ten") or ""))
-            method_code = clean_text(str(method.get("ma") or ""))
+            method_code = clean_text(str(
+                method.get("ma_phuong_thuc") or method.get("ma") or ""
+            ))
             if not name and not method_code:
                 continue
             detail = dict(method.get("chi_tiet") or {}) if isinstance(method.get("chi_tiet"), dict) else {}

@@ -1451,7 +1451,8 @@ function renderMethods(rows, documents) {
         <td class="text-muted text-center">${index + 1}</td>
         <td class="text-nowrap">${escapeHtml(codeName(row.ma_truong, row.ten_truong))}</td>
         <td class="text-center">${escapeHtml(row.nam || '—')}</td>
-        <td class="text-nowrap">${escapeHtml(row.ma_xet_tuyen || row.ma_nganh || '—')}</td>
+        <td class="text-nowrap">${escapeHtml(row.ma_xet_tuyen || '—')}</td>
+        <td class="text-nowrap">${escapeHtml(row.ma_nganh || '—')}</td>
         <td class="method-text">${escapeHtml(row.ten_nganh || row.ten_chuong_trinh || '—')}</td>
         <td class="text-center">${escapeHtml(row.chi_tieu || '—')}</td>
         ${marks}
@@ -1476,6 +1477,7 @@ function renderMethods(rows, documents) {
           <th rowspan="2">Trường</th>
           <th rowspan="2">Năm học</th>
           <th rowspan="2">Mã xét tuyển</th>
+          <th rowspan="2">Mã ngành</th>
           <th rowspan="2">Tên ngành</th>
           <th rowspan="2" class="text-center">Chỉ tiêu</th>
           <th class="text-center" colspan="${span}">Phương thức tuyển sinh</th>
@@ -1829,7 +1831,7 @@ function syncMethodUploadYearBlocks() {
           <label class="form-label" for="methodUploadFiles${year}">Tài liệu năm ${escapeHtml(year)}</label>
           <input class="form-control" type="file" id="methodUploadFiles${year}" multiple
             accept=".json,.xlsx,.xls,.csv,.pdf,.docx,.html,.htm">
-          <div class="form-text">JSON theo mẫu chương trình, hoặc PDF, Word, Excel, HTML của đề án tuyển sinh.</div>
+          <div class="form-text">JSON gồm mã xét tuyển, mã ngành và phuong_thuc (ma_phuong_thuc, to_hop), hoặc PDF, Word, Excel, HTML của đề án tuyển sinh.</div>
         </div>`);
       block = host.querySelector(`[data-method-upload-year="${year}"]`);
     }
