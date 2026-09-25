@@ -847,75 +847,124 @@ def _spreadsheet_rows(path: str) -> List[Dict[str, str]]:
     return parsed
 
 
-def _json_program_rows(path: str) -> List[Dict[str, object]]:
-    """Đọc danh sách chương trình: mã, chỉ tiêu, phương thức và ghi chú."""
-    with open(path, "r", encoding="utf-8-sig") as handle:
-        payload = json.load(handle)
+def _folded_item(item: Dict[str, object]) -> Dict[str, object]:
+    return {str(key).strip().lower(): value for key, value in item.items()}
+
+
+def _first_value(folded: Dict[str, object], *names: str):
+    for name in names:
+        if name in folded and folded[name] not in (None, ""):
+            return folded[name]
+    return None
+
+
+def _combo_codes(value) -> List[str]:
+    if isinstance(value, str):
+        value = [part.strip() for part in value.replace(";", ",").split(",")]
+    if not isinstance(value, list):
+        return []
+    return [clean_text(str(part)) for part in value if clean_text(str(part))]
+
+
+def program_rows_from_payload(payload) -> List[Dict[str, object]]:
+    """Đọc nhiều cấu trúc JSON ngành và phương thức xét tuyển."""
     if isinstance(payload, dict):
+        folded = _folded_item(payload)
         payload = next(
             (
-                payload.get(key)
+                folded.get(key)
                 for key in ("danh_sach", "records", "data", "programs", "chuong_trinh")
-                if isinstance(payload.get(key), list)
+                if isinstance(folded.get(key), list)
             ),
             [payload],
         )
     if not isinstance(payload, list):
-        raise ValueError("File JSON phải là danh sách chương trình đào tạo")
+        raise ValueError("JSON phải là danh sách ngành và phương thức xét tuyển")
     rows: List[Dict[str, object]] = []
-    for item in payload:
+    for index, item in enumerate(payload, start=1):
         if not isinstance(item, dict):
-            continue
-        program = clean_text(str(item.get("chuong_trinh_dao_tao") or item.get("ten_chuong_trinh") or ""))
-        code = clean_text(str(item.get("ma") or item.get("ma_xet_tuyen") or ""))
-        major_code = clean_text(str(item.get("ma_nganh") or ""))
-        major_name = clean_text(str(item.get("ten_nganh") or ""))
-        quota = item.get("chi_tieu")
-        if quota is None:
-            quota = item.get("chi_tieu_du_kien")
+            raise ValueError(f"Phần tử {index} không đúng định dạng.")
+        folded = _folded_item(item)
+        program = clean_text(str(
+            _first_value(folded, "chuong_trinh_dao_tao", "ten_chuong_trinh") or ""
+        ))
+        code = clean_text(str(_first_value(folded, "ma_xet_tuyen", "ma") or ""))
+        major_code = clean_text(str(_first_value(folded, "ma_nganh") or ""))
+        major_name = clean_text(str(_first_value(folded, "ten_nganh") or ""))
+        quota = _first_value(folded, "chi_tieu", "chi_tieu_du_kien")
         quota_text = ""
         if quota is not None and str(quota).strip() not in {"", "None"}:
             quota_text = re.sub(r"[^\d]", "", str(quota))[:6]
+        shared = _combo_codes(_first_value(folded, "to_hop"))
+        raw_methods = folded.get("phuong_thuc") or []
+        if raw_methods and not isinstance(raw_methods, list):
+            raise ValueError(f"Dòng {code or index}: phuong_thuc phải là danh sách.")
         methods: List[Dict[str, object]] = []
-        for method in item.get("phuong_thuc") or []:
-            if not isinstance(method, dict):
+        seen = set()
+        for method in raw_methods:
+            if isinstance(method, dict):
+                method_folded = _folded_item(method)
+                applied = method_folded.get("ap_dung", True)
+                enabled = not (
+                    applied is False
+                    or str(applied).strip().lower() in {"false", "0", "khong", "không"}
+                )
+                name = clean_text(str(_first_value(method_folded, "ten") or ""))
+                method_code = clean_text(str(
+                    _first_value(method_folded, "ma_phuong_thuc", "ma") or ""
+                ))
+                if not name and not method_code:
+                    continue
+                detail_raw = method_folded.get("chi_tiet")
+                detail = dict(detail_raw) if isinstance(detail_raw, dict) else {}
+                combos = _combo_codes(
+                    _first_value(method_folded, "to_hop")
+                    or detail.get("to_hop_xet_tuyen")
+                    or detail.get("to_hop")
+                    or shared
+                )
+            else:
+                enabled = True
+                method_code = clean_text(str(method))
+                name = method_code
+                detail = {}
+                combos = list(shared)
+                if not method_code:
+                    continue
+            key = method_code or name
+            if key in seen:
                 continue
-            applied = method.get("ap_dung", True)
-            enabled = not (
-                applied is False or str(applied).strip().lower() in {"false", "0", "khong", "không"}
-            )
-            name = clean_text(str(method.get("ten") or ""))
-            method_code = clean_text(str(
-                method.get("ma_phuong_thuc") or method.get("ma") or ""
-            ))
-            if not name and not method_code:
-                continue
-            detail = dict(method.get("chi_tiet") or {}) if isinstance(method.get("chi_tiet"), dict) else {}
-            combos = method.get("to_hop") or detail.get("to_hop_xet_tuyen") or detail.get("to_hop") or []
-            combo_list = []
-            if isinstance(combos, list):
-                combo_list = [clean_text(str(combo)) for combo in combos if clean_text(str(combo))]
-            if combo_list:
-                detail["to_hop_xet_tuyen"] = combo_list
+            seen.add(key)
+            if combos:
+                detail["to_hop_xet_tuyen"] = combos
             methods.append({
                 "id": method_code or name,
                 "ten": name or method_code,
                 "ap_dung": enabled,
-                "mo_ta": f"Tổ hợp: {', '.join(combo_list)}" if combo_list else "",
+                "mo_ta": f"Tổ hợp: {', '.join(combos)}" if combos else "",
                 "chi_tiet": detail,
             })
         if not any((program, code, major_code, major_name)):
-            continue
+            raise ValueError(f"Phần tử {index} thiếu mã xét tuyển hoặc tên ngành.")
         rows.append({
             "ma_xet_tuyen": code,
             "ten_chuong_trinh": program,
             "ma_nganh": major_code,
             "ten_nganh": major_name or program,
             "chi_tieu": quota_text,
-            "ghi_chu": clean_text(str(item.get("ghi_chu") or "")),
+            "ghi_chu": clean_text(str(_first_value(folded, "ghi_chu") or "")),
             "hinh_thuc": methods,
         })
+    if not rows:
+        raise ValueError("Không thấy ngành nào trong JSON.")
     return rows
+
+
+def _json_program_rows(path: str) -> List[Dict[str, object]]:
+    """Đọc danh sách chương trình: mã, chỉ tiêu, phương thức và ghi chú."""
+    with open(path, "r", encoding="utf-8-sig") as handle:
+        payload = json.load(handle)
+    return program_rows_from_payload(payload)
 
 
 def local_document_text(path: str) -> str:
@@ -1002,6 +1051,40 @@ def _expand_tmu_methods(methods: List[Dict[str, object]]) -> List[Dict[str, obje
     return kept
 
 
+def records_from_programs(
+    programs: List[Dict[str, object]],
+    school_code: str,
+    school_name: str,
+    year: int,
+    source_url: str = "",
+    note: str = "Nhập từ JSON",
+) -> List[Dict[str, object]]:
+    base = {
+        "ma_truong": school_code,
+        "ten_truong": school_name,
+        "nam": int(year),
+        "nguon": source_url,
+        "ghi_chu": note,
+    }
+    records = []
+    for program in programs:
+        row = dict(base)
+        methods = program.get("hinh_thuc") or []
+        row.update({
+            key: value
+            for key, value in program.items()
+            if key != "hinh_thuc" and not (key == "ghi_chu" and not value)
+        })
+        row["hinh_thuc"] = methods
+        if program.get("ghi_chu"):
+            row["ghi_chu"] = clean_text(str(program.get("ghi_chu")))
+        records.append(row)
+    if str(school_code or "").upper() == "TMU":
+        for row in records:
+            row["hinh_thuc"] = _expand_tmu_methods(row.get("hinh_thuc") or [])
+    return records
+
+
 def records_from_local_file(
     path: str,
     school_code: str,
@@ -1022,30 +1105,24 @@ def records_from_local_file(
     if not programs and not named:
         return []
     note = f"Tải lên từ {filename}" if filename else "Tải lên từ tài liệu"
-    base = {
-        "ma_truong": school_code,
-        "ten_truong": school_name,
-        "nam": int(year),
-        "hinh_thuc": named,
-        "nguon": source_url,
-        "ghi_chu": note,
-    }
-    records = []
     if programs:
+        filled = []
         for program in programs:
-            row = dict(base)
-            methods = program.get("hinh_thuc") or named
-            row.update({key: value for key, value in program.items() if key != "hinh_thuc"})
-            row["hinh_thuc"] = methods
-            if program.get("ghi_chu"):
-                row["ghi_chu"] = clean_text(str(program.get("ghi_chu")))
-            records.append(row)
-    else:
-        records.append(base)
-    if str(school_code or "").upper() == "TMU":
-        for row in records:
-            row["hinh_thuc"] = _expand_tmu_methods(row.get("hinh_thuc") or [])
-    return records
+            item = dict(program)
+            if not item.get("hinh_thuc") and named:
+                item["hinh_thuc"] = named
+            filled.append(item)
+        return records_from_programs(
+            filled, school_code, school_name, year, source_url, note
+        )
+    return records_from_programs(
+        [{"hinh_thuc": named}],
+        school_code,
+        school_name,
+        year,
+        source_url,
+        note,
+    )
 
 
 def _document_prose(crawler: OfficialSiteCrawler, url: str):

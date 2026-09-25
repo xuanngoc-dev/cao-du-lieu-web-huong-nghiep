@@ -43,7 +43,9 @@ from crawlers.online_crawler import OnlineAdmissionCrawler
 from crawlers.method_catalog import (
     METHOD_CATALOG,
     AdmissionMethodCollector,
+    program_rows_from_payload,
     records_from_local_file,
+    records_from_programs,
 )
 from crawlers.score_conversion_crawler import ScoreConversionCrawler
 from crawlers.official_site_crawler import filter_official_urls, lookup_local_school
@@ -163,7 +165,23 @@ def create_app() -> Flask:
 
     @app.route("/crawl")
     def crawl_page():
-        return render_template("thu_thap.html")
+        return redirect(url_for("phuong_thuc_page"))
+
+    @app.route("/thu-thap/phuong-thuc")
+    def phuong_thuc_page():
+        return render_template("thu_thap/phuong_thuc.html")
+
+    @app.route("/thu-thap/diem")
+    def diem_page():
+        return render_template("thu_thap/diem.html")
+
+    @app.route("/thu-thap/quy-doi")
+    def thu_thap_quy_doi_page():
+        return render_template("thu_thap/quy_doi.html")
+
+    @app.route("/thu-thap/diem-cong")
+    def diem_cong_page():
+        return render_template("thu_thap/diem_cong.html")
 
     @app.route("/kiem-chung")
     def kiem_chung_page():
@@ -1512,6 +1530,78 @@ def create_app() -> Flask:
             "errors": errors,
         })
 
+    @app.post("/api/phuong-thuc/import")
+    def api_phuong_thuc_import():
+        """Nhập JSON phương thức cho một trường và các năm học đã chọn."""
+        data = request.get_json(silent=True) or {}
+        code = str(data.get("code") or "").strip().upper()
+        raw_years = data.get("years")
+        if raw_years is None:
+            raw_years = [data.get("year")]
+        if not isinstance(raw_years, list):
+            raw_years = [raw_years]
+        years = []
+        for item in raw_years:
+            try:
+                year = int(item or 0)
+            except (TypeError, ValueError):
+                return jsonify({"ok": False, "error": "Năm học không hợp lệ."}), 400
+            if year < 2000 or year > 2100:
+                return jsonify({"ok": False, "error": "Năm học không hợp lệ."}), 400
+            if year not in years:
+                years.append(year)
+        if not code or not years:
+            return jsonify({"ok": False, "error": "Hãy chọn một trường và ít nhất một năm học."}), 400
+        raw_rows = data.get("rows")
+        try:
+            programs = program_rows_from_payload(raw_rows)
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        schools_data = dataset_store.load_schools(ROOT) or {}
+        school = next(
+            (
+                item for item in (schools_data.get("schools") or [])
+                if str(item.get("code") or "").upper() == code
+            ),
+            lookup_local_school(code),
+        )
+        if not school:
+            return jsonify({"ok": False, "error": f"Không tìm thấy trường {code}."}), 404
+        school_name = school.get("name") or school.get("short_name") or code
+        incoming = []
+        for year in years:
+            incoming.extend(records_from_programs(
+                programs, code, school_name, year, "", "Nhập từ JSON"
+            ))
+        cached = dict(app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {})
+        records = _upsert_records(
+            cached.get("records"),
+            incoming,
+            ("ma_truong", "nam", "ma_xet_tuyen", "ma_nganh", "ten_nganh"),
+        )
+        payload = _method_payload(
+            records,
+            sorted({
+                *[int(item) for item in (cached.get("years") or []) if str(item).isdigit() or isinstance(item, int)],
+                *years,
+            }),
+            sorted({*[str(item).upper() for item in (cached.get("codes") or [])], code}),
+            cached,
+        )
+        app.config["LAST_METHODS"] = payload
+        try:
+            dataset_store.save_phuong_thuc(ROOT, payload)
+        except OSError:
+            pass
+        return jsonify({
+            "ok": True,
+            "programs": len(incoming),
+            "majors": len(programs),
+            "years": years,
+            "records": records,
+            "documents": payload.get("documents") or [],
+        })
+
     @app.post("/api/crawl/danh-gia")
     def api_crawl_danh_gia():
         """Đánh giá cơ hội trúng tuyển (thống kê + AI miễn phí)."""
@@ -2610,7 +2700,15 @@ def create_app() -> Flask:
         collected_at = datetime.now().isoformat(timespec="seconds")
         source = "Nhập dữ liệu điểm"
         incoming = []
+        method_rows = []
         missing = []
+
+        def combo_list(value):
+            if isinstance(value, str):
+                value = [part.strip() for part in value.replace(";", ",").split(",")]
+            if not isinstance(value, list):
+                return []
+            return [str(part).strip() for part in value if str(part).strip()]
 
         def add_score(admission_code, major_code, major_name, method, thpt_score, method_score):
             incoming.append({
@@ -2635,19 +2733,60 @@ def create_app() -> Flask:
                 admission_code = str(item.get("Ma_xet_tuyen") or item.get("ma_xet_tuyen") or "").strip()
                 if not admission_code:
                     raise ValueError(f"Dòng {index} thiếu Ma_xet_tuyen.")
+                stated_name = str(item.get("Ten_nganh") or item.get("ten_nganh") or "").strip()
+                stated_major = str(item.get("Ma_nganh") or item.get("ma_nganh") or "").strip()
                 major = _major_for_admission_code(code, year, admission_code)
                 if major:
-                    major_code = str(major.get("ma_nganh") or "").strip() or admission_code
-                    major_name = str(major.get("ten_nganh") or major.get("ten_chuong_trinh") or "").strip()
+                    major_code = stated_major or str(major.get("ma_nganh") or "").strip() or admission_code
+                    major_name = stated_name or str(major.get("ten_nganh") or major.get("ten_chuong_trinh") or "").strip()
                 else:
-                    major_code = admission_code
-                    major_name = ""
-                    missing.append(admission_code)
+                    major_code = stated_major or admission_code
+                    major_name = stated_name
+                    if not stated_name:
+                        missing.append(admission_code)
+                quota = item.get("Chi_tieu", item.get("chi_tieu"))
+                quota_text = ""
+                if quota is not None and str(quota).strip() not in {"", "None"}:
+                    quota_text = re.sub(r"[^\d]", "", str(quota))[:6]
                 thpt = _score_number(item.get("Diem_chuan_THPT", item.get("diem_chuan_thpt")))
                 if thpt is not None:
                     add_score(admission_code, major_code, major_name, "THPT", thpt, None)
                 methods = item.get("phuong_thuc") or []
                 shared = _score_number(item.get("diem_chuan", item.get("Diem_chuan")))
+                if methods and all(not isinstance(method, dict) for method in methods):
+                    names = []
+                    for method in methods:
+                        name = str(method).strip()
+                        if name and name not in names:
+                            names.append(name)
+                    if not names:
+                        raise ValueError(f"Dòng {admission_code}: thiếu mã phương thức.")
+                    combos = combo_list(item.get("To_hop", item.get("to_hop")))
+                    note = f"Tổ hợp: {', '.join(combos)}" if combos else ""
+                    method_rows.append({
+                        "ma_truong": code,
+                        "ten_truong": school_name,
+                        "nam": year,
+                        "ma_xet_tuyen": admission_code,
+                        "ma_nganh": stated_major or (str(major.get("ma_nganh") or "").strip() if major else ""),
+                        "ten_nganh": major_name,
+                        "chi_tieu": quota_text,
+                        "ghi_chu": source,
+                        "hinh_thuc": [
+                            {
+                                "id": name,
+                                "ten": name,
+                                "ap_dung": True,
+                                "mo_ta": note,
+                                "chi_tiet": {"to_hop_xet_tuyen": combos} if combos else {},
+                            }
+                            for name in names
+                        ],
+                    })
+                    if shared is not None:
+                        for name in names:
+                            add_score(admission_code, major_code, major_name, name, shared, None)
+                    continue
                 if not methods and shared is not None:
                     school_methods = _school_method_names(code, year)
                     if not school_methods:
@@ -2675,8 +2814,39 @@ def create_app() -> Flask:
                     )
         except ValueError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
+        if not incoming and not method_rows:
+            return jsonify({"ok": False, "error": "Không có điểm hoặc phương thức nào để lưu."}), 400
+        saved_programs = 0
+        if method_rows:
+            method_cache = dict(app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {})
+            method_records = _upsert_records(
+                method_cache.get("records"),
+                method_rows,
+                ("ma_truong", "nam", "ma_xet_tuyen", "ma_nganh", "ten_nganh"),
+            )
+            method_payload = _method_payload(
+                method_records,
+                sorted({
+                    *[int(item) for item in (method_cache.get("years") or []) if str(item).isdigit() or isinstance(item, int)],
+                    year,
+                }),
+                sorted({*[str(item).upper() for item in (method_cache.get("codes") or [])], code}),
+                method_cache,
+            )
+            app.config["LAST_METHODS"] = method_payload
+            try:
+                dataset_store.save_phuong_thuc(ROOT, method_payload)
+            except OSError:
+                pass
+            saved_programs = len(method_rows)
         if not incoming:
-            return jsonify({"ok": False, "error": "Không có điểm nào để lưu."}), 400
+            return jsonify({
+                "ok": True,
+                "rows": 0,
+                "majors": len({row["ma_xet_tuyen"] for row in method_rows}),
+                "programs": saved_programs,
+                "missing": missing,
+            })
 
         cached = dict(app.config.get("LAST_CRAWL") or dataset_store.load_admissions(ROOT) or {})
         kept = [
@@ -2713,6 +2883,7 @@ def create_app() -> Flask:
             "ok": True,
             "rows": len(incoming),
             "majors": len({row["ma_xet_tuyen"] for row in incoming}),
+            "programs": saved_programs,
             "missing": missing,
         })
 
@@ -2721,7 +2892,19 @@ def create_app() -> Flask:
         """Xoá một hoặc nhiều dòng kết quả (trường + ngành + phương thức) khỏi dữ liệu đã lưu."""
         data = request.get_json(silent=True) or {}
         raw_keys = data.get("keys") or []
-        if not isinstance(raw_keys, list) or not raw_keys:
+        school_scope = [
+            str(code).strip().upper()
+            for code in (data.get("schools") or [])
+            if str(code).strip()
+        ]
+        try:
+            scope_year = int(data.get("nam") or 0)
+        except (TypeError, ValueError):
+            scope_year = 0
+        if school_scope:
+            if scope_year < 2000:
+                return jsonify({"ok": False, "error": "Hãy chọn năm học cần xoá."}), 400
+        elif not isinstance(raw_keys, list) or not raw_keys:
             return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
         drop_years = {}
         for item in raw_keys:
@@ -2735,10 +2918,13 @@ def create_app() -> Flask:
             except (TypeError, ValueError):
                 year = 0
             drop_years.setdefault(key, set()).add(year)
-        if not drop_years:
+        if not school_scope and not drop_years:
             return jsonify({"ok": False, "error": "Chưa chọn dòng cần xoá."}), 400
 
         def _keep_admission(item):
+            if school_scope:
+                school = str(item.get("ma_truong") or "").strip().upper()
+                return not (school in school_scope and int(item.get("nam") or 0) == scope_year)
             years_for_key = drop_years.get(_record_key(item))
             if not years_for_key:
                 return True

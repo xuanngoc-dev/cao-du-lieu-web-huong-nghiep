@@ -1,0 +1,58 @@
+<div class="card panel-card mb-3 d-none" id="crawlBar">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="filterType">Loại hình</label>
+        <select id="filterType" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả loại hình">
+          <option value="Đại học">Đại học</option>
+          <option value="Học viện">Học viện</option>
+          <option value="Cao đẳng">Cao đẳng</option>
+        </select>
+      </div>
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="filterSector">Loại trường</label>
+        <select id="filterSector" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả loại trường"></select>
+      </div>
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="filterRegion">Khu vực</label>
+        <select id="filterRegion" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả khu vực">
+          <option value="Bắc">Bắc</option>
+          <option value="Trung">Trung</option>
+          <option value="Nam">Nam</option>
+        </select>
+      </div>
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="schoolPick">Trường</label>
+        <select id="schoolPick" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Chọn trường"></select>
+      </div>
+      <div class="col-md-6 col-xl">
+        <label class="form-label small mb-1" for="crawlYears">Năm học</label>
+        <select id="crawlYears" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Chọn năm học">
+          {% for year in range(2021, 2027) %}
+          <option value="{{ year }}" {% if year >= 2021 %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-xl-auto">
+        <button type="button" class="btn btn-teal" id="btnCollect">
+          <i class="bi {{ icon }}"></i> {{ button }}
+        </button>
+      </div>
+    </div>
+    <div id="collectProgress" class="mt-3 d-none" aria-live="polite">
+      <div class="d-flex justify-content-between small mb-1">
+        <span id="collectProgressLabel">Đang thu thập…</span>
+        <span id="collectProgressPct">0%</span>
+      </div>
+      <div class="progress" style="height: 1.35rem;" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="collectProgressTrack">
+        <div id="collectProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-teal" style="width: 0%">0%</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="collectMsg" class="mb-3"></div>

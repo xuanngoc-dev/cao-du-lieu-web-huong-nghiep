@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Quy chế quy đổi điểm{% endblock %}
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-1">Quy chế quy đổi điểm</h1>
+  <p class="text-muted mb-0">Quy chế quy đổi điểm chứng chỉ và điểm thi đã nhập.</p>
+</div>
+{% set icon = "bi-arrow-left-right" %}
+{% set button = "Thu thập quy chế quy đổi điểm" %}
+{% include "thu_thap/_bar.html" %}
+  <div class="card panel-card">
+    <div class="card-body border-bottom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="small text-muted" id="convertInfo">Chưa có bảng quy đổi</div>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-danger btn-sm" type="button" id="btnDeleteConvert" disabled>
+          <i class="bi bi-trash3"></i> Xoá đã chọn
+        </button>
+        <a class="btn btn-outline-teal btn-sm d-none" id="btnConvertExcel" href="#">
+        <i class="bi bi-file-earmark-excel"></i> Excel
+        </a>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="convertTable">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th class="text-center">
+                <input class="form-check-input" type="checkbox" id="convertCheckAll" aria-label="Chọn tất cả quy đổi">
+              </th>
+              <th>#</th>
+              <th>Trường</th>
+              <th>Năm</th>
+              <th>Loại</th>
+              <th>Nội dung quy đổi</th>
+              <th>Nguồn</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<div class="modal fade" id="resultSourceModal" tabindex="-1" aria-labelledby="resultSourceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="resultSourceModalLabel">Nguồn dữ liệu</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2" id="resultSourceCaption"></p>
+        <ol class="mb-0" id="resultSourceList"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="resultDeleteModal" tabindex="-1" aria-labelledby="resultDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title h5 text-danger" id="resultDeleteModalLabel">
+          <i class="bi bi-exclamation-triangle me-1"></i> Xác nhận xoá
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="mb-0" id="resultDeleteMessage"></p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+        <button type="button" class="btn btn-danger" id="resultDeleteConfirm">
+          <i class="bi bi-trash3"></i> Xoá
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20260925b"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-convert.js') }}?v=20260925b"></script>
+{% endblock %}

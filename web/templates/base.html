@@ -26,8 +26,14 @@
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'schools_page' %}active{% endif %}" href="{{ url_for('schools_page') }}">Trường</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'crawl_page' %}active{% endif %}" href="{{ url_for('crawl_page') }}">Crawl data</a>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {% if request.endpoint in ['phuong_thuc_page', 'diem_page', 'thu_thap_quy_doi_page', 'diem_cong_page', 'crawl_page'] %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Thu thập</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item {% if request.endpoint == 'phuong_thuc_page' %}active{% endif %}" href="{{ url_for('phuong_thuc_page') }}">Phương thức tuyển sinh</a></li>
+              <li><a class="dropdown-item {% if request.endpoint == 'diem_page' %}active{% endif %}" href="{{ url_for('diem_page') }}">Dữ liệu điểm</a></li>
+              <li><a class="dropdown-item {% if request.endpoint == 'thu_thap_quy_doi_page' %}active{% endif %}" href="{{ url_for('thu_thap_quy_doi_page') }}">Quy chế quy đổi điểm</a></li>
+              <li><a class="dropdown-item {% if request.endpoint == 'diem_cong_page' %}active{% endif %}" href="{{ url_for('diem_cong_page') }}">Điểm cộng</a></li>
+            </ul>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'kiem_chung_page' %}active{% endif %}" href="{{ url_for('kiem_chung_page') }}">Kiểm chứng</a>

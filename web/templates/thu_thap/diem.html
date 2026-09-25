@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}Dữ liệu điểm{% endblock %}
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-1">Dữ liệu điểm</h1>
+  <p class="text-muted mb-0">Nhập điểm chuẩn theo trường và năm học.</p>
+</div>
+{% set icon = "bi-cloud-download" %}
+{% set button = "Thu thập dữ liệu điểm" %}
+{% include "thu_thap/_bar.html" %}
+<div class="d-flex justify-content-end mb-2">
+  <button type="button" class="btn btn-primary btn-sm" id="btnScoreUpload">
+    <i class="bi bi-upload"></i> Nhập dữ liệu
+  </button>
+</div>
+<div class="card panel-card mb-3">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small mb-1" for="resultSchool">Trường</label>
+        <select id="resultSchool" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả trường"></select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small mb-1" for="resultYear">Năm học</label>
+        <select id="resultYear" class="form-select form-select-sm js-multi-select"
+          data-placeholder="Chọn năm"></select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small mb-1" for="resultMajor">Ngành tuyển sinh</label>
+        <select id="resultMajor" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả ngành"></select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small mb-1" for="resultMethod">Phương thức</label>
+        <select id="resultMethod" class="form-select form-select-sm js-multi-select" multiple
+          data-placeholder="Tất cả phương thức"></select>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card panel-card">
+  <div class="card-body border-bottom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="small text-muted" id="resultInfo">Chưa có kết quả</div>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-outline-danger btn-sm" type="button" id="btnDeleteSchoolScores" disabled>
+        <i class="bi bi-trash3"></i> Xoá dữ liệu trường
+      </button>
+      <button class="btn btn-outline-danger btn-sm" type="button" id="btnDeleteResults" disabled>
+        <i class="bi bi-trash3"></i> Xoá đã chọn
+      </button>
+      <a class="btn btn-outline-teal btn-sm d-none" id="btnExcel" href="#">
+        <i class="bi bi-file-earmark-excel"></i> Excel
+      </a>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+      <table class="table table-sm table-bordered table-hover mb-0 align-middle table-nowrap-head" id="resultTable">
+        <thead class="table-light sticky-top" id="resultHead">
+          <tr>
+            <th class="text-center">
+              <input class="form-check-input" type="checkbox" id="resultCheckAll" aria-label="Chọn tất cả dòng kết quả">
+            </th>
+            <th>#</th>
+            <th>Trường</th>
+            <th>Ngành tuyển sinh</th>
+            <th>Phương thức</th>
+            <th>Nguồn</th>
+            <th>Thời gian thu thập</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="methodGroupModal" tabindex="-1" aria-labelledby="methodGroupModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title h5 mb-1" id="methodGroupModalLabel">Tổ hợp phương thức chuẩn</h2>
+          <div class="small text-muted" id="methodGroupCaption"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">Chọn các mã phương thức chuẩn tạo nên phương thức riêng của trường.</p>
+        <div class="d-flex flex-column gap-2" id="methodGroupChoices"></div>
+        <div class="alert d-none mt-3 mb-0" id="methodGroupResult"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary" id="methodGroupSave">Lưu tổ hợp</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="scoreUploadModal" tabindex="-1" aria-labelledby="scoreUploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title h5 mb-1" id="scoreUploadModalLabel">Nhập dữ liệu điểm</h2>
+          <div class="small text-muted" id="scoreUploadSchool">Mỗi lần chỉ nhập một trường trong một năm học.</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-3">Mã xét tuyển được đối chiếu với phương thức xét tuyển của trường để hiện tên ngành.</p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="scoreUploadSchoolSelect">Trường</label>
+            <select class="form-select form-select-sm js-multi-select" id="scoreUploadSchoolSelect"
+              data-placeholder="Chọn một trường"></select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="scoreUploadYear">Năm học</label>
+            <select class="form-select form-select-sm js-multi-select" id="scoreUploadYear"
+              data-placeholder="Chọn một năm học">
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+              <option value="2021">2021</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="form-label" for="scoreUploadJson">Dữ liệu điểm</label>
+          <textarea class="form-control font-monospace small" id="scoreUploadJson" rows="12" spellcheck="false" placeholder='[
+  {
+    "STT": 1,
+    "Ma_xet_tuyen": "IT-E10",
+    "Diem_chuan_THPT": 29.54,
+    "phuong_thuc": [
+      { "ten": "XTTN_1_2", "diem": 96.75 },
+      { "ten": "XTTN_1_3", "diem": 96.09 },
+      { "ten": "TSA", "diem": 82.12 }
+    ]
+  }
+]'></textarea>
+          <div class="form-text">Dán một danh sách JSON. Có thể xem các cấu trúc được hỗ trợ bên dưới.</div>
+          <button class="btn btn-link btn-sm px-0 mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#scoreJsonFormats" aria-expanded="false" aria-controls="scoreJsonFormats">Xem cấu trúc JSON hỗ trợ nhập</button>
+          <div class="collapse" id="scoreJsonFormats">
+            <div class="border rounded p-3 mt-2 bg-light small">
+              <p class="mb-2"><b>Điểm theo từng phương thức.</b> <code>Diem_chuan_THPT</code> ghi vào phương thức THPT.</p>
+              <pre class="mb-3 bg-white border rounded p-2"><code>[
+  {
+    "STT": 1,
+    "Ma_xet_tuyen": "IT-E10",
+    "Diem_chuan_THPT": 29.54,
+    "phuong_thuc": [
+      { "ten": "XTTN_1_2", "diem": 96.75 },
+      { "ten": "XTTN_1_3", "diem": 96.09 }
+    ]
+  }
+]</code></pre>
+              <p class="mb-2"><b>Một điểm chung.</b> <code>diem_chuan</code> được gán cho mọi phương thức tuyển sinh của trường trong năm đã chọn.</p>
+              <pre class="mb-3 bg-white border rounded p-2"><code>[
+  { "Ma_xet_tuyen": "IT-E10", "diem_chuan": 29.54 }
+]</code></pre>
+              <p class="mb-2"><b>Phương thức và tổ hợp dùng chung.</b> Mỗi mã trong <code>phuong_thuc</code> nhận cùng danh sách <code>To_hop</code>.</p>
+              <pre class="mb-0 bg-white border rounded p-2"><code>[
+  {
+    "STT": 1,
+    "Ma_xet_tuyen": "7210404",
+    "Ten_nganh": "Thiết kế thời trang",
+    "Chi_tieu": 60,
+    "phuong_thuc": [301, 410, 200, 100, 402],
+    "To_hop": ["C01", "C03", "C04", "D01"]
+  }
+]</code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="d-none mt-3" id="scoreUploadProgress">
+          <div class="d-flex justify-content-between small mb-1">
+            <span id="scoreUploadStatus">Đang xử lý…</span>
+            <span id="scoreUploadPct">0%</span>
+          </div>
+          <div class="progress" style="height:1rem">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-teal" id="scoreUploadBar" style="width:0%">0%</div>
+          </div>
+        </div>
+        <div class="alert d-none mt-3 mb-0" id="scoreUploadResult"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="scoreUploadClose">Đóng</button>
+        <button type="button" class="btn btn-primary" id="scoreUploadStart">
+          <i class="bi bi-upload"></i> Cập nhật điểm
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="resultDeleteModal" tabindex="-1" aria-labelledby="resultDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title h5 text-danger" id="resultDeleteModalLabel">
+          <i class="bi bi-exclamation-triangle me-1"></i> Xác nhận xoá
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="mb-0" id="resultDeleteMessage"></p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+        <button type="button" class="btn btn-danger" id="resultDeleteConfirm">
+          <i class="bi bi-trash3"></i> Xoá
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20260925b"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-scores.js') }}?v=20260925c"></script>
+{% endblock %}
