@@ -1052,12 +1052,38 @@ def create_app() -> Flask:
         )
         return jsonify({"ok": True, "removed": len(wanted), "records": records})
 
-    def _method_payload(records, years, codes):
+    OFFICIAL_METHODS = [
+        ("100", "Xét kết quả thi tốt nghiệp THPT"),
+        ("200", "Xét kết quả học tập cấp THPT (học bạ)"),
+        ("301", "Xét tuyển thẳng theo quy định của Quy chế tuyển sinh (Điều 8)"),
+        ("401", "Thi đánh giá năng lực, đánh giá tư duy do CSĐT tự tổ chức để xét tuyển"),
+        ("402", "Sử dụng kết quả thi đánh giá năng lực, đánh giá tư duy do đơn vị khác tổ chức để xét tuyển"),
+        ("403", "Thi văn hóa do CSĐT tổ chức để xét tuyển"),
+        ("404", "Sử dụng kết quả thi văn hóa do CSĐT khác tổ chức để xét tuyển"),
+        ("405", "Kết hợp kết quả thi tốt nghiệp THPT với điểm thi năng khiếu để xét tuyển"),
+        ("406", "Kết hợp kết quả học tập cấp THPT với điểm thi năng khiếu để xét tuyển"),
+        ("407", "Kết hợp kết quả thi tốt nghiệp THPT với kết quả học tập cấp THPT để xét tuyển"),
+        ("409", "Kết hợp kết quả thi tốt nghiệp THPT với chứng chỉ quốc tế để xét tuyển"),
+        ("410", "Kết hợp kết quả học tập cấp THPT với chứng chỉ quốc tế để xét tuyển"),
+        ("411", "Xét tuyển thí sinh tốt nghiệp THPT nước ngoài"),
+        ("413", "Kết hợp kết quả thi tốt nghiệp THPT với phỏng vấn để xét tuyển"),
+        ("414", "Kết hợp kết quả học tập cấp THPT với phỏng vấn để xét tuyển"),
+        ("415", "Sử dụng chứng chỉ quốc tế SAT hoặc chứng chỉ quốc tế khác đủ điều kiện để xét tuyển"),
+        ("416", "Kỳ thi V-SAT"),
+        ("417", "Sử dụng kết quả Kỳ thi V-SAT do đơn vị khác tổ chức để xét tuyển"),
+        ("500", "Sử dụng phương thức khác"),
+    ]
+    OFFICIAL_METHOD_CODES = {code for code, _name in OFFICIAL_METHODS}
+
+    def _method_payload(records, years, codes, cached=None):
+        previous = cached or {}
         return {
             "records": records,
             "catalog": METHOD_CATALOG,
             "years": years,
             "codes": codes,
+            "documents": previous.get("documents") or [],
+            "nhom_phuong_thuc": previous.get("nhom_phuong_thuc") or {},
         }
 
     @app.get("/api/phuong-thuc/records")
@@ -1069,7 +1095,50 @@ def create_app() -> Flask:
             "documents": cached.get("documents") or [],
             "catalog": METHOD_CATALOG,
             "years": cached.get("years") or [],
+            "nhom_phuong_thuc": cached.get("nhom_phuong_thuc") or {},
+            "official_methods": [
+                {"ma": code, "ten": name} for code, name in OFFICIAL_METHODS
+            ],
         })
+
+    @app.post("/api/phuong-thuc/nhom")
+    def api_phuong_thuc_nhom():
+        """Gắn một tên phương thức của trường với tổ hợp mã phương thức chuẩn."""
+        data = request.get_json(silent=True) or {}
+        school = str(data.get("ma_truong") or "").strip().upper()
+        name = str(data.get("ten") or "").strip()
+        try:
+            year = int(data.get("nam") or 0)
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "Năm học không hợp lệ."}), 400
+        if not school or not name or year < 2000:
+            return jsonify({"ok": False, "error": "Thiếu trường, năm học hoặc tên phương thức."}), 400
+        if name in OFFICIAL_METHOD_CODES:
+            return jsonify({"ok": False, "error": "Mã phương thức chuẩn không cần gắn tổ hợp."}), 400
+        raw_codes = data.get("ma") or []
+        if not isinstance(raw_codes, list):
+            return jsonify({"ok": False, "error": "Tổ hợp phương thức không hợp lệ."}), 400
+        chosen = []
+        for code, _label in OFFICIAL_METHODS:
+            if code in {str(item).strip() for item in raw_codes}:
+                chosen.append(code)
+        cached = dict(app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {})
+        groups = dict(cached.get("nhom_phuong_thuc") or {})
+        school_groups = dict(groups.get(school) or {})
+        year_groups = dict(school_groups.get(str(year)) or {})
+        if chosen:
+            year_groups[name] = chosen
+        else:
+            year_groups.pop(name, None)
+        school_groups[str(year)] = year_groups
+        groups[school] = school_groups
+        cached["nhom_phuong_thuc"] = groups
+        app.config["LAST_METHODS"] = cached
+        try:
+            dataset_store.save_phuong_thuc(ROOT, cached)
+        except OSError:
+            pass
+        return jsonify({"ok": True, "nhom_phuong_thuc": groups})
 
     @app.post("/api/phuong-thuc/stream")
     def api_phuong_thuc_stream():
@@ -1148,6 +1217,7 @@ def create_app() -> Flask:
                 records,
                 sorted({*[int(y) for y in (cached.get("years") or [])], *years}),
                 sorted({*[str(c).upper() for c in (cached.get("codes") or [])], *replaced}),
+                cached,
             )
             payload["logs"] = logs
             app.config["LAST_METHODS"] = payload
@@ -1425,6 +1495,7 @@ def create_app() -> Flask:
             records,
             sorted({*[int(item) for item in (cached.get("years") or []) if str(item).isdigit() or isinstance(item, int)], year}),
             sorted({*[str(item).upper() for item in (cached.get("codes") or [])], code}),
+            cached,
         )
         payload["documents"] = kept_docs + documents
         app.config["LAST_METHODS"] = payload
@@ -2471,6 +2542,36 @@ def create_app() -> Flask:
         exact = next((row for row in matches if int(row.get("nam") or 0) == year), None)
         return exact or (matches[0] if matches else None)
 
+    def _school_method_names(school_code: str, year: int):
+        """Tên phương thức tuyển sinh trường đang dùng trong năm học."""
+        cached = app.config.get("LAST_METHODS") or dataset_store.load_phuong_thuc(ROOT) or {}
+        rows = [
+            row for row in (cached.get("records") or [])
+            if str(row.get("ma_truong") or "").strip().upper() == school_code
+            and int(row.get("nam") or 0) == year
+        ]
+        if not rows:
+            rows = [
+                row for row in (cached.get("records") or [])
+                if str(row.get("ma_truong") or "").strip().upper() == school_code
+            ]
+        names = []
+        seen = set()
+        for row in rows:
+            for item in row.get("hinh_thuc") or []:
+                if not isinstance(item, dict) or item.get("ap_dung") is False:
+                    continue
+                name = str(item.get("ten") or item.get("id") or "").strip()
+                folded = name.casefold()
+                if not name or ("tất cả" in folded and "phương thức" in folded):
+                    continue
+                key = folded
+                if key in seen:
+                    continue
+                seen.add(key)
+                names.append(name)
+        return names
+
     @app.post("/api/crawl/records/import")
     def api_crawl_records_import():
         """Nhập điểm chuẩn JSON cho đúng một trường và một năm học."""
@@ -2546,6 +2647,16 @@ def create_app() -> Flask:
                 if thpt is not None:
                     add_score(admission_code, major_code, major_name, "THPT", thpt, None)
                 methods = item.get("phuong_thuc") or []
+                shared = _score_number(item.get("diem_chuan", item.get("Diem_chuan")))
+                if not methods and shared is not None:
+                    school_methods = _school_method_names(code, year)
+                    if not school_methods:
+                        raise ValueError(
+                            "Trường chưa có phương thức tuyển sinh cho năm này, nên chưa gán được điểm chung."
+                        )
+                    for name in school_methods:
+                        add_score(admission_code, major_code, major_name, name, shared, None)
+                    continue
                 if methods and not isinstance(methods, list):
                     raise ValueError(f"Dòng {admission_code}: phuong_thuc phải là danh sách.")
                 for method in methods:

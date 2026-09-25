@@ -111,9 +111,9 @@
             data-placeholder="Tất cả ngành"></select>
         </div>
         <div class="col-md-4">
-          <label class="form-label small mb-1" for="methodForm">Hình thức tuyển sinh</label>
+          <label class="form-label small mb-1" for="methodForm">Phương thức tuyển sinh</label>
           <select id="methodForm" class="form-select form-select-sm js-multi-select" multiple
-            data-placeholder="Tất cả hình thức"></select>
+            data-placeholder="Tất cả phương thức"></select>
         </div>
         <div class="col-md-4">
           <label class="form-label small mb-1" for="methodQuery">Mã / chương trình</label>
@@ -134,10 +134,10 @@
         </button>
       </div>
     </div>
-    <div class="small text-muted px-3 py-2 border-bottom d-none" id="methodDocs"></div>
     <div class="card-body p-0">
       <div class="method-table-scroll" id="methodTables"></div>
     </div>
+    <div class="small text-muted px-3 py-2 border-top d-none" id="methodDocs"></div>
   </div>
 </div>
 
@@ -169,12 +169,6 @@
         <label class="form-label small mb-1" for="resultMethod">Phương thức</label>
         <select id="resultMethod" class="form-select form-select-sm js-multi-select" multiple
           data-placeholder="Tất cả phương thức"></select>
-      </div>
-      <div class="col-12">
-        <div class="form-check mb-0">
-          <input class="form-check-input" type="checkbox" id="resultMissingScore">
-          <label class="form-check-label small" for="resultMissingScore">Chỉ hiện ngành chưa có điểm chuẩn trong năm đang xem</label>
-        </div>
       </div>
     </div>
   </div>
@@ -300,6 +294,29 @@
   </div>
 </div>
 
+<div class="modal fade" id="methodGroupModal" tabindex="-1" aria-labelledby="methodGroupModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title h5 mb-1" id="methodGroupModalLabel">Tổ hợp phương thức chuẩn</h2>
+          <div class="small text-muted" id="methodGroupCaption"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">Chọn các mã phương thức chuẩn tạo nên phương thức riêng của trường.</p>
+        <div class="d-flex flex-column gap-2" id="methodGroupChoices"></div>
+        <div class="alert d-none mt-3 mb-0" id="methodGroupResult"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary" id="methodGroupSave">Lưu tổ hợp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="methodUploadModal" tabindex="-1" aria-labelledby="methodUploadModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
@@ -409,7 +426,7 @@
     ]
   }
 ]'></textarea>
-          <div class="form-text">Dán một danh sách JSON. Mỗi mã xét tuyển là một ngành của trường đã chọn.</div>
+          <div class="form-text">Dán danh sách JSON. Nếu chỉ có <code>Ma_xet_tuyen</code> và <code>diem_chuan</code>, điểm đó được gán cho mọi phương thức tuyển sinh của trường trong năm đã chọn.</div>
         </div>
         <div class="d-none mt-3" id="scoreUploadProgress">
           <div class="d-flex justify-content-between small mb-1">
@@ -465,6 +482,28 @@ let convertRows = [];
 let bonusRows = [];
 let methodRows = [];
 let methodDocuments = [];
+let methodGroups = {};
+const OFFICIAL_METHODS = [
+  {ma: '100', ten: 'Xét kết quả thi tốt nghiệp THPT'},
+  {ma: '200', ten: 'Xét kết quả học tập cấp THPT (học bạ)'},
+  {ma: '301', ten: 'Xét tuyển thẳng theo quy định của Quy chế tuyển sinh (Điều 8)'},
+  {ma: '401', ten: 'Thi đánh giá năng lực, đánh giá tư duy do CSĐT tự tổ chức để xét tuyển'},
+  {ma: '402', ten: 'Sử dụng kết quả thi đánh giá năng lực, đánh giá tư duy do đơn vị khác tổ chức để xét tuyển'},
+  {ma: '403', ten: 'Thi văn hóa do CSĐT tổ chức để xét tuyển'},
+  {ma: '404', ten: 'Sử dụng kết quả thi văn hóa do CSĐT khác tổ chức để xét tuyển'},
+  {ma: '405', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với điểm thi năng khiếu để xét tuyển'},
+  {ma: '406', ten: 'Kết hợp kết quả học tập cấp THPT với điểm thi năng khiếu để xét tuyển'},
+  {ma: '407', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với kết quả học tập cấp THPT để xét tuyển'},
+  {ma: '409', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với chứng chỉ quốc tế để xét tuyển'},
+  {ma: '410', ten: 'Kết hợp kết quả học tập cấp THPT với chứng chỉ quốc tế để xét tuyển'},
+  {ma: '411', ten: 'Xét tuyển thí sinh tốt nghiệp THPT nước ngoài'},
+  {ma: '413', ten: 'Kết hợp kết quả thi tốt nghiệp THPT với phỏng vấn để xét tuyển'},
+  {ma: '414', ten: 'Kết hợp kết quả học tập cấp THPT với phỏng vấn để xét tuyển'},
+  {ma: '415', ten: 'Sử dụng chứng chỉ quốc tế SAT hoặc chứng chỉ quốc tế khác đủ điều kiện để xét tuyển'},
+  {ma: '416', ten: 'Kỳ thi V-SAT'},
+  {ma: '417', ten: 'Sử dụng kết quả Kỳ thi V-SAT do đơn vị khác tổ chức để xét tuyển'},
+  {ma: '500', ten: 'Sử dụng phương thức khác'},
+];
 const METHOD_ORDER = ['thpt', 'hoc_ba', 'dgnl', 'ket_hop', 'xttn_bo', 'xttn_truong'];
 const METHOD_LABELS = {
   thpt: 'Xét tuyển bằng kết quả Kỳ thi tốt nghiệp THPT',
@@ -729,14 +768,7 @@ function renderResults(rows, downloadUrl, years, methods) {
     else if (method && group.byMethod[method] == null) group.byMethod[method] = null;
   });
 
-  const missingOnly = document.getElementById('resultMissingScore').checked;
-  const list = [...groups.values()].filter(group => {
-    if (!missingOnly) return true;
-    return !methodNames.some(name => {
-      const score = group.byMethod[name];
-      return score != null && score !== '';
-    });
-  });
+  const list = [...groups.values()];
   resultGroups = list;
   const alive = new Set(list.map(resultKey));
   [...selectedResultKeys].forEach(key => {
@@ -866,7 +898,6 @@ document.getElementById('resultSchool').addEventListener('change', () => {
 ['resultYear', 'resultMajor', 'resultMethod'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => renderResults());
 });
-document.getElementById('resultMissingScore').addEventListener('change', () => renderResults());
 
 ['filterType', 'filterSector', 'filterRegion'].forEach(id => {
   document.getElementById(id).addEventListener('change', renderSchoolPick);
@@ -1198,10 +1229,38 @@ function methodColumnNames(rows) {
   ];
 }
 
-function methodHeaderLabel(name, school) {
-  if (String(school || '').toUpperCase() !== 'TMU') return {label: name, title: name};
-  const note = TMU_METHOD_NOTES.find(([code]) => code === name);
-  return note ? {label: name, title: `${name}: ${note[1]}`} : {label: name, title: name};
+function officialMethod(name) {
+  return OFFICIAL_METHODS.find(item => item.ma === String(name || '').trim()) || null;
+}
+
+function methodGroupCodes(school, year, name) {
+  const schoolGroups = methodGroups[String(school || '').trim().toUpperCase()] || {};
+  const yearGroups = schoolGroups[String(year || '')] || {};
+  const codes = yearGroups[name];
+  return Array.isArray(codes) ? codes.filter(code => officialMethod(code)) : [];
+}
+
+function methodColumnNote(name, school, year) {
+  const official = officialMethod(name);
+  if (official) return {kind: 'official', title: `${official.ma}: ${official.ten}`, lines: [`${official.ma}: ${official.ten}`]};
+  const codes = methodGroupCodes(school, year, name);
+  if (!codes.length) {
+    return {
+      kind: 'empty',
+      title: `${name}: chưa gắn tổ hợp phương thức chuẩn. Bấm để cập nhật.`,
+      lines: ['Chưa gắn tổ hợp phương thức chuẩn'],
+    };
+  }
+  const lines = codes.map(code => {
+    const item = officialMethod(code);
+    return `${item.ma}: ${item.ten}`;
+  });
+  return {kind: 'group', title: `${name} gồm ${lines.join('; ')}`, lines};
+}
+
+function methodHeaderLabel(name, school, year) {
+  const note = methodColumnNote(name, school, year);
+  return {label: name, title: note.title, kind: note.kind};
 }
 
 function methodApplies(row, name) {
@@ -1225,7 +1284,6 @@ function syncMethodFilters() {
   const schools = new Map();
   const years = new Set();
   const majors = new Map();
-  const forms = new Map();
   methodRows.forEach(row => {
     const school = String(row.ma_truong || '').trim();
     if (school) schools.set(school, codeName(school, row.ten_truong));
@@ -1233,7 +1291,6 @@ function syncMethodFilters() {
     if (year) years.add(year);
     const major = methodMajorKey(row);
     if (major) majors.set(major, codeName(row.ma_nganh, row.ten_nganh) || major);
-    methodForms(row).forEach(name => forms.set(name, name));
   });
   const keep = (id) => window.App.getSelectValues(document.getElementById(id));
   window.App.setSelectOptions(document.getElementById('methodSchool'), resultOptionHtml([...schools]), keep('methodSchool'), {
@@ -1248,9 +1305,21 @@ function syncMethodFilters() {
   window.App.setSelectOptions(document.getElementById('methodMajor'), resultOptionHtml([...majors]), keep('methodMajor'), {
     placeholder: 'Tất cả ngành',
   });
-  window.App.setSelectOptions(document.getElementById('methodForm'), resultOptionHtml([...forms]), keep('methodForm'), {
-    placeholder: 'Tất cả hình thức',
+  const methodHtml = OFFICIAL_METHODS
+    .map(item => `<option value="${escapeHtml(item.ma)}">${escapeHtml(item.ma)} — ${escapeHtml(item.ten)}</option>`)
+    .join('');
+  window.App.setSelectOptions(document.getElementById('methodForm'), methodHtml, keep('methodForm'), {
+    placeholder: 'Tất cả phương thức',
   });
+}
+
+function rowOfficialCodes(row) {
+  const codes = new Set();
+  methodForms(row).forEach(name => {
+    if (officialMethod(name)) codes.add(String(name).trim());
+    methodGroupCodes(row.ma_truong, row.nam, name).forEach(code => codes.add(code));
+  });
+  return codes;
 }
 
 function methodRowVisible(row) {
@@ -1261,7 +1330,7 @@ function methodRowVisible(row) {
   if (schools.size && !schools.has(String(row.ma_truong || '').trim())) return false;
   if (years.size && !years.has(String(row.nam || '').trim())) return false;
   if (majors.size && !majors.has(methodMajorKey(row))) return false;
-  if (forms.size && !methodForms(row).some(name => forms.has(name))) return false;
+  if (forms.size && ![...rowOfficialCodes(row)].some(code => forms.has(code))) return false;
   const query = (document.getElementById('methodQuery')?.value || '').trim().toLowerCase();
   if (!query) return true;
   const blob = [row.ma_xet_tuyen, row.ten_chuong_trinh, row.ma_nganh, row.ten_nganh].join(' ').toLowerCase();
@@ -1371,14 +1440,23 @@ function renderMethods(rows, documents) {
         </tr>
         <tr>
           ${(columns.length ? columns : ['Hình thức']).map(name => {
-            const header = methodHeaderLabel(name, sample.ma_truong);
-            return `<th class="text-center" title="${escapeHtml(header.title)}">${escapeHtml(header.label)}</th>`;
+            const header = methodHeaderLabel(name, sample.ma_truong, sample.nam);
+            if (header.kind === 'official' || name === 'Hình thức') {
+              return `<th class="text-center" title="${escapeHtml(header.title)}">${escapeHtml(header.label)}</th>`;
+            }
+            return `<th class="text-center"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-method-group="${escapeHtml(name)}" data-group-school="${escapeHtml(sample.ma_truong || '')}" data-group-year="${escapeHtml(sample.nam || '')}" title="${escapeHtml(header.title)}">${escapeHtml(header.label)}</button></th>`;
           }).join('')}
         </tr>
       </thead>
       <tbody>${body}</tbody>
     </table>
-    ${String(sample.ma_truong || '').toUpperCase() === 'TMU' ? `<div class="small text-muted px-2 py-2">${TMU_METHOD_NOTES.map(([code, note]) => `<div><b>${escapeHtml(code)}</b>: ${escapeHtml(note)}</div>`).join('')}</div>` : ''}`;
+    <div class="small text-muted px-2 py-2">${(columns.length ? columns : []).map(name => {
+      const note = methodColumnNote(name, sample.ma_truong, sample.nam);
+      const edit = note.kind === 'official'
+        ? ''
+        : ` <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-method-group="${escapeHtml(name)}" data-group-school="${escapeHtml(sample.ma_truong || '')}" data-group-year="${escapeHtml(sample.nam || '')}">Cập nhật tổ hợp</button>`;
+      return `<div><b>${escapeHtml(name)}</b>: ${escapeHtml(note.lines.join('; '))}${edit}</div>`;
+    }).join('')}</div>`;
   }).join('') || '<p class="small text-muted p-3 mb-0">Chưa có ngành và hình thức tuyển sinh</p>';
   renderMethodDocuments();
   const schools = new Set(methodRows.map(row => row.ma_truong)).size;
@@ -1543,7 +1621,8 @@ document.getElementById('btnCollectMethods').addEventListener('click', async () 
     const saved = await fetch('/api/phuong-thuc/records');
     const data = await saved.json();
     if (!data.ok) throw new Error(data.error || 'Không đọc được phương thức');
-    renderMethods((donePayload && donePayload.records) || data.records || []);
+    if (data.nhom_phuong_thuc) methodGroups = data.nhom_phuong_thuc;
+    renderMethods((donePayload && donePayload.records) || data.records || [], data.documents || []);
     const found = schoolEvents.filter(event => (event.found || []).length).length;
     setProgress('done', 'Thu thập phương thức hoàn tất', 100);
     const programs = schoolEvents.reduce((sum, event) => sum + (event.programs || 0), 0);
@@ -1573,7 +1652,58 @@ document.getElementById('methodTables').addEventListener('change', (event) => {
   document.getElementById('btnDeleteMethods').disabled = selectedMethodKeys.size === 0;
 });
 
+let methodGroupTarget = null;
+
+function openMethodGroup(name, school, year) {
+  methodGroupTarget = {name, school: String(school || '').toUpperCase(), year: String(year || '')};
+  const selected = new Set(methodGroupCodes(school, year, name));
+  document.getElementById('methodGroupCaption').textContent = `${school} · Năm ${year} · ${name}`;
+  document.getElementById('methodGroupChoices').innerHTML = OFFICIAL_METHODS.map(item => `
+    <label class="form-check">
+      <input class="form-check-input" type="checkbox" value="${escapeHtml(item.ma)}" ${selected.has(item.ma) ? 'checked' : ''}>
+      <span class="form-check-label"><b>${escapeHtml(item.ma)}</b> — ${escapeHtml(item.ten)}</span>
+    </label>`).join('');
+  const result = document.getElementById('methodGroupResult');
+  result.className = 'alert d-none mt-3 mb-0';
+  result.textContent = '';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('methodGroupModal')).show();
+}
+
+document.getElementById('methodGroupSave').addEventListener('click', async () => {
+  if (!methodGroupTarget) return;
+  const result = document.getElementById('methodGroupResult');
+  const codes = [...document.querySelectorAll('#methodGroupChoices input:checked')].map(input => input.value);
+  document.getElementById('methodGroupSave').disabled = true;
+  try {
+    const res = await fetch('/api/phuong-thuc/nhom', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        ma_truong: methodGroupTarget.school,
+        nam: Number(methodGroupTarget.year),
+        ten: methodGroupTarget.name,
+        ma: codes,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Không lưu được tổ hợp');
+    methodGroups = data.nhom_phuong_thuc || {};
+    renderMethods(methodRows, methodDocuments);
+    bootstrap.Modal.getInstance(document.getElementById('methodGroupModal'))?.hide();
+  } catch (e) {
+    result.className = 'alert alert-danger mt-3 mb-0';
+    result.textContent = e.message;
+  } finally {
+    document.getElementById('methodGroupSave').disabled = false;
+  }
+});
+
 document.getElementById('methodTables').addEventListener('click', (event) => {
+  const group = event.target.closest('[data-method-group]');
+  if (group) {
+    openMethodGroup(group.dataset.methodGroup, group.dataset.groupSchool, group.dataset.groupYear);
+    return;
+  }
   const detail = event.target.closest('[data-method-detail]');
   if (detail) {
     showMethodDetail(methodRows[Number(detail.dataset.methodDetail)]);
@@ -2330,6 +2460,7 @@ document.getElementById('btnDeleteConvert').addEventListener('click', () => {
     if (!saved.ok) return;
     const data = await saved.json();
     if (data.ok) {
+      if (data.nhom_phuong_thuc) methodGroups = data.nhom_phuong_thuc;
       renderMethods(data.records || [], data.documents || []);
       if (resultRows.length) renderResults();
     }
