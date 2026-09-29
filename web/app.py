@@ -909,6 +909,8 @@ def _regulation_calculator_spec(code: str) -> Optional[Dict[str, Any]]:
     """Ô nhập thêm theo quy chế. Học bạ, điểm thi, chứng chỉ và ưu tiên lấy từ hồ sơ."""
     if code == "DCN":
         return _dcn_calculator_spec()
+    if code == "KHA":
+        return _kha_calculator_spec()
     if code != "BKA":
         return None
     bonus = _load_bka_talent_bonus() or {}
@@ -1955,6 +1957,495 @@ def _convert_dcn_scores(
     return {"ok": True, "results": tiles}
 
 
+_KHA_EQUIV_FIELDS = (
+    ("thpt", "diem_tn_thpt", "TN THPT"),
+    ("hsa", "diem_hsa", "HSA"),
+    ("sat", "diem_sat", "SAT"),
+    ("vact", "diem_v_act", "V-ACT"),
+    ("tsa", "diem_tsa", "TSA"),
+)
+_KHA_CERT_BOUNDS = {
+    "HSA": (0, 150),
+    "SAT": (400, 1600),
+    "V-ACT": (0, 1200),
+    "TSA": (0, 100),
+    "IELTS": (0, 9),
+    "TOEFL iBT": (0, 120),
+    "TOEIC": (0, 990),
+}
+_KHA_METHOD_CERTS = (
+    ("hsa", "HSA", "HSA"),
+    ("sat", "SAT", "SAT"),
+    ("vact", "V-ACT", "V-ACT"),
+    ("tsa", "TSA", "TSA"),
+)
+
+
+def _kha_calculator_spec() -> Dict[str, Any]:
+    """Chọn một phương thức gốc. Ba môn chỉ dùng khi gốc là điểm thi tốt nghiệp THPT."""
+    when_thpt = {"id": "nguon", "value": "thpt"}
+    return {
+        "lead": (
+            "Chọn một phương thức gốc. Chỉ điểm đó được quy đổi sang các cột còn lại trong bảng, "
+            "kể cả khi hồ sơ đồng thời có điểm thi tốt nghiệp THPT, HSA, SAT, V-ACT và TSA. "
+            "Nếu gốc là điểm thi tốt nghiệp THPT, chọn thêm ba môn; điểm lấy từ hồ sơ. "
+            "Kết quả là khoảng trong bảng; số ước tính nằm trong khoảng đó. Bảng không cộng điểm ưu tiên."
+        ),
+        "inputs": [
+            {
+                "id": "nguon",
+                "label": "Phương thức gốc",
+                "group": "Phương thức gốc",
+                "type": "select",
+                "hint": "Điểm của phương thức này là mốc để so với HSA, SAT, V-ACT, TSA và điểm thi tốt nghiệp THPT.",
+                "options": [
+                    {"value": "", "label": "Chọn phương thức"},
+                    {"value": "thpt", "label": "Điểm thi tốt nghiệp THPT"},
+                    {"value": "hsa", "label": "HSA"},
+                    {"value": "sat", "label": "SAT"},
+                    {"value": "vact", "label": "V-ACT"},
+                    {"value": "tsa", "label": "TSA"},
+                ],
+            },
+            {
+                "id": "mon_1",
+                "label": "Môn 1",
+                "group": "Tổ hợp thi tốt nghiệp THPT",
+                "type": "select",
+                "hint": "Cộng với môn 2 và môn 3 thành điểm TN THPT thang 30.",
+                "show_when": when_thpt,
+                "options": _dcn_subject_options(),
+            },
+            {
+                "id": "mon_2",
+                "label": "Môn 2",
+                "group": "Tổ hợp thi tốt nghiệp THPT",
+                "type": "select",
+                "hint": "Cộng với môn 1 và môn 3 thành điểm TN THPT thang 30.",
+                "show_when": when_thpt,
+                "options": _dcn_subject_options(),
+            },
+            {
+                "id": "mon_3",
+                "label": "Môn 3",
+                "group": "Tổ hợp thi tốt nghiệp THPT",
+                "type": "select",
+                "hint": "Cộng với môn 1 và môn 2 thành điểm TN THPT thang 30.",
+                "show_when": when_thpt,
+                "options": _dcn_subject_options(),
+            },
+        ],
+    }
+
+
+def _load_kha_table() -> Optional[Dict[str, Any]]:
+    path = os.path.join(CONVERSION_REGULATION_DIR, "kha-2026.md")
+    try:
+        with open(path, encoding="utf-8") as handle:
+            source = handle.read()
+    except OSError:
+        return None
+    mark = "<!-- điểm thưởng -->"
+    if mark not in source:
+        return None
+    try:
+        data = json.loads(source.split(mark, 1)[1].strip())
+    except json.JSONDecodeError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _kha_span(value: Any) -> Optional[tuple]:
+    """Khoảng '28-30', '77,90-100', '7.5 – 9.0', '≥ 102' hoặc một ngưỡng."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value), None
+    text = str(value or "").strip().replace("–", "-").replace("—", "-")
+    if not text:
+        return None
+    open_ended = text.startswith("≥") or text.startswith(">=")
+    text = text.replace("≥", "").replace(">=", "").replace(",", ".").strip()
+    if "-" in text:
+        left, right = [part.strip() for part in text.split("-", 1)]
+        try:
+            return float(left), float(right)
+        except ValueError:
+            return None
+    try:
+        number = float(text)
+    except ValueError:
+        return None
+    if open_ended:
+        return number, None
+    return number, number
+
+
+def _kha_bands() -> List[Dict[str, Any]]:
+    data = _load_kha_table() or {}
+    bands = []
+    for item in data.get("quy_doi_tuong_duong_diem_trung_tuyen") or []:
+        if not isinstance(item, dict):
+            continue
+        spans = {}
+        for key, field, _label in _KHA_EQUIV_FIELDS:
+            span = _kha_span(item.get(field))
+            if span is None or span[1] is None:
+                spans = {}
+                break
+            spans[key] = span
+        if len(spans) == len(_KHA_EQUIV_FIELDS):
+            bands.append(spans)
+    return bands
+
+
+def _kha_english_rows() -> List[Dict[str, Any]]:
+    data = _load_kha_table() or {}
+    rows = []
+    for item in data.get("quy_doi_chung_chi_tieng_anh") or []:
+        if not isinstance(item, dict):
+            continue
+        toeic = item.get("toeic") if isinstance(item.get("toeic"), dict) else {}
+        try:
+            score = float(item.get("diem_quy_doi"))
+        except (TypeError, ValueError):
+            continue
+        ielts = _kha_span(item.get("ielts"))
+        toefl = _kha_span(item.get("toefl_ibt"))
+        if ielts is None or toefl is None:
+            continue
+        if ielts[1] is not None and abs(ielts[1] - ielts[0]) < 1e-9:
+            ielts = (ielts[0], None)
+        rows.append({
+            "ielts": ielts,
+            "toefl": toefl,
+            "toeic_lr": _kha_span(toeic.get("listening_reading")),
+            "toeic_s": _kha_span(toeic.get("speaking")),
+            "toeic_w": _kha_span(toeic.get("writing")),
+            "score": score,
+            "ielts_label": str(item.get("ielts") or ""),
+            "toefl_label": str(item.get("toefl_ibt") or ""),
+        })
+    return rows
+
+
+def _kha_band_for(bands: List[Dict[str, Any]], key: str, score: float) -> Optional[Dict[str, Any]]:
+    matched = []
+    ceiling = None
+    floor = None
+    for band in bands:
+        lo, hi = band[key]
+        if floor is None or lo < floor:
+            floor = lo
+        if ceiling is None or hi > ceiling:
+            ceiling = hi
+        if lo - 1e-9 <= score <= hi + 1e-9:
+            matched.append(band)
+    if matched:
+        return max(matched, key=lambda band: band["thpt"][0])
+    if ceiling is not None and score > ceiling:
+        return max(bands, key=lambda band: band[key][1])
+    return None
+
+
+def _kha_interpolate(score: float, source: tuple, target: tuple) -> float:
+    src_lo, src_hi = source
+    dst_lo, dst_hi = target
+    width = src_hi - src_lo
+    if abs(width) < 1e-9:
+        return dst_lo
+    ratio = min(1.0, max(0.0, (score - src_lo) / width))
+    return dst_lo + ratio * (dst_hi - dst_lo)
+
+
+def _kha_range_text(span: tuple) -> str:
+    lo, hi = span
+    if hi is None or abs(hi - lo) < 1e-9:
+        return _fmt_reg_score(lo)
+    return f"{_fmt_reg_score(lo)}–{_fmt_reg_score(hi)}"
+
+
+def _kha_threshold_row(rows: List[Dict[str, Any]], key: str, score: float) -> Optional[Dict[str, Any]]:
+    eligible = [row for row in rows if score + 1e-9 >= row[key][0]]
+    if not eligible:
+        return None
+    row = max(eligible, key=lambda item: item[key][0])
+    hi = row[key][1]
+    if hi is not None and score > hi + 1e-9:
+        return None
+    return row
+
+
+def _kha_from_profile(profile: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    profile = profile or {}
+    certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+    exam_raw = profile.get("diem_thi_thu") if isinstance(profile.get("diem_thi_thu"), dict) else {}
+    notes: List[str] = []
+    values: Dict[str, float] = {}
+    for key, bounds in _KHA_CERT_BOUNDS.items():
+        raw = certs.get(key)
+        if raw is None or str(raw).strip() == "":
+            continue
+        value = _profile_number(raw, bounds[0], bounds[1])
+        if value is None:
+            notes.append(
+                f"{key} trong hồ sơ không nằm trong thang {_fmt_reg_score(bounds[0])}–{_fmt_reg_score(bounds[1])}."
+            )
+            continue
+        values[key] = value
+    exam: Dict[str, float] = {}
+    for key, raw in exam_raw.items():
+        value = _profile_number(raw, 0, 10)
+        if value is not None:
+            exam[str(key)] = value
+    uu_tien, uu_label = _dcn_priority(profile)
+    return {"certs": values, "exam": exam, "uu_tien": uu_tien, "uu_label": uu_label, "notes": notes, "raw_certs": certs}
+
+
+def _kha_profile_groups(profile: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    bundle = _kha_from_profile(profile)
+    exam = bundle["exam"]
+    if exam:
+        exam_rows = [
+            {"label": _subject_label(key), "value": _fmt_reg_score(value), "detail": "Điểm thi THPT đã lưu."}
+            for key, value in exam.items()
+        ]
+    else:
+        exam_rows = [{
+            "label": "Điểm thi THPT",
+            "value": "Chưa có",
+            "detail": "Chưa lưu điểm thi tốt nghiệp THPT trong hồ sơ.",
+        }]
+    method_rows = []
+    for _key, cert_key, label in _KHA_METHOD_CERTS:
+        value = bundle["certs"].get(cert_key)
+        if value is None:
+            continue
+        method_rows.append({
+            "label": label,
+            "value": _fmt_reg_score(value),
+            "detail": "Dùng cho bảng quy đổi tương đương.",
+        })
+    if not method_rows:
+        method_rows.append({
+            "label": "HSA, SAT, V-ACT, TSA",
+            "value": "Chưa có",
+            "detail": "Chưa lưu điểm các bài thi trong hồ sơ.",
+        })
+    english_rows = []
+    for key in ("IELTS", "TOEFL iBT", "TOEIC"):
+        value = bundle["certs"].get(key)
+        if value is None:
+            continue
+        english_rows.append({
+            "label": key,
+            "value": _fmt_reg_score(value),
+            "detail": "Dùng cho bảng quy đổi chứng chỉ tiếng Anh.",
+        })
+    speaking = str((bundle["raw_certs"] or {}).get("TOEIC SW") or "").strip()
+    if speaking:
+        english_rows.append({
+            "label": "TOEIC SW",
+            "value": speaking,
+            "detail": "Bảng NEU yêu cầu điểm nói và điểm viết riêng.",
+        })
+    if not english_rows:
+        english_rows.append({
+            "label": "Chứng chỉ tiếng Anh",
+            "value": "Chưa có",
+            "detail": "Chưa lưu IELTS, TOEFL iBT hoặc TOEIC.",
+        })
+    for note in bundle["notes"]:
+        english_rows.append({"label": "Lưu ý", "value": note, "detail": ""})
+    if bundle["uu_tien"] is None:
+        uu_rows = [{
+            "label": "Điểm ưu tiên",
+            "value": "Chưa có",
+            "detail": "Bảng quy đổi năm 2026 không cộng điểm ưu tiên.",
+        }]
+    else:
+        uu_rows = [{
+            "label": "Điểm ưu tiên",
+            "value": _fmt_reg_score(bundle["uu_tien"]),
+            "detail": f"{bundle['uu_label']}. Bảng quy đổi không cộng điểm này.",
+        }]
+    return [
+        {"label": "Điểm thi THPT", "rows": exam_rows},
+        {"label": "Bài thi quy đổi tương đương", "rows": method_rows},
+        {"label": "Chứng chỉ tiếng Anh", "rows": english_rows},
+        {"label": "Điểm ưu tiên", "rows": uu_rows},
+    ]
+
+
+def _kha_cross_tiles(
+    source_key: str,
+    source_score: float,
+    source_note: str,
+    bands: List[Dict[str, Any]],
+) -> List[Dict[str, str]]:
+    """Một điểm nguồn ra khoảng tương đương của từng cột còn lại trong bảng."""
+    labels = {key: label for key, _field, label in _KHA_EQUIV_FIELDS}
+    source_label = labels[source_key]
+    shown = _fmt_reg_score(source_score)
+    band = _kha_band_for(bands, source_key, source_score)
+    if band is None:
+        return [{
+            "label": f"{source_label} (gốc)",
+            "value": shown,
+            "detail": f"{source_note}Thấp hơn mức thấp nhất trong bảng, chưa quy đổi sang cột khác.",
+            "kind": "source",
+        }]
+    source_span = band[source_key]
+    above = source_score > source_span[1] + 1e-9
+    if above:
+        belong = f"cao hơn mức cao nhất, lấy khoảng {_kha_range_text(source_span)}"
+    else:
+        belong = f"thuộc {_kha_range_text(source_span)}"
+    tiles = [{
+        "label": f"{source_label} (gốc)",
+        "value": shown,
+        "detail": f"{source_note}{belong[0].upper()}{belong[1:]}.",
+        "kind": "source",
+    }]
+    for key, _field, label in _KHA_EQUIV_FIELDS:
+        if key == source_key:
+            continue
+        estimate = _kha_interpolate(source_score, source_span, band[key])
+        tiles.append({
+            "label": f"{source_label} → {label}",
+            "value": _kha_range_text(band[key]),
+            "detail": (
+                f"{source_note}{source_label} {_fmt_reg_score(source_score)} {belong}. "
+                f"Tương đương {label} {_kha_range_text(band[key])}. "
+                f"Ước tính trong khoảng: {_fmt_reg_score(estimate)}."
+            ),
+            "kind": "value",
+        })
+    return tiles
+
+
+def _convert_kha_scores(
+    scores: Dict[str, Any],
+    spec: Dict[str, Any],
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Xếp điểm hồ sơ vào bảng khoảng của NEU và quy đổi chứng chỉ tiếng Anh."""
+    parsed: Dict[str, Any] = {}
+    errors: List[str] = []
+    for item in spec["inputs"]:
+        value, error = _read_regulation_score(scores.get(item["id"]), item)
+        if error:
+            errors.append(error)
+            continue
+        if value not in (None, ""):
+            parsed[item["id"]] = value
+    if errors:
+        return {"ok": False, "error": " ".join(errors)}
+    source = parsed.get("nguon")
+    labels = {key: label for key, _field, label in _KHA_EQUIV_FIELDS}
+    if source not in labels:
+        return {"ok": False, "error": "Chọn một phương thức gốc để quy đổi."}
+    chosen = [parsed.get("mon_1"), parsed.get("mon_2"), parsed.get("mon_3")]
+    if source == "thpt":
+        if not all(chosen):
+            return {"ok": False, "error": "Chọn đủ ba môn tổ hợp tốt nghiệp THPT."}
+        if len(set(chosen)) < 3:
+            return {"ok": False, "error": "Ba môn trong tổ hợp phải khác nhau."}
+
+    bundle = _kha_from_profile(profile)
+    bands = _kha_bands()
+    if not bands:
+        return {"ok": False, "error": "Chưa đọc được bảng quy đổi của Đại học Kinh tế Quốc dân."}
+    tiles: List[Dict[str, str]] = []
+
+    if source == "thpt":
+        exam = bundle["exam"]
+        absent = [key for key in chosen if key not in exam]
+        if absent:
+            tiles.append({
+                "label": "Điểm TN THPT",
+                "value": "Thiếu môn",
+                "detail": "Cần điểm thi của " + ", ".join(_subject_label(key) for key in absent) + ".",
+                "kind": "missing",
+            })
+        else:
+            total = sum(exam[key] for key in chosen)
+            parts = " + ".join(f"{_subject_label(key)} {_fmt_reg_score(exam[key])}" for key in chosen)
+            tiles.extend(_kha_cross_tiles("thpt", total, parts + ". ", bands))
+    else:
+        cert_key = next(item[1] for item in _KHA_METHOD_CERTS if item[0] == source)
+        raw = bundle["certs"].get(cert_key)
+        if raw is None:
+            return {
+                "ok": False,
+                "error": f"Hồ sơ chưa có điểm {labels[source]} để làm phương thức gốc.",
+            }
+        tiles.extend(_kha_cross_tiles(source, raw, "", bands))
+
+    english = _kha_english_rows()
+    english_hits = []
+    ielts = bundle["certs"].get("IELTS")
+    if ielts is not None:
+        row = _kha_threshold_row(english, "ielts", ielts)
+        if row is None:
+            tiles.append({
+                "label": "Chứng chỉ tiếng Anh",
+                "value": "Chưa có trong bảng",
+                "detail": f"IELTS {_fmt_reg_score(ielts)} thấp hơn 5,5 hoặc cao hơn 9,0.",
+                "kind": "missing",
+            })
+        else:
+            english_hits.append((row["score"], f"IELTS {_fmt_reg_score(ielts)} ({row['ielts_label']})"))
+    toefl = bundle["certs"].get("TOEFL iBT")
+    if toefl is not None:
+        row = _kha_threshold_row(english, "toefl", toefl)
+        if row is None:
+            tiles.append({
+                "label": "TOEFL iBT",
+                "value": "Chưa có trong bảng",
+                "detail": f"TOEFL iBT {_fmt_reg_score(toefl)} thấp hơn 46.",
+                "kind": "missing",
+            })
+        else:
+            english_hits.append((row["score"], f"TOEFL iBT {_fmt_reg_score(toefl)} ({row['toefl_label']})"))
+    if english_hits:
+        best_score, best_label = max(english_hits, key=lambda item: item[0])
+        tiles.append({
+            "label": "Chứng chỉ tiếng Anh",
+            "value": _fmt_reg_score(best_score),
+            "detail": (
+                f"{best_label} quy đổi {_fmt_reg_score(best_score)} điểm thang 10. "
+                "Dùng để kết hợp với điểm thi tốt nghiệp THPT hoặc bài thi đánh giá năng lực."
+            ),
+            "kind": "value",
+        })
+    toeic = bundle["certs"].get("TOEIC")
+    if toeic is not None:
+        tiles.append({
+            "label": "TOEIC",
+            "value": "Thiếu nói và viết",
+            "detail": (
+                f"TOEIC nghe-đọc {_fmt_reg_score(toeic)}. "
+                "Bảng yêu cầu đồng thời điểm nghe-đọc, nói và viết; hồ sơ chưa có điểm nói và viết riêng."
+            ),
+            "kind": "missing",
+        })
+
+    if bundle["notes"]:
+        tiles.append({
+            "label": "Hồ sơ chưa dùng được",
+            "value": "Bỏ qua",
+            "detail": " ".join(bundle["notes"]),
+            "kind": "missing",
+        })
+    if not tiles:
+        return {
+            "ok": False,
+            "error": "Chọn phương thức gốc và điểm tương ứng trong hồ sơ để quy đổi.",
+        }
+    return {"ok": True, "results": tiles}
+
+
 def calculate_regulation_scores(
     code: str,
     year: int,
@@ -1978,6 +2469,8 @@ def calculate_regulation_scores(
         return _convert_bka_scores(scores, spec, profile)
     if code == "DCN":
         return _convert_dcn_scores(scores, spec, profile)
+    if code == "KHA":
+        return _convert_kha_scores(scores, spec, profile)
     return {"ok": False, "error": "Chưa hỗ trợ quy đổi cho trường này."}
 
 
@@ -2075,6 +2568,8 @@ def regulation_profile_groups(code: str, profile: Optional[Dict[str, Any]]) -> L
         return _bka_profile_groups(profile)
     if code == "DCN":
         return _dcn_profile_groups(profile)
+    if code == "KHA":
+        return _kha_profile_groups(profile)
     return _shared_profile_groups(profile)
 
 

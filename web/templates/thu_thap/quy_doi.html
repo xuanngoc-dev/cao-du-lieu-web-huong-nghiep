@@ -148,17 +148,20 @@ window.MathJax = {
         <div class="row g-3">
           ${group.inputs.map(input => {
             const hint = input.hint ? `<div class="form-text">${esc(input.hint)}</div>` : '';
+            const when = input.show_when && input.show_when.id
+              ? ` data-show-when="${esc(input.show_when.id)}=${esc(input.show_when.value || '')}"`
+              : '';
             if (input.type === 'select') {
               const options = (input.options || []).map(opt =>
                 `<option value="${esc(opt.value)}">${esc(opt.label)}</option>`
               ).join('');
-              return `<div class="col-md-4">
+              return `<div class="col-md-4"${when}>
                 <label class="form-label" for="regScore-${esc(input.id)}">${esc(input.label)}</label>
                 <select class="form-select" id="regScore-${esc(input.id)}" name="${esc(input.id)}">${options}</select>
                 ${hint}
               </div>`;
             }
-            return `<div class="col-md-4">
+            return `<div class="col-md-4"${when}>
               <label class="form-label" for="regScore-${esc(input.id)}">${esc(input.label)}</label>
               <input class="form-control" id="regScore-${esc(input.id)}" name="${esc(input.id)}"
                 type="number" inputmode="decimal" step="${esc(input.step || '0.01')}"
@@ -170,6 +173,28 @@ window.MathJax = {
         </div>
       </fieldset>
     `).join('');
+    syncConditionalFields();
+  }
+
+  function syncConditionalFields() {
+    if (!fields) return;
+    fields.querySelectorAll('[data-show-when]').forEach(el => {
+      const spec = el.dataset.showWhen || '';
+      const eq = spec.indexOf('=');
+      const id = eq >= 0 ? spec.slice(0, eq) : '';
+      const expected = eq >= 0 ? spec.slice(eq + 1) : '';
+      const control = id ? fields.querySelector(`[name="${id}"]`) : null;
+      const visible = !!(control && control.value === expected);
+      el.classList.toggle('d-none', !visible);
+      if (!visible) {
+        el.querySelectorAll('select, input').forEach(input => { input.value = ''; });
+      }
+    });
+    fields.querySelectorAll('fieldset').forEach(group => {
+      const cols = [...group.querySelectorAll(':scope > .row > div')];
+      if (!cols.length) return;
+      group.classList.toggle('d-none', cols.every(col => col.classList.contains('d-none')));
+    });
   }
 
   const collapseEl = document.getElementById('regCollapse');
@@ -282,6 +307,11 @@ window.MathJax = {
     render();
   });
   yearSel.addEventListener('change', render);
+  if (fields) {
+    fields.addEventListener('change', (event) => {
+      if (event.target && event.target.name === 'nguon') syncConditionalFields();
+    });
+  }
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const doc = currentDoc();
