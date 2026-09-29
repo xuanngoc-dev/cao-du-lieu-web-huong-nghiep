@@ -85,23 +85,70 @@ from core import dataset_store
 
 CONVERSION_IMPORT_SOURCE = "Nhập quy chế quy đổi"
 CERTIFICATE_CATALOG_PATH = os.path.join(ROOT, "data", "constants", "bang_cap_chung_chi.md")
+EXAM_CATALOG_PATH = os.path.join(ROOT, "data", "constants", "ky_thi.txt")
+
+
+def _load_thpt_exam_category() -> Optional[Dict[str, Any]]:
+    """Mức chứng chỉ được miễn thi ngoại ngữ khi xét tốt nghiệp THPT — nguồn ky_thi.txt."""
+    try:
+        with open(EXAM_CATALOG_PATH, encoding="utf-8") as fh:
+            raw = fh.read().strip()
+    except OSError:
+        return None
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    items: List[Dict[str, Any]] = []
+    for subject in data.get("subjects") or []:
+        if not isinstance(subject, dict):
+            continue
+        language = str(subject.get("subject") or "").strip()
+        for item in subject.get("items") or []:
+            if not isinstance(item, dict) or not str(item.get("name") or "").strip():
+                continue
+            row = dict(item)
+            row["subject"] = language
+            row["type"] = "Miễn thi THPT"
+            items.append(row)
+    if not items:
+        return None
+    description = str(data.get("rule") or "").strip()
+    source = str(data.get("source") or "").strip()
+    if source:
+        description = f"{description} Nguồn: {source}.".strip()
+    return {
+        "category_id": "cat_05",
+        "category_name": str(data.get("title") or "Miễn thi ngoại ngữ kỳ thi tốt nghiệp THPT"),
+        "description": description,
+        "items": items,
+    }
 
 
 def _load_certificate_catalog() -> Dict[str, Any]:
-    """Danh mục bằng cấp, chứng chỉ theo nhóm — nguồn data/constants/bang_cap_chung_chi.md."""
+    """Danh mục bằng cấp, chứng chỉ và mức miễn thi THPT."""
     empty: Dict[str, Any] = {"certificate_categories": [], "item_count": 0}
     try:
         with open(CERTIFICATE_CATALOG_PATH, encoding="utf-8") as fh:
             data = json.load(fh)
     except (OSError, json.JSONDecodeError):
-        return empty
+        data = dict(empty)
     if not isinstance(data, dict):
-        return empty
+        data = dict(empty)
     categories = data.get("certificate_categories")
     if not isinstance(categories, list):
-        data["certificate_categories"] = []
-        data["item_count"] = 0
-        return data
+        categories = []
+        data["certificate_categories"] = categories
+    exam_category = _load_thpt_exam_category()
+    if exam_category and not any(
+        isinstance(category, dict) and category.get("category_id") == "cat_05"
+        for category in categories
+    ):
+        categories.append(exam_category)
     total = 0
     for category in categories:
         items = category.get("items") if isinstance(category, dict) else None

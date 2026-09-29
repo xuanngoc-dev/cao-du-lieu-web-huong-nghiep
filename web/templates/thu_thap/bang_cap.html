@@ -6,18 +6,20 @@
   'cat_01': 'Ngoại ngữ',
   'cat_02': 'Đánh giá năng lực',
   'cat_03': 'Tin học',
-  'cat_04': 'Thành tích'
+  'cat_04': 'Thành tích',
+  'cat_05': 'Thi THPT'
 } %}
 {% set icons = {
   'cat_01': 'bi-translate',
   'cat_02': 'bi-lightbulb',
   'cat_03': 'bi-pc-display',
-  'cat_04': 'bi-trophy'
+  'cat_04': 'bi-trophy',
+  'cat_05': 'bi-mortarboard'
 } %}
 <div class="mb-3 d-flex flex-wrap justify-content-between align-items-end gap-2">
   <div>
     <h1 class="h3 mb-1">Bằng cấp & chứng chỉ</h1>
-    <p class="text-muted mb-0">Danh mục dùng khi xét tuyển, quy đổi hoặc cộng điểm, chia theo nhóm.</p>
+    <p class="text-muted mb-0">Bằng cấp, chứng chỉ và mức miễn thi ngoại ngữ khi xét tốt nghiệp THPT, chia theo nhóm.</p>
   </div>
   <div class="small text-muted">{{ categories|length }} nhóm · {{ catalog.item_count or 0 }} mục{% if catalog.last_updated %} · cập nhật {{ catalog.last_updated }}{% endif %}</div>
 </div>
@@ -27,7 +29,7 @@
     <div class="row g-2 align-items-center">
       <div class="col-lg-5">
         <label class="visually-hidden" for="certSearch">Tìm bằng cấp, chứng chỉ</label>
-        <input id="certSearch" class="form-control" type="search" placeholder="Tìm theo tên, môn, thang điểm…" autocomplete="off">
+        <input id="certSearch" class="form-control" type="search" placeholder="Tìm theo tên, môn, mức miễn thi…" autocomplete="off">
       </div>
       <div class="col-lg-7">
         <div class="cert-nav d-flex flex-wrap gap-2" role="group" aria-label="Nhóm bằng cấp">
@@ -62,18 +64,30 @@
       <div class="row g-3">
         {% for item in cat['items'] or [] %}
         {% set kind = item.type or '' %}
-        <div class="col-md-6 col-xl-4 cert-item" data-search="{{ (item.name ~ ' ' ~ kind ~ ' ' ~ (item.subject or '') ~ ' ' ~ (item.score_range or '') ~ ' ' ~ (item.admissions_usage or ''))|lower }}">
+        <div class="col-md-6 col-xl-4 cert-item" data-search="{{ (item.name ~ ' ' ~ kind ~ ' ' ~ (item.subject or '') ~ ' ' ~ (item.score_range or '') ~ ' ' ~ (item.minimum or '') ~ ' ' ~ (item.issuer or '') ~ ' ' ~ (item.admissions_usage or ''))|lower }}">
           <article class="cert-card">
             <div class="d-flex justify-content-between align-items-start gap-2">
               <h3 class="h6 mb-0">{{ item.name }}</h3>
               {% if kind %}
-              <span class="cert-type {% if kind == 'Quốc tế' %}is-intl{% elif kind == 'Trong nước' %}is-local{% endif %}">{{ kind }}</span>
+              <span class="cert-type {% if kind == 'Quốc tế' %}is-intl{% elif kind == 'Trong nước' %}is-local{% elif kind == 'Miễn thi THPT' %}is-exam{% endif %}">{{ kind }}</span>
               {% endif %}
             </div>
             {% if item.subject %}
             <div class="cert-meta">
               <span class="cert-meta-label">Môn / lĩnh vực</span>
               {{ item.subject }}
+            </div>
+            {% endif %}
+            {% if item.minimum %}
+            <div class="cert-meta">
+              <span class="cert-meta-label">Mức tối thiểu để miễn thi</span>
+              {{ item.minimum }}
+            </div>
+            {% endif %}
+            {% if item.issuer %}
+            <div class="cert-meta">
+              <span class="cert-meta-label">Đơn vị cấp</span>
+              {{ item.issuer }}
             </div>
             {% endif %}
             {% if item.score_range %}

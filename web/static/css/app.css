@@ -935,6 +935,12 @@ select.cn-multi-native {
   border-color: rgba(196, 92, 38, 0.28);
 }
 
+.cert-type.is-exam {
+  background: rgba(15, 42, 61, 0.08);
+  color: #0f2a3d;
+  border-color: rgba(15, 42, 61, 0.18);
+}
+
 .cert-meta {
   font-size: 0.85rem;
   color: var(--ink);
