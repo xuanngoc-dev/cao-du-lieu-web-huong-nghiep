@@ -12,7 +12,7 @@ import os
 import re
 import sys
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from flask import (
     Flask,
@@ -81,6 +81,176 @@ from core.admission_chance import (
 from core.aggregator import METHOD_COLUMN_LABELS, build_grouped_score_view
 from core.bonus_policy import list_bonus_records, summarize_certificate_bonus
 from core import dataset_store
+
+
+CONVERSION_IMPORT_SOURCE = "Nhập quy chế quy đổi"
+
+_CONVERSION_METHOD_ALIASES = {
+    "THPT": "THPT",
+    "TN": "THPT",
+    "TOTNGHIEP": "THPT",
+    "KQHB": "HOC_BA",
+    "HOCBA": "HOC_BA",
+    "HOC_BA": "HOC_BA",
+    "PT2": "HOC_BA",
+    "2": "HOC_BA",
+    "HSA": "HSA",
+    "DGNL": "HSA",
+    "PT4": "HSA",
+    "4": "HSA",
+    "TSA": "TSA",
+    "DGTD": "TSA",
+    "PT5": "TSA",
+    "5": "TSA",
+    "VACT": "V-ACT",
+    "V-ACT": "V-ACT",
+    "SAT": "SAT",
+    "ACT": "ACT",
+    "IELTS": "IELTS",
+}
+
+_CONVERSION_COLUMNS = {
+    "THPT": "Điểm TN THPT",
+    "HOC_BA": "Điểm học bạ",
+    "HSA": "Điểm HSA",
+    "TSA": "Điểm TSA",
+    "V-ACT": "Điểm V-ACT",
+    "SAT": "Điểm SAT",
+    "ACT": "Điểm ACT",
+    "IELTS": "Điểm IELTS",
+}
+
+
+def _conversion_method_id(raw: Any) -> str:
+    text = re.sub(r"[^A-Z0-9]", "", str(raw or "").upper())
+    if text in _CONVERSION_METHOD_ALIASES:
+        return _CONVERSION_METHOD_ALIASES[text]
+    folded = text.replace("PHUONGTHUC", "PT")
+    return _CONVERSION_METHOD_ALIASES.get(folded, str(raw or "").strip()[:40] or "OTHER")
+
+
+def _fmt_conversion_score(value: float) -> str:
+    return f"{value:.4f}".rstrip("0").rstrip(".") or "0"
+
+
+def _conversion_bound(value: Any, label: str) -> float:
+    if isinstance(value, bool) or value is None or str(value).strip() == "":
+        raise ValueError(f"Thiếu {label}.")
+    try:
+        return float(str(value).replace(",", ".").strip())
+    except (TypeError, ValueError):
+        raise ValueError(f"{label} không phải số: {value}.")
+
+
+def _conversion_band(level: Dict[str, Any], nxt_lo: Optional[float]) -> str:
+    lo = _conversion_bound(
+        level.get("tu", level.get("diem_nguon", level.get("nguon", level.get("from")))),
+        "mức nguồn",
+    )
+    raw_hi = level.get("den", level.get("to"))
+    if raw_hi is None or str(raw_hi).strip() == "":
+        hi = None
+    else:
+        hi = _conversion_bound(raw_hi, "mức đến")
+        if hi < lo:
+            lo, hi = hi, lo
+    if hi is None or abs(hi - lo) < 1e-9:
+        if nxt_lo is not None and nxt_lo > lo:
+            return f"{_fmt_conversion_score(lo)}-{_fmt_conversion_score(nxt_lo)}"
+        if hi is None:
+            return f"{_fmt_conversion_score(lo)}-9999"
+        return _fmt_conversion_score(lo)
+    return f"{_fmt_conversion_score(lo)}-{_fmt_conversion_score(hi)}"
+
+
+def conversion_rows_from_payload(payload: Any, code: str, school_name: str, year: int) -> tuple:
+    """JSON quy chế → dòng bảng quy đổi, mỗi mức một dòng theo phương thức."""
+    source_url = ""
+    methods = payload
+    if isinstance(payload, dict):
+        source_url = str(payload.get("nguon") or payload.get("url") or "").strip()
+        methods = payload.get("phuong_thuc") or payload.get("methods") or payload.get("bang")
+        if methods is None and any(key in payload for key in ("muc", "tu", "diem", "diem_quy_doi")):
+            methods = [payload]
+    if isinstance(methods, dict):
+        methods = [methods]
+    if not isinstance(methods, list) or not methods:
+        raise ValueError("JSON cần có phuong_thuc, mỗi phương thức gồm danh sách muc.")
+
+    rows = []
+    notes = []
+    seen_methods = []
+    for index, method in enumerate(methods, start=1):
+        if not isinstance(method, dict):
+            raise ValueError(f"Phương thức thứ {index} không đúng định dạng.")
+        levels = method.get("muc") or method.get("levels") or method.get("bang")
+        if levels is None and any(key in method for key in ("tu", "diem", "diem_nguon", "diem_quy_doi")):
+            levels = [method]
+        if not isinstance(levels, list) or not levels:
+            raise ValueError(f"Phương thức thứ {index} chưa có mức quy đổi.")
+        method_id = _conversion_method_id(method.get("ma") or method.get("phuong_thuc") or method.get("ten"))
+        title = str(method.get("ten") or method.get("tieu_de") or METHOD_LABELS.get(method_id, method_id)).strip()
+        table_title = f"{method_id} · {title}" if method_id not in title.upper() else title
+        target_id = _conversion_method_id(method.get("quy_ve") or method.get("dich") or "THPT")
+        source_col = _CONVERSION_COLUMNS.get(method_id, f"Điểm {method_id}")
+        target_col = _CONVERSION_COLUMNS.get(target_id, "Điểm TN THPT")
+        parsed = []
+        for level_index, level in enumerate(levels, start=1):
+            if not isinstance(level, dict):
+                raise ValueError(f"{table_title}: mức {level_index} không đúng định dạng.")
+            score = _conversion_bound(
+                level.get("diem", level.get("diem_quy_doi", level.get("score"))),
+                f"điểm quy đổi của {table_title}",
+            )
+            parsed.append((level, score))
+        parsed.sort(key=lambda item: _conversion_bound(
+            item[0].get("tu", item[0].get("diem_nguon", item[0].get("nguon", item[0].get("from")))),
+            "mức nguồn",
+        ))
+        for level_index, (level, score) in enumerate(parsed, start=1):
+            nxt = None
+            if level_index < len(parsed):
+                nxt = _conversion_bound(
+                    parsed[level_index][0].get("tu", parsed[level_index][0].get("diem_nguon", parsed[level_index][0].get("nguon", parsed[level_index][0].get("from")))),
+                    "mức nguồn",
+                )
+            rows.append({
+                "ma_truong": code,
+                "ten_truong": school_name,
+                "tieu_de_bang": table_title,
+                "stt": f"{method_id}|{level_index}",
+                "cot_gia_tri": {
+                    source_col: _conversion_band(level, nxt),
+                    target_col: _fmt_conversion_score(score),
+                },
+                "nam": year,
+                "url_nguon": source_url,
+                "nguon": CONVERSION_IMPORT_SOURCE,
+            })
+        if method_id not in seen_methods:
+            seen_methods.append(method_id)
+        formula = str(method.get("cong_thuc") or method.get("mo_ta") or "").strip()
+        if formula:
+            notes.append({
+                "ma_truong": code,
+                "ten_truong": school_name,
+                "tieu_de": table_title,
+                "noi_dung": formula,
+                "nam": year,
+                "url_nguon": source_url,
+                "nguon": CONVERSION_IMPORT_SOURCE,
+            })
+    if source_url and not notes:
+        notes.append({
+            "ma_truong": code,
+            "ten_truong": school_name,
+            "tieu_de": "Nguồn quy chế quy đổi",
+            "noi_dung": source_url,
+            "nam": year,
+            "url_nguon": source_url,
+            "nguon": CONVERSION_IMPORT_SOURCE,
+        })
+    return rows, notes, seen_methods
 
 
 def _upsert_records(existing, incoming, fields: tuple):
@@ -182,6 +352,14 @@ def create_app() -> Flask:
     @app.route("/thu-thap/diem-cong")
     def diem_cong_page():
         return render_template("thu_thap/diem_cong.html")
+
+    @app.route("/thu-thap/uu-tien")
+    def uu_tien_page():
+        return render_template("thu_thap/uu_tien.html")
+
+    @app.route("/thu-thap/bang-cap")
+    def bang_cap_page():
+        return render_template("thu_thap/bang_cap.html")
 
     @app.route("/kiem-chung")
     def kiem_chung_page():
@@ -3207,6 +3385,90 @@ def create_app() -> Flask:
         if not content:
             content = str(cert.get("chi_tiet_hang") or "").strip()
         return content
+
+    @app.post("/api/quy-doi/records/import")
+    def api_quy_doi_records_import():
+        """Nhập quy chế quy đổi JSON: mỗi phương thức một danh sách mức."""
+        data = request.get_json(silent=True) or {}
+        code = str(data.get("code") or "").strip().upper()
+        try:
+            year = int(data.get("year") or 0)
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "Năm học không hợp lệ."}), 400
+        if not code or year < 2000 or year > 2100:
+            return jsonify({"ok": False, "error": "Hãy chọn một trường và một năm học."}), 400
+        school = lookup_local_school(code)
+        if not school:
+            schools_data = dataset_store.load_schools(ROOT) or {}
+            school = next(
+                (
+                    item for item in (schools_data.get("schools") or [])
+                    if str(item.get("code") or "").upper() == code
+                ),
+                None,
+            )
+        if not school:
+            return jsonify({"ok": False, "error": f"Không tìm thấy trường {code}."}), 404
+        school_name = school.get("name") or school.get("short_name") or code
+        try:
+            rows, notes, method_ids = conversion_rows_from_payload(
+                data.get("quy_che") if "quy_che" in data else data.get("rows"),
+                code,
+                school_name,
+                year,
+            )
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
+        cached = dict(app.config.get("LAST_QUY_DOI") or dataset_store.load_quy_doi(ROOT) or {})
+        replaced_titles = {row["tieu_de_bang"] for row in rows}
+        cached["rows"] = [
+            row for row in (cached.get("rows") or [])
+            if not (
+                str(row.get("ma_truong") or "").upper() == code
+                and int(row.get("nam") or 0) == year
+                and row.get("nguon") == CONVERSION_IMPORT_SOURCE
+                and row.get("tieu_de_bang") in replaced_titles
+            )
+        ]
+        cached["notes"] = [
+            note for note in (cached.get("notes") or [])
+            if not (
+                str(note.get("ma_truong") or "").upper() == code
+                and int(note.get("nam") or 0) == year
+                and note.get("nguon") == CONVERSION_IMPORT_SOURCE
+                and (
+                    note.get("tieu_de") in replaced_titles
+                    or note.get("tieu_de") == "Nguồn quy chế quy đổi"
+                )
+            )
+        ]
+        app.config["LAST_QUY_DOI"] = cached
+        methods = list_methods_from_rows(rows, code)
+        payload = {
+            "rows": rows,
+            "notes": notes,
+            "school_results": [{
+                "code": code,
+                "name": school_name,
+                "ok": True,
+                "row_count": len(rows),
+                "notes": len(notes),
+                "images": 0,
+                "ranges": 0,
+                "url": rows[0].get("url_nguon") or "",
+                "error": "",
+            }],
+            "methods_by_school": {code: methods},
+            "method_labels": METHOD_LABELS,
+        }
+        _merge_last_quy_doi(payload, [code])
+        return jsonify({
+            "ok": True,
+            "rows": len(rows),
+            "methods": len(method_ids),
+            "method_ids": method_ids,
+        })
 
     @app.post("/api/quy-doi/records/delete")
     def api_quy_doi_records_delete():

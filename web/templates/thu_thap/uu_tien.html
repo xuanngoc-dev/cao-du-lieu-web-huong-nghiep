@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Đối tượng, khu vực ưu tiên{% endblock %}
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-1">Đối tượng, khu vực ưu tiên</h1>
+  <p class="text-muted mb-0">Đối tượng ưu tiên và khu vực ưu tiên theo quy chế tuyển sinh của từng trường.</p>
+</div>
+{% set icon = "bi-geo-alt" %}
+{% set button = "Thu thập đối tượng, khu vực ưu tiên" %}
+{% include "thu_thap/_bar.html" %}
+<div class="card panel-card">
+  <div class="card-body border-bottom py-2">
+    <div class="small text-muted" id="priorityInfo">Chưa có đối tượng, khu vực ưu tiên</div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+      <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="priorityTable">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th>#</th>
+            <th>Trường</th>
+            <th>Năm</th>
+            <th>Nhóm</th>
+            <th>Mã</th>
+            <th>Diễn giải</th>
+            <th>Điểm ưu tiên</th>
+            <th>Nguồn</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20260925b"></script>
+<script>
+  loadCollectSchools();
+</script>
+{% endblock %}

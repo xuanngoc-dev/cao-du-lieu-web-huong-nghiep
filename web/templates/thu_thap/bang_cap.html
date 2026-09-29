@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Bằng cấp & chứng chỉ{% endblock %}
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-1">Bằng cấp & chứng chỉ</h1>
+  <p class="text-muted mb-0">Bằng cấp và chứng chỉ được dùng khi xét tuyển, quy đổi hoặc cộng điểm.</p>
+</div>
+{% set icon = "bi-patch-check" %}
+{% set button = "Thu thập bằng cấp và chứng chỉ" %}
+{% include "thu_thap/_bar.html" %}
+<div class="card panel-card">
+  <div class="card-body border-bottom py-2">
+    <div class="small text-muted" id="credentialInfo">Chưa có bằng cấp và chứng chỉ</div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive table-scroll-x" style="max-height: 520px;">
+      <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="credentialTable">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th>#</th>
+            <th>Trường</th>
+            <th>Năm</th>
+            <th>Loại</th>
+            <th>Tên</th>
+            <th>Mức</th>
+            <th>Điểm</th>
+            <th>Nguồn</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20260925b"></script>
+<script>
+  loadCollectSchools();
+</script>
+{% endblock %}

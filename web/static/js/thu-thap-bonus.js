@@ -1,170 +1,132 @@
-var bonusRows = [];
-var selectedBonusKeys = new Set();
-function bonusKey(row) {
-  return [row.ma_truong, row.nam, row.phuong_thuc, row.dieu_kien, row.diem_cong].join('\u001f');
-}
-function renderBonus(rows) {
-  bonusRows = rows || [];
-  const alive = new Set(bonusRows.map(bonusKey));
-  [...selectedBonusKeys].forEach(key => {
-    if (!alive.has(key)) selectedBonusKeys.delete(key);
-  });
-  document.querySelector('#bonusTable tbody').innerHTML = bonusRows.map((row, i) => {
-    const key = bonusKey(row);
-    const checked = selectedBonusKeys.has(key) ? 'checked' : '';
-    return `
-    <tr>
-      <td class="text-center"><input class="form-check-input bonus-pick" type="checkbox" data-key="${escapeHtml(key)}" aria-label="Chọn điểm cộng ${i + 1}" ${checked}></td>
-      <td class="text-muted">${i + 1}</td>
-      <td class="text-nowrap">${escapeHtml(codeName(row.ma_truong, row.ten_truong))}</td>
-      <td class="text-center">${escapeHtml(row.nam || '—')}</td>
-      <td>${escapeHtml(row.phuong_thuc || '—')}</td>
-      <td class="convert-body">${escapeHtml(row.dieu_kien || '—')}</td>
-      <td class="text-nowrap">${escapeHtml(row.diem_cong || '—')}</td>
-      <td class="text-nowrap">
-        ${sourceUrls([row.nguon]).length
-          ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-bonus-source="${i}">Chi tiết</button>`
-          : '—'}
-      </td>
-      <td>
-        <button type="button" class="btn btn-outline-danger btn-sm" data-delete-bonus="${escapeHtml(key)}" title="Xoá dòng này">
-          <i class="bi bi-trash3"></i>
-        </button>
-      </td>
-    </tr>`;
-  }).join('');
-  document.getElementById('bonusInfo').textContent = bonusRows.length
-    ? `${bonusRows.length} mức điểm cộng`
-    : 'Không có điểm cộng cho trường đã chọn';
-  updateBonusSelect();
+var PRIORITY_REGIONS = {
+  KV1: { label: 'KV1', points: 75, hint: 'Xã vùng đồng bào dân tộc thiểu số và miền núi, xã khu vực I–III, thôn đặc biệt khó khăn, hải đảo, đặc khu hoặc biên giới. Mức 0,75 điểm.' },
+  'KV2-NT': { label: 'KV2-NT', points: 50, hint: 'Địa phương không thuộc KV1, KV2, KV3. Mức 0,50 điểm.' },
+  KV2: { label: 'KV2', points: 25, hint: 'Phường thuộc tỉnh và xã của thành phố trực thuộc trung ương, trừ xã thuộc KV1. Mức 0,25 điểm.' },
+  KV3: { label: 'KV3', points: 0, hint: 'Phường của thành phố trực thuộc trung ương. Mức 0 điểm.' },
+};
+var PRIORITY_OBJECTS = {
+  '01': { label: 'Đối tượng 01', group: 'UT1', points: 200, hint: 'Người dân tộc thiểu số thuộc diện ưu tiên khu vực 1. Nhóm UT1, mức 2,00 điểm.' },
+  '02': { label: 'Đối tượng 02', group: 'UT1', points: 200, hint: 'Thương binh, bệnh binh, người có giấy chứng nhận như thương binh, hoặc quân nhân, sĩ quan, hạ sĩ quan, chiến sĩ nghĩa vụ trong Công an nhân dân đã xuất ngũ. Nhóm UT1, mức 2,00 điểm.' },
+  '03': { label: 'Đối tượng 03', group: 'UT1', points: 200, hint: 'Thân nhân liệt sĩ, con thương binh, con bệnh binh hoặc con người hoạt động kháng chiến bị nhiễm chất độc hoá học, suy giảm khả năng lao động từ 81% trở lên. Nhóm UT1, mức 2,00 điểm.' },
+  '04': { label: 'Đối tượng 04', group: 'UT2', points: 100, hint: 'Thanh niên xung phong tập trung được cử đi học, hoặc quân nhân Công an nhân dân tại ngũ được cử đi học với thời gian phục vụ trên 15 tháng. Nhóm UT2, mức 1,00 điểm.' },
+  '05': { label: 'Đối tượng 05', group: 'UT2', points: 100, hint: 'Người dân tộc thiểu số học ngoài khu vực của đối tượng 01, hoặc con thương binh, con bệnh binh, con người bị nhiễm chất độc hoá học với mức suy giảm dưới 81%. Nhóm UT2, mức 1,00 điểm.' },
+  '06': { label: 'Đối tượng 06', group: 'UT2', points: 100, hint: 'Người khuyết tật nặng, giáo viên đã dạy đủ 3 năm dự tuyển ngành sư phạm, hoặc nhân viên y tế, trung cấp Dược đã công tác đủ 3 năm dự tuyển đúng ngành sức khỏe. Nhóm UT2, mức 1,00 điểm.' },
+};
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-async function loadBonus(codes, years) {
-  const params = new URLSearchParams();
-  if (codes && codes.length) params.set('schools', codes.join(','));
-  if (years && years.length) params.set('years', years.join(','));
-  const res = await fetch('/api/crawl/bonus?' + params.toString());
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error || 'Không đọc được điểm cộng');
-  renderBonus(data.records || []);
-  return data.records || [];
+function formatHundredths(value) {
+  const sign = value < 0 ? '-' : '';
+  const abs = Math.abs(value);
+  const whole = Math.floor(abs / 100);
+  const frac = String(abs % 100).padStart(2, '0');
+  return sign + whole + ',' + frac;
 }
 
-document.getElementById('btnCollect').addEventListener('click', async () => {
-  if (collectBusy) return;
-  const codes = window.App.getSelectValues(document.getElementById('schoolPick'));
-  const years = selectedYears();
-  const msg = document.getElementById('collectMsg');
-  if (!codes.length) {
-    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một trường.</div>';
+function parseHundredths(text) {
+  const raw = String(text || '').trim().replace(/\s/g, '').replace(',', '.');
+  if (!raw) return null;
+  if (!/^\d+(\.\d+)?$/.test(raw)) return NaN;
+  const parts = raw.split('.');
+  const whole = Number(parts[0]);
+  const frac = parts[1] || '';
+  if (frac.length <= 2) return whole * 100 + Number((frac + '00').slice(0, 2));
+  let hundredths = whole * 100 + Number(frac.slice(0, 2));
+  const rest = frac.slice(2);
+  if (rest[0] > '4') hundredths += 1;
+  return hundredths;
+}
+
+function priorityBonusHundredths(score, level) {
+  if (score < 2250) return level;
+  return Math.floor(((3000 - score) * level + 375) / 750);
+}
+
+function syncPriorityHints() {
+  const region = PRIORITY_REGIONS[document.getElementById('priorityRegion').value] || null;
+  const object = PRIORITY_OBJECTS[document.getElementById('priorityObject').value] || null;
+  document.getElementById('priorityRegionHint').textContent = region
+    ? region.hint
+    : 'Chọn khu vực theo nơi học THPT lâu nhất.';
+  document.getElementById('priorityObjectHint').textContent = object
+    ? object.hint
+    : 'Nếu thuộc nhiều đối tượng, chỉ chọn mức cao nhất.';
+}
+
+function renderPriorityCalc() {
+  const region = PRIORITY_REGIONS[document.getElementById('priorityRegion').value] || null;
+  const object = PRIORITY_OBJECTS[document.getElementById('priorityObject').value] || null;
+  const score = parseHundredths(document.getElementById('priorityScore').value);
+  const msg = document.getElementById('priorityCalcMsg');
+  const result = document.getElementById('priorityCalcResult');
+  syncPriorityHints();
+  if (score == null) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy nhập tổng điểm thi THPT.</div>';
+    result.innerHTML = '';
     return;
   }
-  if (!years.length) {
-    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Hãy chọn ít nhất một năm học.</div>';
+  if (Number.isNaN(score) || score > 3000) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Tổng điểm thi THPT là số từ 0 đến 30.</div>';
+    result.innerHTML = '';
     return;
   }
-  setCollectBusy(true);
+  const regionPoints = region ? region.points : 0;
+  const objectPoints = object ? object.points : 0;
+  const level = regionPoints + objectPoints;
+  const bonus = priorityBonusHundredths(score, level);
+  const total = score + bonus;
+  const reduced = score >= 2250;
+  const parts = [];
+  if (region) parts.push(`${region.label} ${formatHundredths(regionPoints)}`);
+  if (object) parts.push(`${object.label} ${formatHundredths(objectPoints)}`);
+  const levelLine = parts.length ? parts.join(' + ') : 'Không có khu vực hoặc đối tượng ưu tiên';
+  const formula = reduced
+    ? `[(30 − ${formatHundredths(score)}) / 7,50] × ${formatHundredths(level)}`
+    : `${formatHundredths(regionPoints)} + ${formatHundredths(objectPoints)}`;
   msg.innerHTML = '';
-  setProgress('run', `Đang thu thập điểm cộng 0/${codes.length} trường…`, 0);
-  try {
-    const res = await fetch('/api/crawl/stream', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ codes: codes.join(','), years, merge: true })
-    });
-    if (!res.ok || !res.body) throw new Error(`Không thu thập được (HTTP ${res.status})`);
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    while (true) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      buffer += decoder.decode(chunk.value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        const event = JSON.parse(line);
-        if (event.type === 'school') {
-          const pct = event.total ? Math.round(event.index * 90 / event.total) : 0;
-          setProgress('run', event.log || `${event.code}: ${event.index}/${event.total}`, pct);
-        } else if (event.type === 'finalize') {
-          setProgress('run', event.message || 'Đang lọc điểm cộng…', 95);
-        } else if (event.type === 'error') {
-          throw new Error(event.error || 'Thu thập điểm cộng thất bại');
-        }
-      }
-    }
-    const rows = await loadBonus(codes, years);
-    setProgress('done', 'Thu thập điểm cộng hoàn tất', 100);
-    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Thu thập thành công <b>${rows.length}</b> mức điểm cộng theo phương thức và điều kiện.</div>`;
-  } catch (e) {
-    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
-    setProgress('hide');
-  } finally {
-    setCollectBusy(false);
-  }
-});
-
-document.getElementById('bonusTable').addEventListener('click', (event) => {
-  const btn = event.target.closest('[data-bonus-source]');
-  if (!btn) return;
-  const row = bonusRows[Number(btn.dataset.bonusSource)];
-  if (!row) return;
-  document.getElementById('resultSourceCaption').textContent = [
-    codeName(row.ma_truong, row.ten_truong),
-    row.phuong_thuc || '',
-    row.dieu_kien || '',
-  ].filter(Boolean).join(' · ');
-  const urls = sourceUrls([row.nguon]);
-  document.getElementById('resultSourceList').innerHTML = urls.length
-    ? urls.map(url => `<li class="mb-1"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></li>`).join('')
-    : '<li>Không có liên kết.</li>';
-  bootstrap.Modal.getOrCreateInstance(document.getElementById('resultSourceModal')).show();
-});
-
-function updateBonusSelect() {
-  updatePickSelect('.bonus-pick', 'bonusCheckAll', 'btnDeleteBonus', selectedBonusKeys);
-}
-bindPickTable('bonusTable', '.bonus-pick', 'bonusCheckAll', selectedBonusKeys, updateBonusSelect);
-async function deleteBonusKeys(keys) {
-  const unique = [...new Set((keys || []).filter(Boolean))];
-  if (!unique.length) return;
-  const label = unique.length === 1 ? 'dòng điểm cộng đã chọn' : `${unique.length} dòng điểm cộng đã chọn`;
-  const accepted = await confirmDeleteResults(`Xoá ${label} khỏi dữ liệu đã tải?`);
-  if (!accepted) return;
-  const payload = unique.map(key => bonusRows.find(row => bonusKey(row) === key)).filter(Boolean);
-  const msg = document.getElementById('collectMsg');
-  try {
-    const res = await fetch('/api/crawl/bonus/delete', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ keys: payload }),
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Không xoá được');
-    unique.forEach(key => selectedBonusKeys.delete(key));
-    const codes = window.App.getSelectValues(document.getElementById('schoolPick'));
-    await loadBonus(codes, selectedYears());
-    msg.innerHTML = `<div class="alert alert-success py-2 mb-0">Đã xoá ${unique.length} dòng điểm cộng.</div>`;
-  } catch (e) {
-    msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${escapeHtml(e.message)}</div>`;
-  }
+  result.innerHTML = `
+    <div class="row g-2">
+      <div class="col-md-4">
+        <div class="calc-result-tile">
+          <div class="small text-muted">Mức điểm ưu tiên</div>
+          <div class="calc-est">${formatHundredths(level)}</div>
+          <div class="small">${escapeHtml(levelLine)}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="calc-result-tile is-source">
+          <div class="small text-muted">Điểm ưu tiên được cộng</div>
+          <div class="calc-est">${formatHundredths(bonus)}</div>
+          <div class="small">${escapeHtml(formula)}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="calc-result-tile">
+          <div class="small text-muted">Tổng điểm sau khi cộng</div>
+          <div class="calc-est">${formatHundredths(total)}</div>
+          <div class="small">${formatHundredths(score)} + ${formatHundredths(bonus)}</div>
+        </div>
+      </div>
+    </div>
+    <p class="small text-muted mt-2 mb-0">${reduced
+      ? 'Tổng điểm từ 22,50 trở lên nên điểm ưu tiên được điều chỉnh và làm tròn đến hàng phần trăm.'
+      : 'Tổng điểm dưới 22,50 nên cộng đủ mức điểm ưu tiên.'}</p>`;
 }
 
-document.getElementById('bonusTable').addEventListener('click', (event) => {
-  const btn = event.target.closest('[data-delete-bonus]');
-  if (!btn) return;
-  deleteBonusKeys([btn.dataset.deleteBonus]);
+document.getElementById('btnPriorityCalc').addEventListener('click', renderPriorityCalc);
+document.getElementById('priorityScore').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') renderPriorityCalc();
 });
-
-document.getElementById('btnDeleteBonus').addEventListener('click', () => {
-  deleteBonusKeys([...selectedBonusKeys]);
+document.getElementById('priorityScore').addEventListener('input', () => {
+  if (document.getElementById('priorityCalcResult').innerHTML) renderPriorityCalc();
 });
-
-
-loadCollectSchools().then(async () => {
-  try {
-    await loadBonus([], []);
-  } catch (_) {}
+['priorityRegion', 'priorityObject'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    syncPriorityHints();
+    if (document.getElementById('priorityCalcResult').innerHTML) renderPriorityCalc();
+  });
 });

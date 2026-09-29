@@ -172,6 +172,105 @@ document.getElementById('btnDeleteConvert').addEventListener('click', () => {
   deleteConvertKeys([...selectedConvertKeys]);
 });
 
+let convertUploadCode = '';
+
+function fillConvertUploadSchools(preferred) {
+  const select = document.getElementById('convertUploadSchoolSelect');
+  const options = new Map();
+  (schoolRows || []).forEach(school => {
+    const code = String(school.code || '').trim().toUpperCase();
+    if (code) options.set(code, `${code} - ${school.name || ''}`);
+  });
+  (convertRows || []).forEach(row => {
+    const code = String(row.ma_truong || '').trim().toUpperCase();
+    if (code && !options.has(code)) options.set(code, codeName(code, row.ten_truong));
+  });
+  const pairs = [...options].sort((a, b) => a[1].localeCompare(b[1], 'vi'));
+  const wanted = String(preferred || '').trim().toUpperCase();
+  window.App.setSelectOptions(
+    select,
+    pairs.map(([code, label]) => `<option value="${escapeHtml(code)}">${escapeHtml(label)}</option>`).join(''),
+    options.has(wanted) ? wanted : '',
+    { placeholder: 'Chọn một trường' },
+  );
+  convertUploadCode = select.value || '';
+  const chosen = [...select.selectedOptions][0];
+  document.getElementById('convertUploadSchool').textContent = chosen
+    ? `${chosen.textContent} · mỗi phương thức một danh sách mức quy đổi`
+    : 'Mỗi lần nhập một trường, một năm. JSON theo từng mức của mỗi phương thức.';
+}
+
+document.getElementById('btnConvertUpload').addEventListener('click', () => {
+  const result = document.getElementById('convertUploadResult');
+  result.className = 'alert d-none mt-3 mb-0';
+  result.innerHTML = '';
+  const selected = window.App.getSelectValues(document.getElementById('schoolPick'));
+  fillConvertUploadSchools(selected.length === 1 ? selected[0] : '');
+  const yearSelect = document.getElementById('convertUploadYear');
+  const yearWidget = window.App.getMultiSelect(yearSelect);
+  if (yearWidget) yearWidget.setValues(['2026']);
+  else yearSelect.value = '2026';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('convertUploadModal')).show();
+});
+
+document.getElementById('convertUploadSchoolSelect').addEventListener('change', () => {
+  const select = document.getElementById('convertUploadSchoolSelect');
+  convertUploadCode = select.value || '';
+  const chosen = [...select.selectedOptions][0];
+  document.getElementById('convertUploadSchool').textContent = chosen
+    ? `${chosen.textContent} · mỗi phương thức một danh sách mức quy đổi`
+    : 'Mỗi lần nhập một trường, một năm. JSON theo từng mức của mỗi phương thức.';
+});
+
+document.getElementById('convertUploadStart').addEventListener('click', async () => {
+  const result = document.getElementById('convertUploadResult');
+  const year = window.App.getSelectValues(document.getElementById('convertUploadYear'))[0] || '';
+  const raw = document.getElementById('convertUploadJson').value.trim();
+  if (!convertUploadCode) {
+    result.className = 'alert alert-warning mt-3 mb-0';
+    result.textContent = 'Hãy chọn một trường.';
+    return;
+  }
+  if (!year) {
+    result.className = 'alert alert-warning mt-3 mb-0';
+    result.textContent = 'Hãy chọn một năm học.';
+    return;
+  }
+  if (!raw) {
+    result.className = 'alert alert-warning mt-3 mb-0';
+    result.textContent = 'Hãy dán quy chế quy đổi.';
+    return;
+  }
+  let quyChe;
+  try {
+    quyChe = JSON.parse(raw);
+  } catch (_) {
+    result.className = 'alert alert-warning mt-3 mb-0';
+    result.textContent = 'Dữ liệu không phải JSON hợp lệ.';
+    return;
+  }
+  document.getElementById('convertUploadStart').disabled = true;
+  try {
+    const res = await fetch('/api/quy-doi/records/import', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ code: convertUploadCode, year: Number(year), quy_che: quyChe }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Không lưu được quy chế');
+    const saved = await fetch('/api/quy-doi/records');
+    const table = await saved.json();
+    if (table.ok) renderConversions(table.rows || [], table.download_url || '');
+    result.className = 'alert alert-success mt-3 mb-0';
+    result.innerHTML = `Đã lưu <b>${data.rows || 0}</b> mức quy đổi cho <b>${data.methods || 0}</b> phương thức (${escapeHtml((data.method_ids || []).join(', '))}) của ${escapeHtml(convertUploadCode)} năm ${escapeHtml(year)}.`;
+  } catch (e) {
+    result.className = 'alert alert-danger mt-3 mb-0';
+    result.textContent = e.message;
+  } finally {
+    document.getElementById('convertUploadStart').disabled = false;
+  }
+});
+
 
 loadCollectSchools().then(async () => {
   try {
