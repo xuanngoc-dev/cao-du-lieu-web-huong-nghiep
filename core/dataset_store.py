@@ -47,45 +47,138 @@ def profile_path(root: str) -> str:
     return os.path.join(datasets_dir(root), "ca_nhan.json")
 
 
+_PROFILE_REGIONS = {"KV1", "KV2-NT", "KV2", "KV3"}
+_PROFILE_OBJECTS = {"01", "02", "03", "04", "05", "06"}
+_PROFILE_GRADES = ("10", "11", "12")
+PROFILE_SUBJECTS = [
+    {"key": "toan", "label": "Toán"},
+    {"key": "van", "label": "Ngữ văn"},
+    {"key": "anh", "label": "Tiếng Anh"},
+    {"key": "nga", "label": "Tiếng Nga"},
+    {"key": "phap", "label": "Tiếng Pháp"},
+    {"key": "trung", "label": "Tiếng Trung"},
+    {"key": "duc", "label": "Tiếng Đức"},
+    {"key": "nhat", "label": "Tiếng Nhật"},
+    {"key": "han", "label": "Tiếng Hàn"},
+    {"key": "ly", "label": "Vật lí"},
+    {"key": "hoa", "label": "Hóa học"},
+    {"key": "sinh", "label": "Sinh học"},
+    {"key": "su", "label": "Lịch sử"},
+    {"key": "dia", "label": "Địa lí"},
+    {"key": "gdktpl", "label": "Giáo dục kinh tế và pháp luật"},
+    {"key": "tin", "label": "Tin học"},
+    {"key": "cn", "label": "Công nghệ"},
+]
+_PROFILE_SUBJECT_KEYS = {item["key"] for item in PROFILE_SUBJECTS}
+
+
+def _empty_hoc_ba() -> Dict[str, Dict[str, str]]:
+    return {grade: {} for grade in _PROFILE_GRADES}
+
+
+def _subject_score(value: Any) -> str:
+    raw = str(value or "").strip().replace(",", ".")
+    if not raw or any(ch in raw for ch in "\r\n\t"):
+        return ""
+    try:
+        number = float(raw)
+    except ValueError:
+        return ""
+    if number < 0 or number > 10:
+        return ""
+    return f"{number:.2f}".rstrip("0").rstrip(".") or "0"
+
+
+def _subject_scores(raw: Any) -> Dict[str, str]:
+    if not isinstance(raw, dict):
+        return {}
+    scores: Dict[str, str] = {}
+    for key, value in raw.items():
+        subject = str(key or "").strip()
+        score = _subject_score(value)
+        if subject in _PROFILE_SUBJECT_KEYS and score:
+            scores[subject] = score
+    return scores
+
+
+def _hoc_ba_scores(raw: Any) -> Dict[str, Dict[str, str]]:
+    grades = _empty_hoc_ba()
+    if not isinstance(raw, dict):
+        return grades
+    for grade in _PROFILE_GRADES:
+        grades[grade] = _subject_scores(raw.get(grade))
+    return grades
+
+
+def _empty_profile() -> Dict[str, Any]:
+    return {
+        "ho_ten": "",
+        "ngay_sinh": "",
+        "gioi_tinh": "",
+        "dia_chi": "",
+        "khu_vuc": "",
+        "doi_tuong": "",
+        "diem_thi_thu": {},
+        "hoc_ba": _empty_hoc_ba(),
+        "chung_chi": {},
+    }
+
+
 def load_profile(root: str) -> Dict[str, Any]:
     data = load_json(profile_path(root))
     if not isinstance(data, dict):
-        return {"ho_ten": "", "ngay_sinh": "", "gioi_tinh": "", "dia_chi": "", "chung_chi": {}}
+        return _empty_profile()
     certs = data.get("chung_chi") if isinstance(data.get("chung_chi"), dict) else {}
     gender = str(data.get("gioi_tinh") or "").strip()
-    if gender not in {"Nam", "Nữ", "Khác"}:
-        gender = ""
+    region = str(data.get("khu_vuc") or "").strip()
+    obj = str(data.get("doi_tuong") or "").strip()
     return {
         "ho_ten": str(data.get("ho_ten") or ""),
         "ngay_sinh": str(data.get("ngay_sinh") or ""),
-        "gioi_tinh": gender,
+        "gioi_tinh": gender if gender in {"Nam", "Nữ", "Khác"} else "",
         "dia_chi": str(data.get("dia_chi") or ""),
+        "khu_vuc": region if region in _PROFILE_REGIONS else "",
+        "doi_tuong": obj if obj in _PROFILE_OBJECTS else "",
+        "diem_thi_thu": _subject_scores(data.get("diem_thi_thu")),
+        "hoc_ba": _hoc_ba_scores(data.get("hoc_ba")),
         "chung_chi": {str(k): str(v) for k, v in certs.items() if str(v).strip()},
     }
 
 
 def save_profile(root: str, profile: Dict[str, Any]) -> Dict[str, Any]:
     gender = str(profile.get("gioi_tinh") or "").strip()
+    region = str(profile.get("khu_vuc") or "").strip()
+    obj = str(profile.get("doi_tuong") or "").strip()
+    existing = load_json(profile_path(root))
+    existing = existing if isinstance(existing, dict) else {}
     cleaned = {
         "ho_ten": str(profile.get("ho_ten") or "").strip()[:120],
         "ngay_sinh": str(profile.get("ngay_sinh") or "").strip()[:10],
         "gioi_tinh": gender if gender in {"Nam", "Nữ", "Khác"} else "",
         "dia_chi": str(profile.get("dia_chi") or "").strip()[:300],
+        "khu_vuc": region if region in _PROFILE_REGIONS else "",
+        "doi_tuong": obj if obj in _PROFILE_OBJECTS else "",
+        "diem_thi_thu": _subject_scores(profile.get("diem_thi_thu")) if "diem_thi_thu" in profile else _subject_scores(existing.get("diem_thi_thu")),
+        "hoc_ba": _hoc_ba_scores(profile.get("hoc_ba")) if "hoc_ba" in profile else _hoc_ba_scores(existing.get("hoc_ba")),
         "chung_chi": {},
     }
     raw_certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
     for key, value in raw_certs.items():
         name = re.sub(r"\s+", " ", str(key or "").strip())[:40]
-        score = str(value or "").strip().replace(",", ".")
-        if not name or not score:
+        raw = str(value or "").strip()
+        if not name or not raw or any(ch in raw for ch in "\r\n\t"):
             continue
+        score = raw.replace(",", ".")
         try:
             number = float(score)
         except ValueError:
+            number = None
+        if number is not None:
+            if number < 0 or number > 10000:
+                continue
+            cleaned["chung_chi"][name] = score
             continue
-        if number < 0 or number > 10000:
-            continue
-        cleaned["chung_chi"][name] = score
+        cleaned["chung_chi"][name] = raw[:80]
     _atomic_write_json(profile_path(root), cleaned)
     return cleaned
 

@@ -2,40 +2,215 @@
 {% block title %}Thông tin cá nhân{% endblock %}
 {% block head %}
 <style>
-  #profileForm .cert-label { cursor: help; border-bottom: 1px dotted var(--ink-soft, #6c757d); }
+  #profileForm .profile-section { border-bottom: 1px solid var(--line); }
+  #profileForm .profile-section:last-of-type { border-bottom: 0; }
+  .profile-fold-btn {
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.15rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+  }
+  .profile-fold-btn:hover { background: rgba(13, 115, 119, 0.04); }
+  .profile-fold-chevron { color: var(--teal); transition: transform 0.2s ease; }
+  .profile-fold-btn[aria-expanded="true"] .profile-fold-chevron { transform: rotate(-180deg); }
+  .profile-fold-body { padding: 0 0.15rem 0.85rem; }
+  .profile-subsection .profile-fold-btn { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+  .cert-add { width: 2rem; height: 2rem; padding: 0; flex: 0 0 auto; }
+  .cert-table .cert-score { max-width: 11rem; }
+  .cert-table .cert-remove { width: 2.25rem; }
 </style>
 {% endblock %}
 {% block content %}
 <div class="card panel-card">
   <div class="card-body">
-    <h1 class="h5 mb-3">Thông tin cá nhân</h1>
-    <form id="profileForm" class="row g-2">
-      <div class="col-3">
-        <label class="form-label small mb-1" for="hoTen">Họ tên</label>
-        <input type="text" class="form-control form-control-sm" id="hoTen" maxlength="120" autocomplete="name">
-      </div>
-      <div class="col-3">
-        <label class="form-label small mb-1" for="ngaySinh">Ngày sinh</label>
-        <input type="date" class="form-control form-control-sm" id="ngaySinh">
-      </div>
-      <div class="col-3">
-        <label class="form-label small mb-1" for="gioiTinh">Giới tính</label>
-        <select class="form-select form-select-sm" id="gioiTinh">
-          <option value="">Chọn</option>
-          <option value="Nam">Nam</option>
-          <option value="Nữ">Nữ</option>
-          <option value="Khác">Khác</option>
-        </select>
-      </div>
-      <div class="col-3">
-        <label class="form-label small mb-1" for="diaChi">Địa chỉ</label>
-        <input type="text" class="form-control form-control-sm" id="diaChi" maxlength="300" autocomplete="street-address">
-      </div>
-      <div class="col-12 mt-2">
-        <div class="form-label small mb-1">Điểm chứng chỉ</div>
-        <div class="row g-2" id="certInputs"></div>
-      </div>
-      <div class="col-12 mt-2">
+    <h1 class="h5 mb-1">Thông tin cá nhân</h1>
+    <p class="small text-muted mb-3">Họ tên, điểm thi thử, học bạ, khu vực ưu tiên, đối tượng ưu tiên và bằng cấp, chứng chỉ đang có.</p>
+    <form id="profileForm">
+      <section class="profile-section">
+        <button type="button" class="profile-fold-btn" data-bs-toggle="collapse" data-bs-target="#foldHoSo" aria-expanded="true" aria-controls="foldHoSo">
+          <h2 class="h6 mb-0">Hồ sơ</h2>
+          <i class="bi bi-chevron-down profile-fold-chevron" aria-hidden="true"></i>
+        </button>
+        <div id="foldHoSo" class="collapse show profile-fold-body">
+        <div class="row g-2">
+          <div class="col-12 col-md-6 col-xl-3">
+            <label class="form-label small mb-1" for="hoTen">Họ tên</label>
+            <input type="text" class="form-control form-control-sm" id="hoTen" maxlength="120" autocomplete="name">
+          </div>
+          <div class="col-12 col-md-6 col-xl-3">
+            <label class="form-label small mb-1" for="ngaySinh">Ngày sinh</label>
+            <input type="date" class="form-control form-control-sm" id="ngaySinh">
+          </div>
+          <div class="col-12 col-md-6 col-xl-3">
+            <label class="form-label small mb-1" for="gioiTinh">Giới tính</label>
+            <select class="form-select form-select-sm" id="gioiTinh">
+              <option value="">Chọn</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6 col-xl-3">
+            <label class="form-label small mb-1" for="diaChi">Địa chỉ</label>
+            <input type="text" class="form-control form-control-sm" id="diaChi" maxlength="300" autocomplete="street-address">
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <button type="button" class="profile-fold-btn" data-bs-toggle="collapse" data-bs-target="#foldUuTien" aria-expanded="true" aria-controls="foldUuTien">
+          <h2 class="h6 mb-0">Khu vực và đối tượng ưu tiên</h2>
+          <i class="bi bi-chevron-down profile-fold-chevron" aria-hidden="true"></i>
+        </button>
+        <div id="foldUuTien" class="collapse show profile-fold-body">
+        <div class="row g-2">
+          <div class="col-lg-6">
+            <label class="form-label small mb-1" for="khuVuc">Khu vực ưu tiên</label>
+            <select id="khuVuc" class="form-select form-select-sm">
+              <option value="">Không chọn khu vực</option>
+              <option value="KV1">Khu vực 1 (KV1) — 0,75 điểm</option>
+              <option value="KV2-NT">Khu vực 2 nông thôn (KV2-NT) — 0,50 điểm</option>
+              <option value="KV2">Khu vực 2 (KV2) — 0,25 điểm</option>
+              <option value="KV3">Khu vực 3 (KV3) — 0 điểm</option>
+            </select>
+            <div class="form-text" id="khuVucHint">Chọn khu vực theo nơi học THPT lâu nhất.</div>
+          </div>
+          <div class="col-lg-6">
+            <label class="form-label small mb-1" for="doiTuong">Đối tượng ưu tiên</label>
+            <select id="doiTuong" class="form-select form-select-sm">
+              <option value="">Không thuộc đối tượng ưu tiên</option>
+              <optgroup label="Nhóm UT1 — 2,00 điểm">
+                <option value="01">01 — Người dân tộc thiểu số thuộc KV1</option>
+                <option value="02">02 — Thương binh, bệnh binh, quân nhân xuất ngũ</option>
+                <option value="03">03 — Thân nhân người có công, suy giảm từ 81%</option>
+              </optgroup>
+              <optgroup label="Nhóm UT2 — 1,00 điểm">
+                <option value="04">04 — Thanh niên xung phong, quân nhân tại ngũ được cử đi học</option>
+                <option value="05">05 — Dân tộc thiểu số ngoài KV1, thân nhân suy giảm dưới 81%</option>
+                <option value="06">06 — Khuyết tật nặng, giáo viên hoặc nhân viên y tế đủ 3 năm</option>
+              </optgroup>
+            </select>
+            <div class="form-text" id="doiTuongHint">Nếu thuộc nhiều đối tượng, chỉ chọn mức cao nhất.</div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="profile-fold-btn" data-bs-toggle="collapse" data-bs-target="#foldThiThu" aria-expanded="true" aria-controls="foldThiThu">
+            <h2 class="h6 mb-0">Điểm thi thử THPT</h2>
+            <i class="bi bi-chevron-down profile-fold-chevron" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="btn btn-outline-teal btn-sm cert-add" data-add-subject="thi-thu" aria-label="Thêm môn thi thử">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+        </div>
+        <div id="foldThiThu" class="collapse show profile-fold-body">
+        <p class="small text-muted mb-2">Điểm dự kiến từng môn, thang điểm 10. Bấm + để thêm môn.</p>
+        <div class="table-responsive d-none" data-subject-table="thi-thu">
+          <table class="table table-sm table-bordered align-middle mb-1 cert-table">
+            <thead class="table-light">
+              <tr>
+                <th>Môn</th>
+                <th class="cert-score">Điểm</th>
+                <th class="cert-remove"></th>
+              </tr>
+            </thead>
+            <tbody id="subjectBody-thi-thu"></tbody>
+          </table>
+        </div>
+        <p class="small text-muted mb-0 cert-empty" data-subject-empty="thi-thu">Chưa có. Bấm + để thêm.</p>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <button type="button" class="profile-fold-btn" data-bs-toggle="collapse" data-bs-target="#foldHocBa" aria-expanded="true" aria-controls="foldHocBa">
+          <h2 class="h6 mb-0">Điểm học bạ THPT</h2>
+          <i class="bi bi-chevron-down profile-fold-chevron" aria-hidden="true"></i>
+        </button>
+        <div id="foldHocBa" class="collapse show profile-fold-body">
+        <p class="small text-muted mb-0">Điểm trung bình môn cả năm, thang điểm 10, theo từng lớp.</p>
+        {% for grade, grade_label in [('10', 'Lớp 10'), ('11', 'Lớp 11'), ('12', 'Lớp 12')] %}
+        <div class="profile-subsection">
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="profile-fold-btn" data-bs-toggle="collapse" data-bs-target="#foldLop{{ grade }}" aria-expanded="true" aria-controls="foldLop{{ grade }}">
+            <h3 class="h6 text-teal mb-0">{{ grade_label }}</h3>
+            <i class="bi bi-chevron-down profile-fold-chevron" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="btn btn-outline-teal btn-sm cert-add" data-add-subject="{{ grade }}" aria-label="Thêm môn {{ grade_label }}">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+        </div>
+        <div id="foldLop{{ grade }}" class="collapse show">
+        <div class="table-responsive d-none" data-subject-table="{{ grade }}">
+          <table class="table table-sm table-bordered align-middle mb-1 cert-table">
+            <thead class="table-light">
+              <tr>
+                <th>Môn</th>
+                <th class="cert-score">Điểm</th>
+                <th class="cert-remove"></th>
+              </tr>
+            </thead>
+            <tbody id="subjectBody-{{ grade }}"></tbody>
+          </table>
+        </div>
+        <p class="small text-muted mb-0 cert-empty" data-subject-empty="{{ grade }}">Chưa có. Bấm + để thêm.</p>
+        </div>
+        </div>
+        {% endfor %}
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <button type="button" class="profile-fold-btn" data-bs-toggle="collapse" data-bs-target="#foldChungChi" aria-expanded="true" aria-controls="foldChungChi">
+          <h2 class="h6 mb-0">Bằng cấp và chứng chỉ</h2>
+          <i class="bi bi-chevron-down profile-fold-chevron" aria-hidden="true"></i>
+        </button>
+        <div id="foldChungChi" class="collapse show profile-fold-body">
+        <p class="small text-muted mb-0">Bấm + để thêm loại và điểm. Chỉ những dòng đã thêm mới được lưu.</p>
+        {% for group in cert_groups %}
+        {% set type_label = 'Bài thi' if group.id == 'cat_02' else ('Thành tích' if group.id == 'cat_04' else 'Loại chứng chỉ') %}
+        {% set score_label = 'Mức' if group.id == 'cat_04' else 'Điểm' %}
+        <div class="profile-subsection">
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="profile-fold-btn" data-bs-toggle="collapse" data-bs-target="#foldCert{{ group.id }}" aria-expanded="true" aria-controls="foldCert{{ group.id }}">
+            <h3 class="h6 text-teal mb-0">{{ group.name }}</h3>
+            <i class="bi bi-chevron-down profile-fold-chevron" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="btn btn-outline-teal btn-sm cert-add" data-add-cert="{{ group.id }}" aria-label="Thêm {{ group.name }}">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+        </div>
+        <div id="foldCert{{ group.id }}" class="collapse show">
+        <div class="table-responsive d-none" data-table-for="{{ group.id }}">
+          <table class="table table-sm table-bordered align-middle mb-1 cert-table">
+            <thead class="table-light">
+              <tr>
+                <th>{{ type_label }}</th>
+                <th class="cert-score">{{ score_label }}</th>
+                <th class="cert-remove"></th>
+              </tr>
+            </thead>
+            <tbody id="certBody-{{ group.id }}"></tbody>
+          </table>
+        </div>
+        <p class="small text-muted mb-0 cert-empty" data-empty-for="{{ group.id }}">Chưa có. Bấm + để thêm.</p>
+        </div>
+        </div>
+        {% endfor %}
+        </div>
+      </section>
+
+      <div class="mt-3">
         <button type="submit" class="btn btn-teal" id="btnSaveProfile">
           <i class="bi bi-save"></i> Lưu thông tin
         </button>
@@ -48,40 +223,24 @@
 
 {% block scripts %}
 <script>
-const PROFILE_CERTS = [
-  ['IELTS', 'VD: 7.6', 'IELTS Academic. Thang điểm 0–9, dùng phổ biến khi xét tuyển và cộng điểm chứng chỉ tiếng Anh.'],
-  ['TOEFL iBT', 'VD: 94', 'TOEFL thi trên máy (Internet-based Test). Thang thường 0–120.'],
-  ['TOEFL ITP', 'VD: 627', 'TOEFL dạng giấy (Institutional Testing Program). Thang thường 310–677.'],
-  ['TOEIC', 'VD: 800', 'TOEIC Listening & Reading. Thang 10–990.'],
-  ['TOEIC SW', 'VD: 300', 'TOEIC Speaking & Writing. Thang 0–400.'],
-  ['VSTEP', 'VD: 6', 'Khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam. Thường ghi bậc 3–6 hoặc điểm bài thi.'],
-  ['Cambridge', 'VD: 180', 'Cambridge English Scale (KET, PET, FCE, CAE, CPE). Thang khoảng 80–230.'],
-  ['Aptis', 'VD: 150', 'Aptis của British Council. Điểm tổng thường 0–200.'],
-  ['PTE', 'VD: 65', 'PTE Academic. Thang 10–90.'],
-  ['Duolingo', 'VD: 120', 'Duolingo English Test. Thang 10–160.'],
-  ['TSA', 'VD: 70', 'Bài thi Đánh giá tư duy của Đại học Bách khoa Hà Nội.'],
-  ['HSA', 'VD: 90', 'Bài thi Đánh giá năng lực của Đại học Quốc gia Hà Nội.'],
-  ['V-ACT', 'VD: 800', 'Bài thi Đánh giá năng lực của Đại học Quốc gia TP.HCM.'],
-  ['SPT', 'VD: 80', 'Bài thi Đánh giá năng lực của Đại học Sư phạm Hà Nội.'],
-  ['SAT', 'VD: 1400', 'Scholastic Assessment Test. Thang 400–1600.'],
-  ['ACT', 'VD: 30', 'American College Testing. Thang 1–36.'],
-  ['IB', 'VD: 38', 'International Baccalaureate. Điểm tổng thường 24–45.'],
-  ['A-Level', 'VD: 120', 'Chứng chỉ A-Level (Cambridge hoặc Pearson). Nhập điểm UMS hoặc điểm quy đổi của trường.'],
-  ['JLPT', 'VD: 140', 'Năng lực tiếng Nhật. Điểm tổng thường 0–180 (cấp N5–N1).'],
-  ['HSK', 'VD: 240', 'Năng lực tiếng Trung giản thể. Điểm hoặc cấp HSK 1–6, tùy cách trường quy đổi.'],
-  ['HSKK', 'VD: 80', 'HSKK, phần nói của tiếng Trung.'],
-  ['TOPIK', 'VD: 180', 'Năng lực tiếng Hàn. Điểm hoặc cấp TOPIK I/II.'],
-  ['DELF', 'VD: 75', 'DELF, chứng chỉ tiếng Pháp trình độ A1–B2. Điểm thường trên 100.'],
-  ['DALF', 'VD: 70', 'DALF, chứng chỉ tiếng Pháp trình độ C1–C2.'],
-  ['DELE', 'VD: 70', 'DELE, chứng chỉ tiếng Tây Ban Nha.'],
-  ['TestDaF', 'VD: 16', 'TestDaF, tiếng Đức học thuật. Bậc TDN 3–5 từng kỹ năng, hoặc tổng điểm nếu trường yêu cầu.'],
-  ['Goethe', 'VD: 80', 'Goethe-Zertifikat tiếng Đức. Nhập điểm bài thi theo cách trường quy đổi.'],
-  ['TRKI', 'VD: 80', 'TRKI / TORFL, chứng chỉ tiếng Nga.'],
-  ['TOCFL', 'VD: 4', 'TOCFL, năng lực tiếng Trung phồn thể (Đài Loan).'],
-  ['TCF', 'VD: 400', 'TCF, bài kiểm tra tiếng Pháp.'],
-  ['GMAT', 'VD: 650', 'GMAT, bài thi sau đại học về quản trị. Thang cổ điển khoảng 200–800.'],
-  ['GRE', 'VD: 320', 'GRE General Test. Điểm Verbal + Quantitative thường 260–340.'],
-];
+const REGION_HINTS = {
+  KV1: 'Xã vùng đồng bào dân tộc thiểu số và miền núi, xã khu vực I–III, thôn đặc biệt khó khăn, hải đảo, đặc khu hoặc biên giới. Mức 0,75 điểm.',
+  'KV2-NT': 'Địa phương không thuộc KV1, KV2, KV3. Mức 0,50 điểm.',
+  KV2: 'Phường thuộc tỉnh và xã của thành phố trực thuộc trung ương, trừ xã thuộc KV1. Mức 0,25 điểm.',
+  KV3: 'Phường của thành phố trực thuộc trung ương. Mức 0 điểm.',
+};
+const OBJECT_HINTS = {
+  '01': 'Người dân tộc thiểu số thuộc diện ưu tiên khu vực 1. Nhóm UT1, mức 2,00 điểm.',
+  '02': 'Thương binh, bệnh binh, người có giấy chứng nhận như thương binh, hoặc quân nhân, sĩ quan, hạ sĩ quan, chiến sĩ nghĩa vụ trong Công an nhân dân đã xuất ngũ. Nhóm UT1, mức 2,00 điểm.',
+  '03': 'Thân nhân liệt sĩ, con thương binh, con bệnh binh hoặc con người hoạt động kháng chiến bị nhiễm chất độc hoá học, suy giảm khả năng lao động từ 81% trở lên. Nhóm UT1, mức 2,00 điểm.',
+  '04': 'Thanh niên xung phong tập trung được cử đi học, hoặc quân nhân Công an nhân dân tại ngũ được cử đi học với thời gian phục vụ trên 15 tháng. Nhóm UT2, mức 1,00 điểm.',
+  '05': 'Người dân tộc thiểu số học ngoài khu vực của đối tượng 01, hoặc con thương binh, con bệnh binh, con người bị nhiễm chất độc hoá học với mức suy giảm dưới 81%. Nhóm UT2, mức 1,00 điểm.',
+  '06': 'Người khuyết tật nặng, giáo viên đã dạy đủ 3 năm dự tuyển ngành sư phạm, hoặc nhân viên y tế, trung cấp Dược đã công tác đủ 3 năm dự tuyển đúng ngành sức khỏe. Nhóm UT2, mức 1,00 điểm.',
+};
+
+const CERT_GROUPS = {{ cert_groups|tojson }};
+const SUBJECTS = {{ subjects|tojson }};
+let extraCerts = {};
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
@@ -89,31 +248,169 @@ function escapeHtml(value) {
   }[ch]));
 }
 
-function certId(name) {
-  return 'cert-' + name.replace(/[^A-Za-z0-9]+/g, '-');
+function certGroup(groupId) {
+  return CERT_GROUPS.find(group => group.id === groupId);
 }
 
-function bindTooltips(root) {
-  root.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-    const current = bootstrap.Tooltip.getInstance(el);
-    if (current) current.dispose();
-    bootstrap.Tooltip.getOrCreateInstance(el);
+function fieldByKey(group, key) {
+  return (group?.fields || []).find(field => field.key === key) || null;
+}
+
+function usedKeys(groupId, exceptRow) {
+  const keys = new Set();
+  document.querySelectorAll(`#certBody-${groupId} tr`).forEach(row => {
+    if (row === exceptRow) return;
+    const key = row.querySelector('[data-cert-type]')?.value;
+    if (key) keys.add(key);
+  });
+  return keys;
+}
+
+function typeOptions(group, selected, used) {
+  const options = ['<option value="">Chọn loại</option>'];
+  (group.fields || []).forEach(field => {
+    const disabled = used.has(field.key) && field.key !== selected ? ' disabled' : '';
+    const chosen = field.key === selected ? ' selected' : '';
+    options.push(`<option value="${escapeHtml(field.key)}"${chosen}${disabled}>${escapeHtml(field.label)}</option>`);
+  });
+  return options.join('');
+}
+
+function scoreControl(field, value) {
+  if (!field) {
+    return '<input type="text" class="form-control form-control-sm" data-cert-score disabled placeholder="Chọn loại trước">';
+  }
+  if (field.kind === 'select') {
+    const options = ['<option value="">Chọn mức</option>'].concat((field.options || []).map(option => (
+      `<option value="${escapeHtml(option)}"${option === value ? ' selected' : ''}>${escapeHtml(option)}</option>`
+    )));
+    return `<select class="form-select form-select-sm" data-cert-score>${options.join('')}</select>`;
+  }
+  return `<input type="number" step="0.01" min="0" class="form-control form-control-sm" data-cert-score placeholder="${escapeHtml(field.placeholder || 'Nhập điểm')}" value="${escapeHtml(value || '')}">`;
+}
+
+function refreshTypeOptions(groupId) {
+  const group = certGroup(groupId);
+  if (!group) return;
+  document.querySelectorAll(`#certBody-${groupId} tr`).forEach(row => {
+    const select = row.querySelector('[data-cert-type]');
+    const selected = select.value;
+    select.innerHTML = typeOptions(group, selected, usedKeys(groupId, row));
   });
 }
 
-function renderCertInputs(certs) {
-  const box = document.getElementById('certInputs');
-  box.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-    bootstrap.Tooltip.getInstance(el)?.dispose();
+function usedSubjects(tableId, exceptRow) {
+  const keys = new Set();
+  document.querySelectorAll(`#subjectBody-${tableId} tr`).forEach(row => {
+    if (row === exceptRow) return;
+    const key = row.querySelector('[data-subject]')?.value;
+    if (key) keys.add(key);
   });
-  box.innerHTML = PROFILE_CERTS.map(([name, placeholder, hint]) => `
-    <div class="col-3">
-      <label class="form-label small mb-1 cert-label" for="${certId(name)}"
-        data-bs-toggle="tooltip" data-bs-placement="top" title="${escapeHtml(hint)}">${escapeHtml(name)}</label>
-      <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="${certId(name)}"
-        data-cert="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(certs[name] || '')}">
-    </div>`).join('');
-  bindTooltips(box);
+  return keys;
+}
+
+function subjectOptions(selected, used) {
+  const options = ['<option value="">Chọn môn</option>'];
+  SUBJECTS.forEach(subject => {
+    const disabled = used.has(subject.key) && subject.key !== selected ? ' disabled' : '';
+    const chosen = subject.key === selected ? ' selected' : '';
+    options.push(`<option value="${escapeHtml(subject.key)}"${chosen}${disabled}>${escapeHtml(subject.label)}</option>`);
+  });
+  return options.join('');
+}
+
+function subjectScoreControl(value) {
+  return `<input type="number" step="0.01" min="0" max="10" class="form-control form-control-sm" data-subject-score placeholder="0–10" value="${escapeHtml(value || '')}">`;
+}
+
+function refreshSubjectOptions(tableId) {
+  document.querySelectorAll(`#subjectBody-${tableId} tr`).forEach(row => {
+    const select = row.querySelector('[data-subject]');
+    const selected = select.value;
+    select.innerHTML = subjectOptions(selected, usedSubjects(tableId, row));
+  });
+}
+
+function syncSubjectEmpty(tableId) {
+  const empty = document.querySelector(`[data-subject-empty="${tableId}"]`);
+  const table = document.querySelector(`[data-subject-table="${tableId}"]`);
+  const count = document.querySelectorAll(`#subjectBody-${tableId} tr`).length;
+  if (empty) empty.classList.toggle('d-none', count > 0);
+  if (table) table.classList.toggle('d-none', count === 0);
+}
+
+function addSubjectRow(tableId, key, score) {
+  const body = document.getElementById(`subjectBody-${tableId}`);
+  if (!body) return;
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>
+      <select class="form-select form-select-sm" data-subject>${subjectOptions(key, usedSubjects(tableId))}</select>
+    </td>
+    <td class="cert-score">${subjectScoreControl(score)}</td>
+    <td class="cert-remove text-center">
+      <button type="button" class="btn btn-sm btn-outline-secondary border-0" data-remove-subject aria-label="Xóa dòng">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </td>`;
+  body.appendChild(row);
+  refreshSubjectOptions(tableId);
+  syncSubjectEmpty(tableId);
+}
+
+function fillSubjectTable(tableId, scores) {
+  const body = document.getElementById(`subjectBody-${tableId}`);
+  if (body) body.replaceChildren();
+  SUBJECTS.forEach(subject => {
+    if (scores && scores[subject.key]) addSubjectRow(tableId, subject.key, scores[subject.key]);
+  });
+  syncSubjectEmpty(tableId);
+}
+
+function collectSubjectTable(tableId) {
+  const scores = {};
+  document.querySelectorAll(`#subjectBody-${tableId} tr`).forEach(row => {
+    const key = row.querySelector('[data-subject]')?.value || '';
+    const value = String(row.querySelector('[data-subject-score]')?.value || '').trim();
+    if (key && value) scores[key] = value;
+  });
+  return scores;
+}
+
+function syncEmpty(groupId) {
+  const empty = document.querySelector(`[data-empty-for="${groupId}"]`);
+  const table = document.querySelector(`[data-table-for="${groupId}"]`);
+  const count = document.querySelectorAll(`#certBody-${groupId} tr`).length;
+  if (empty) empty.classList.toggle('d-none', count > 0);
+  if (table) table.classList.toggle('d-none', count === 0);
+}
+
+function addCertRow(groupId, key, score) {
+  const group = certGroup(groupId);
+  const body = document.getElementById(`certBody-${groupId}`);
+  if (!group || !body) return;
+  const row = document.createElement('tr');
+  const field = fieldByKey(group, key);
+  row.innerHTML = `
+    <td>
+      <select class="form-select form-select-sm" data-cert-type>${typeOptions(group, key, usedKeys(groupId))}</select>
+    </td>
+    <td class="cert-score">${scoreControl(field, score)}</td>
+    <td class="cert-remove text-center">
+      <button type="button" class="btn btn-sm btn-outline-secondary border-0" data-remove-cert aria-label="Xóa dòng">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </td>`;
+  body.appendChild(row);
+  refreshTypeOptions(groupId);
+  syncEmpty(groupId);
+}
+
+function syncPriorityHints() {
+  const region = document.getElementById('khuVuc').value;
+  const object = document.getElementById('doiTuong').value;
+  document.getElementById('khuVucHint').textContent = REGION_HINTS[region] || 'Chọn khu vực theo nơi học THPT lâu nhất.';
+  document.getElementById('doiTuongHint').textContent = OBJECT_HINTS[object] || 'Nếu thuộc nhiều đối tượng, chỉ chọn mức cao nhất.';
 }
 
 function fillProfile(profile) {
@@ -121,16 +418,99 @@ function fillProfile(profile) {
   document.getElementById('ngaySinh').value = profile.ngay_sinh || '';
   document.getElementById('gioiTinh').value = profile.gioi_tinh || '';
   document.getElementById('diaChi').value = profile.dia_chi || '';
-  renderCertInputs(profile.chung_chi || {});
+  document.getElementById('khuVuc').value = profile.khu_vuc || '';
+  document.getElementById('doiTuong').value = profile.doi_tuong || '';
+  const certs = profile.chung_chi || {};
+  const known = new Set();
+  extraCerts = {};
+  CERT_GROUPS.forEach(group => {
+    const body = document.getElementById(`certBody-${group.id}`);
+    if (body) body.replaceChildren();
+    group.fields.forEach(field => known.add(field.key));
+  });
+  CERT_GROUPS.forEach(group => {
+    group.fields.forEach(field => {
+      if (certs[field.key]) addCertRow(group.id, field.key, certs[field.key]);
+    });
+    syncEmpty(group.id);
+  });
+  Object.entries(certs).forEach(([key, value]) => {
+    if (!known.has(key) && value) extraCerts[key] = value;
+  });
+  fillSubjectTable('thi-thu', profile.diem_thi_thu || {});
+  const transcript = profile.hoc_ba || {};
+  ['10', '11', '12'].forEach(grade => fillSubjectTable(grade, transcript[grade] || {}));
+  syncPriorityHints();
 }
+
+document.getElementById('khuVuc').addEventListener('change', syncPriorityHints);
+document.getElementById('doiTuong').addEventListener('change', syncPriorityHints);
+function expandFold(button) {
+  [button.closest('.profile-subsection'), button.closest('.profile-section')].forEach(node => {
+    const pane = node?.querySelector(':scope > .collapse');
+    if (pane && !pane.classList.contains('show')) {
+      bootstrap.Collapse.getOrCreateInstance(pane, { toggle: false }).show();
+    }
+  });
+}
+
+document.querySelectorAll('[data-add-cert]').forEach(button => {
+  button.addEventListener('click', () => {
+    expandFold(button);
+    addCertRow(button.dataset.addCert, '', '');
+  });
+});
+document.querySelectorAll('[data-add-subject]').forEach(button => {
+  button.addEventListener('click', () => {
+    expandFold(button);
+    addSubjectRow(button.dataset.addSubject, '', '');
+  });
+});
+document.getElementById('profileForm').addEventListener('change', (event) => {
+  const subjectSelect = event.target.closest('[data-subject]');
+  if (subjectSelect) {
+    const tableId = subjectSelect.closest('tr').parentElement.id.replace('subjectBody-', '');
+    refreshSubjectOptions(tableId);
+    return;
+  }
+  const typeSelect = event.target.closest('[data-cert-type]');
+  if (!typeSelect) return;
+  const row = typeSelect.closest('tr');
+  const groupId = row.parentElement.id.replace('certBody-', '');
+  const group = certGroup(groupId);
+  const field = fieldByKey(group, typeSelect.value);
+  const scoreCell = row.querySelector('.cert-score');
+  const previous = row.querySelector('[data-cert-score]')?.value || '';
+  scoreCell.innerHTML = scoreControl(field, field && field.kind === 'select' ? previous : previous);
+  refreshTypeOptions(groupId);
+});
+document.getElementById('profileForm').addEventListener('click', (event) => {
+  const removeSubject = event.target.closest('[data-remove-subject]');
+  if (removeSubject) {
+    const row = removeSubject.closest('tr');
+    const tableId = row.parentElement.id.replace('subjectBody-', '');
+    row.remove();
+    refreshSubjectOptions(tableId);
+    syncSubjectEmpty(tableId);
+    return;
+  }
+  const remove = event.target.closest('[data-remove-cert]');
+  if (!remove) return;
+  const row = remove.closest('tr');
+  const groupId = row.parentElement.id.replace('certBody-', '');
+  row.remove();
+  refreshTypeOptions(groupId);
+  syncEmpty(groupId);
+});
 
 document.getElementById('profileForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   const msg = document.getElementById('profileMsg');
-  const chung_chi = {};
-  document.querySelectorAll('#certInputs [data-cert]').forEach(input => {
-    const value = String(input.value || '').trim();
-    if (value) chung_chi[input.dataset.cert] = value;
+  const chung_chi = { ...extraCerts };
+  document.querySelectorAll('#profileForm tr').forEach(row => {
+    const key = row.querySelector('[data-cert-type]')?.value || '';
+    const value = String(row.querySelector('[data-cert-score]')?.value || '').trim();
+    if (key && value) chung_chi[key] = value;
   });
   const btn = document.getElementById('btnSaveProfile');
   btn.disabled = true;
@@ -143,6 +523,14 @@ document.getElementById('profileForm').addEventListener('submit', async (event) 
         ngay_sinh: document.getElementById('ngaySinh').value,
         gioi_tinh: document.getElementById('gioiTinh').value,
         dia_chi: document.getElementById('diaChi').value,
+        khu_vuc: document.getElementById('khuVuc').value,
+        doi_tuong: document.getElementById('doiTuong').value,
+        diem_thi_thu: collectSubjectTable('thi-thu'),
+        hoc_ba: {
+          '10': collectSubjectTable('10'),
+          '11': collectSubjectTable('11'),
+          '12': collectSubjectTable('12'),
+        },
         chung_chi,
       }),
     });
@@ -152,7 +540,7 @@ document.getElementById('profileForm').addEventListener('submit', async (event) 
       return;
     }
     fillProfile(data.profile || {});
-    msg.innerHTML = '<div class="alert alert-success py-2 mb-0">Đã lưu. Khi tính điểm cộng, các chứng chỉ này được điền sẵn.</div>';
+    msg.innerHTML = '<div class="alert alert-success py-2 mb-0">Đã lưu hồ sơ, điểm thi thử, học bạ, khu vực, đối tượng và bằng cấp, chứng chỉ.</div>';
   } catch (_) {
     msg.innerHTML = '<div class="alert alert-warning py-2 mb-0">Không lưu được thông tin.</div>';
   } finally {
@@ -161,7 +549,6 @@ document.getElementById('profileForm').addEventListener('submit', async (event) 
 });
 
 (async function loadProfile() {
-  renderCertInputs({});
   try {
     const res = await fetch('/api/ca-nhan');
     const data = await res.json();

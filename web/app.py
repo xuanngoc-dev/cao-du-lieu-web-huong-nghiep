@@ -157,6 +157,170 @@ def _load_certificate_catalog() -> Dict[str, Any]:
     return data
 
 
+_PROFILE_CERT_SPLITS = {
+    "TOEFL": [("TOEFL iBT", "TOEFL iBT"), ("TOEFL ITP", "TOEFL ITP")],
+    "TOEIC": [("TOEIC", "TOEIC"), ("TOEIC SW", "TOEIC SW")],
+    "HSK": [("HSK", "HSK"), ("HSKK", "HSKK")],
+    "DELF": [("DELF", "DELF"), ("DALF", "DALF")],
+    "A-Level": [("A-Level", "A-Level"), ("IB", "IB")],
+}
+_PROFILE_CERT_SHORT = {
+    "IELTS": "IELTS",
+    "PTE Academic": "PTE",
+    "Aptis": "Aptis",
+    "Duolingo": "Duolingo",
+    "Cambridge": "Cambridge",
+    "VSTEP": "VSTEP",
+    "JLPT": "JLPT",
+    "TOPIK": "TOPIK",
+    "TCF": "TCF",
+    "DELE": "DELE",
+    "TestDaF": "TestDaF",
+    "Goethe": "Goethe",
+    "TRKI": "TRKI",
+    "TOCFL": "TOCFL",
+    "HSA": "HSA",
+    "V-ACT": "V-ACT",
+    "TSA": "TSA",
+    "SPT": "SPT",
+    "SAT": "SAT",
+    "ACT": "ACT",
+    "GMAT": "GMAT",
+    "GRE": "GRE",
+    "MOS": "MOS",
+    "IC3": "IC3",
+}
+_PROFILE_RANGE_FOCUS = {
+    "TOEFL iBT": "iBT",
+    "TOEFL ITP": "ITP",
+    "TOEIC": "Nghe",
+    "TOEIC SW": "Nói",
+    "HSK": "HSK Cấp",
+    "A-Level": "A-Level",
+    "IB": "IB",
+}
+_SCORE_PAIR = re.compile(r"(\d+(?:[.,]\d+)?)\s*[-–—]\s*(\d+(?:[.,]\d+)?)")
+_PROFILE_AWARDS = {
+    "Học sinh giỏi Quốc gia": ("HSG quốc gia", ["Giải Nhất", "Giải Nhì", "Giải Ba", "Khuyến khích"]),
+    "Khoa học Kỹ thuật": ("KHKT", ["Giải Nhất", "Giải Nhì", "Giải Ba", "Giải Tư"]),
+    "Học sinh giỏi cấp Tỉnh": ("HSG tỉnh", ["Giải Nhất", "Giải Nhì", "Giải Ba"]),
+    "Giải thưởng Năng khiếu": ("Năng khiếu", ["Huy chương Vàng", "Huy chương Bạc", "Huy chương Đồng", "Giải thưởng"]),
+}
+
+
+def _profile_cert_groups(catalog: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Nhóm ô nhập trên màn cá nhân, cùng danh mục với trang bằng cấp (trừ mức miễn thi THPT)."""
+    groups: List[Dict[str, Any]] = []
+    for category in catalog.get("certificate_categories") or []:
+        if not isinstance(category, dict) or category.get("category_id") == "cat_05":
+            continue
+        fields: List[Dict[str, Any]] = []
+        for item in category.get("items") or []:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name") or "").strip()
+            if not name:
+                continue
+            score_range = str(item.get("score_range") or "").strip()
+            hint = " ".join(part for part in (score_range, str(item.get("admissions_usage") or "").strip()) if part)
+            fields.extend(_profile_fields_for_item(name, hint, score_range))
+        if fields:
+            groups.append({
+                "id": category.get("category_id") or "",
+                "name": category.get("category_name") or "",
+                "fields": fields,
+            })
+    return groups
+
+
+def _score_bounds(text: str) -> str:
+    """Rút khoảng điểm chấp nhận, dạng min–max, từ mô tả thang điểm."""
+    pairs = _SCORE_PAIR.findall(text or "")
+    if pairs:
+        def span(pair: tuple) -> float:
+            try:
+                return float(pair[1].replace(",", ".")) - float(pair[0].replace(",", "."))
+            except ValueError:
+                return 0
+        low, high = max(pairs, key=span)
+        return f"{low.replace(',', '.')}–{high.replace(',', '.')}"
+    ceiling = re.search(r"thang(?:\s+điểm|\s+tổ hợp)?\s+(\d+(?:[.,]\d+)?)", text or "", re.I)
+    if not ceiling:
+        ceiling = re.search(r"tối đa\s+(\d+(?:[.,]\d+)?)", text or "", re.I)
+    if ceiling:
+        return f"0–{ceiling.group(1).replace(',', '.')}"
+    level = re.search(r"bậc\s+(\d+)\s+đến\s+bậc\s+(\d+)", text or "", re.I)
+    if level:
+        return f"{level.group(1)}–{level.group(2)}"
+    band = re.search(r"cấp\s+(\d+)\s+đến\s+cấp\s+(\d+)", text or "", re.I)
+    if band:
+        return f"{band.group(1)}–{band.group(2)}"
+    until = re.search(r"đến cấp\s+(\d+)", text or "", re.I)
+    if until:
+        return f"1–{until.group(1)}"
+    letters = re.search(r"((?:[A-C]\d)|(?:[A-Z]\*))\s*[-–—]\s*([A-Z]\d?)", text or "")
+    if letters:
+        return f"{letters.group(1)}–{letters.group(2)}"
+    step = re.search(r"\bN(\d+)\s+đến\s+N(\d+)", text or "", re.I)
+    if step:
+        return f"N{step.group(1)}–N{step.group(2)}"
+    return ""
+
+
+def _placeholder_for(score_range: str, key: str) -> str:
+    text = score_range or ""
+    focus = _PROFILE_RANGE_FOCUS.get(key)
+    if focus and focus.lower() in text.lower():
+        start = text.lower().find(focus.lower())
+        rest = text[start:]
+        cut = re.search(r",\s+(?=[A-Z])|;\s*|\.\s+", rest[len(focus):])
+        text = rest[: len(focus) + cut.start()] if cut else rest
+    bounds = _score_bounds(text)
+    if key == "HSKK" and "HSKK" not in (score_range or ""):
+        bounds = "0–100"
+    return bounds or "Nhập điểm"
+
+
+def _profile_fields_for_item(name: str, hint: str, score_range: str = "") -> List[Dict[str, Any]]:
+    for prefix, (key, options) in _PROFILE_AWARDS.items():
+        if name.startswith(prefix):
+            return [{
+                "key": key,
+                "label": name,
+                "hint": hint,
+                "kind": "select",
+                "options": options,
+            }]
+    for prefix, parts in _PROFILE_CERT_SPLITS.items():
+        if name.startswith(prefix):
+            return [
+                {
+                    "key": key,
+                    "label": label,
+                    "hint": hint,
+                    "placeholder": _placeholder_for(score_range, key),
+                    "kind": "number",
+                }
+                for key, label in parts
+            ]
+    for prefix, key in _PROFILE_CERT_SHORT.items():
+        if name.startswith(prefix):
+            return [{
+                "key": key,
+                "label": key,
+                "hint": hint,
+                "placeholder": _placeholder_for(score_range, key),
+                "kind": "number",
+            }]
+    return [{
+        "key": name[:40],
+        "label": name,
+        "hint": hint,
+        "placeholder": _placeholder_for(score_range, name[:40]),
+        "kind": "number",
+    }]
+
+
 _CONVERSION_METHOD_ALIASES = {
     "THPT": "THPT",
     "TN": "THPT",
@@ -439,7 +603,11 @@ def create_app() -> Flask:
 
     @app.route("/ca-nhan")
     def ca_nhan_page():
-        return render_template("ca_nhan.html")
+        return render_template(
+            "ca_nhan.html",
+            cert_groups=_profile_cert_groups(_load_certificate_catalog()),
+            subjects=dataset_store.PROFILE_SUBJECTS,
+        )
 
     @app.get("/api/ca-nhan")
     def api_ca_nhan_get():
