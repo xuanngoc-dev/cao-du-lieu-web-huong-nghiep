@@ -12,6 +12,7 @@ import os
 import re
 import sys
 from datetime import datetime
+from html import escape as html_escape
 from typing import Any, Dict, List, Optional
 
 from flask import (
@@ -87,6 +88,8 @@ CONVERSION_IMPORT_SOURCE = "Nhập quy chế quy đổi"
 CERTIFICATE_CATALOG_PATH = os.path.join(ROOT, "data", "constants", "bang_cap_chung_chi.md")
 EXAM_CATALOG_PATH = os.path.join(ROOT, "data", "constants", "ky_thi.txt")
 SUBJECT_COMBO_PATH = os.path.join(ROOT, "data", "constants", "to_hop_mon_hoc.txt")
+CONVERSION_REGULATION_DIR = os.path.join(ROOT, "data", "constants", "quy-che-quy-doi-diem")
+_REGULATION_FILE = re.compile(r"^([A-Za-z0-9]+)-(\d{4})\.md$", re.IGNORECASE)
 _COMBO_GROUP_NAMES = {
     "A": "Khối A",
     "B": "Khối B",
@@ -584,6 +587,1497 @@ def _enrich_methods_for_school(code: str, quy_doi_methods: List) -> List:
     return merge_method_lists([], quy_doi_methods or [])
 
 
+_REG_DISPLAY_MATH = re.compile(r"\$\$(.+?)\$\$", re.DOTALL)
+_REG_INLINE_MATH = re.compile(r"\$(.+?)\$")
+_REG_MATH_TOKEN = re.compile(r"⟦MATH(\d+)⟧")
+
+
+def _plain_inline_math(latex: str) -> str:
+    """Số và chữ ngắn trong $...$ hiện như chữ thường, không giãn khoảng kiểu công thức."""
+    text_only = re.fullmatch(r"\\text\{([^{}]+)\}", latex.strip())
+    if text_only:
+        return html_escape(text_only.group(1))
+    if re.fullmatch(r"\d+(?:[.,]\d+)?", latex.strip()):
+        return html_escape(latex.strip())
+    return ""
+
+
+def _regulation_inline(text: str, slots: List[str]) -> str:
+    """Định dạng đậm, nghiêng, mã và công thức trong một dòng."""
+    text = html_escape(text)
+
+    def restore(match: re.Match) -> str:
+        latex = slots[int(match.group(1))]
+        plain = _plain_inline_math(latex)
+        if plain:
+            return plain
+        return f'<span class="reg-math">${html_escape(latex)}$</span>'
+
+    text = re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+    return _REG_MATH_TOKEN.sub(restore, text)
+
+
+def _regulation_markdown(source: str) -> str:
+    """Markdown quy chế (đề mục, danh sách, công thức) → HTML."""
+    slots: List[str] = []
+
+    def stash(match: re.Match) -> str:
+        slots.append(match.group(1).strip())
+        return f"⟦MATH{len(slots) - 1}⟧"
+
+    text = _REG_DISPLAY_MATH.sub(stash, source.replace("\r\n", "\n"))
+    text = _REG_INLINE_MATH.sub(stash, text)
+    parts: List[str] = []
+    stack: List[Dict[str, Any]] = []
+
+    def close_li() -> None:
+        if stack and stack[-1]["li_open"]:
+            parts.append("</li>")
+            stack[-1]["li_open"] = False
+
+    def close_lists() -> None:
+        while stack:
+            close_li()
+            parts.append(f"</{stack.pop()['kind']}>")
+
+    def close_deeper_than(indent: int, kind: Optional[str] = None) -> None:
+        while stack and stack[-1]["indent"] > indent:
+            close_li()
+            parts.append(f"</{stack.pop()['kind']}>")
+        if stack and stack[-1]["indent"] == indent and kind and stack[-1]["kind"] != kind:
+            close_li()
+            parts.append(f"</{stack.pop()['kind']}>")
+        elif stack and stack[-1]["indent"] == indent:
+            close_li()
+
+    def formula_html(index: int) -> str:
+        latex = html_escape(slots[index])
+        return f'<div class="reg-formula">$${latex}$$</div>'
+
+    def append_block(raw_line: str) -> None:
+        token = _REG_MATH_TOKEN.fullmatch(raw_line.strip())
+        if token:
+            parts.append(formula_html(int(token.group(1))))
+            return
+        inline = _regulation_inline(raw_line.strip(), slots)
+        css = ' class="reg-note"' if inline.startswith("<em>Lưu ý") else ""
+        parts.append(f"<p{css}>{inline}</p>")
+
+    for raw in text.split("\n"):
+        if not raw.strip():
+            close_lists()
+            continue
+        heading = re.match(r"^(#{1,4})\s+(.*)$", raw.strip())
+        if heading:
+            close_lists()
+            level = len(heading.group(1))
+            parts.append(f"<h{level}>{_regulation_inline(heading.group(2), slots)}</h{level}>")
+            continue
+        if raw.strip() == "---":
+            close_lists()
+            parts.append("<hr>")
+            continue
+        bullet = re.match(r"^(\s*)[*-]\s+(.*)$", raw)
+        number = re.match(r"^(\s*)\d+\.\s+(.*)$", raw)
+        if bullet or number:
+            matched = bullet or number
+            indent = len(matched.group(1).replace("\t", "    "))
+            kind = "ul" if bullet else "ol"
+            if not stack or stack[-1]["indent"] < indent:
+                parts.append(f"<{kind}>")
+                stack.append({"kind": kind, "indent": indent, "li_open": False})
+            else:
+                close_deeper_than(indent, kind)
+                if not stack or stack[-1]["kind"] != kind:
+                    parts.append(f"<{kind}>")
+                    stack.append({"kind": kind, "indent": indent, "li_open": False})
+            parts.append(f"<li>{_regulation_inline(matched.group(2), slots)}")
+            stack[-1]["li_open"] = True
+            continue
+        if stack and raw.startswith((" ", "\t")):
+            append_block(raw)
+            continue
+        close_lists()
+        append_block(raw)
+    close_lists()
+    return "\n".join(parts)
+
+
+def _parse_regulation_document(source: str) -> Dict[str, str]:
+    """Tách tiêu đề, tên trường và phần thân quy chế."""
+    mark = "<!-- điểm thưởng -->"
+    if mark in source:
+        source = source.split(mark, 1)[0]
+    lines = source.replace("\r\n", "\n").split("\n")
+    title = ""
+    subtitle = ""
+    body_at = 0
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not title and stripped.startswith("# "):
+            title = stripped[2:].strip()
+            body_at = index + 1
+            continue
+        if title and not subtitle and stripped.startswith("**") and stripped.endswith("**"):
+            subtitle = stripped.strip("*").strip()
+            body_at = index + 1
+            continue
+        if title and stripped == "---":
+            body_at = index + 1
+            break
+        if title and stripped:
+            break
+    name = re.sub(r"\s*\([^)]*\)\s*$", "", subtitle).strip()
+    return {
+        "title": title,
+        "name": name or subtitle,
+        "html": _regulation_markdown("\n".join(lines[body_at:]).strip()),
+    }
+
+
+def _load_conversion_regulations() -> Dict[str, Any]:
+    """Quy chế quy đổi điểm theo trường, mỗi file {mã}-{năm}.md."""
+    documents: List[Dict[str, Any]] = []
+    try:
+        names = sorted(os.listdir(CONVERSION_REGULATION_DIR))
+    except OSError:
+        names = []
+    for filename in names:
+        matched = _REGULATION_FILE.match(filename)
+        if not matched:
+            continue
+        path = os.path.join(CONVERSION_REGULATION_DIR, filename)
+        try:
+            with open(path, encoding="utf-8") as handle:
+                source = handle.read()
+        except OSError:
+            continue
+        parsed = _parse_regulation_document(source)
+        if not parsed["html"]:
+            continue
+        code = matched.group(1).upper()
+        documents.append({
+            "code": code,
+            "year": int(matched.group(2)),
+            "name": parsed["name"] or code,
+            "title": parsed["title"],
+            "html": parsed["html"],
+            "calculator": _regulation_calculator_spec(code) or _default_regulation_calculator(),
+        })
+    documents.sort(key=lambda item: (item["name"], -item["year"]))
+    schools: List[Dict[str, Any]] = []
+    for doc in documents:
+        school = next((item for item in schools if item["code"] == doc["code"]), None)
+        if school:
+            school["years"].append(doc["year"])
+            continue
+        schools.append({
+            "code": doc["code"],
+            "name": doc["name"],
+            "years": [doc["year"]],
+        })
+    for school in schools:
+        school["years"] = sorted(set(school["years"]), reverse=True)
+    return {"schools": schools, "documents": documents}
+
+
+def _fmt_reg_score(value: float) -> str:
+    if abs(value - round(value)) < 1e-9:
+        return str(int(round(value)))
+    return f"{value:.2f}".replace(".", ",")
+
+
+_PROFILE_REGION_POINTS = {"KV1": 0.75, "KV2-NT": 0.5, "KV2": 0.25, "KV3": 0.0}
+_PROFILE_OBJECT_POINTS = {"01": 2.0, "02": 2.0, "03": 2.0, "04": 1.0, "05": 1.0, "06": 1.0}
+_PROFILE_SUBJECT_LABELS = {item["key"]: item["label"] for item in dataset_store.PROFILE_SUBJECTS}
+_BKA_THPT_COMBOS = (
+    ("A00", ("toan", "ly", "hoa")),
+    ("A01", ("toan", "ly", "anh")),
+    ("A02", ("toan", "ly", "sinh")),
+    ("B00", ("toan", "hoa", "sinh")),
+    ("D01", ("van", "toan", "anh")),
+    ("D04", ("van", "toan", "trung")),
+    ("D07", ("toan", "hoa", "anh")),
+    ("D26", ("toan", "ly", "duc")),
+    ("D28", ("toan", "ly", "nhat")),
+    ("D29", ("toan", "ly", "phap")),
+)
+_BKA_K01_THIRD = ("ly", "hoa", "sinh", "tin")
+_BKA_CERT_BOUNDS = {
+    "SAT": (400, 1600),
+    "ACT": (1, 36),
+    "TSA": (0, 100),
+    "IELTS": (0, 9),
+    "A-Level": (0, 30),
+    "IB": (0, 45),
+    "AP": (0, 15),
+}
+_BKA_INTL_SCALES = (
+    ("sat", "SAT", "thang_sat_1600"),
+    ("act", "ACT", "thang_act_36"),
+    ("a-level", "A-Level", "thang_a_level_30"),
+    ("ap", "AP", "thang_ap_15"),
+    ("ib", "IB", "thang_ib_45"),
+)
+_BKA_PROFILE_ACHIEVEMENTS = {
+    ("HSG quốc gia", "Giải Nhất"): ("ky_thi_hsg", "Giải Nhất quốc gia trở lên"),
+    ("HSG quốc gia", "Giải Nhì"): ("ky_thi_hsg", "Giải Nhì quốc gia"),
+    ("HSG quốc gia", "Giải Ba"): ("ky_thi_hsg", "Giải Ba quốc gia"),
+    ("HSG quốc gia", "Khuyến khích"): ("ky_thi_hsg", "Giải Khuyến khích quốc gia"),
+    ("HSG tỉnh", "Giải Nhất"): ("ky_thi_hsg", "Giải Nhất tỉnh hoặc tương đương"),
+    ("HSG tỉnh", "Giải Nhì"): ("ky_thi_hsg", "Giải Nhì tỉnh hoặc tương đương"),
+    ("HSG tỉnh", "Giải Ba"): ("ky_thi_hsg", "Giải Ba tỉnh hoặc tương đương"),
+    ("KHKT", "Giải Nhất"): ("ky_thi_khkt", "Giải Nhất quốc gia"),
+    ("KHKT", "Giải Nhì"): ("ky_thi_khkt", "Giải Nhì quốc gia"),
+    ("KHKT", "Giải Ba"): ("ky_thi_khkt", "Giải Ba quốc gia"),
+    ("KHKT", "Giải Tư"): ("ky_thi_khkt", "Giải Tư/Khuyến khích quốc gia"),
+}
+_BKA_BONUS_FIELDS = (
+    ("ky_thi_hsg_them", "HSG môn khác hoặc năm khác"),
+    ("ky_thi_khkt_them", "KHKT đề tài khác"),
+    ("duong_len_dinh_olympia_them", "Olympia năm học khác"),
+    ("giai_thuong_van_the_my", "Giải văn hóa, thể thao"),
+    ("khen_thuong_xa_hoi", "Khen thưởng hoạt động xã hội"),
+)
+
+
+def _load_bka_talent_bonus() -> Optional[Dict[str, Any]]:
+    """Bảng điểm thưởng xét tuyển tài năng nằm cuối file quy chế BKA."""
+    path = os.path.join(CONVERSION_REGULATION_DIR, "bka-2026.md")
+    try:
+        with open(path, encoding="utf-8") as handle:
+            source = handle.read()
+    except OSError:
+        return None
+    mark = "<!-- điểm thưởng -->"
+    if mark not in source:
+        return None
+    try:
+        data = json.loads(source.split(mark, 1)[1].strip())
+    except json.JSONDecodeError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _bka_bonus_rows(node: Any) -> List[Dict[str, Any]]:
+    if isinstance(node, list):
+        return [item for item in node if isinstance(item, dict)]
+    if isinstance(node, dict):
+        return [item for item in (node.get("danh_sach") or []) if isinstance(item, dict)]
+    return []
+
+
+def _bka_choice_points(bonus: Dict[str, Any], token: str) -> Optional[tuple]:
+    """token dạng thanh:nhóm:chỉ số hoặc thuong:nhóm:chỉ số."""
+    parts = str(token or "").split(":")
+    if len(parts) != 3 or parts[0] not in ("thanh", "thuong"):
+        return None
+    try:
+        index = int(parts[2])
+    except ValueError:
+        return None
+    cases = (bonus.get("cac_dien_xet_tuyen") or {}).get("dien_1_3") or {}
+    if parts[0] == "thanh":
+        groups = (cases.get("diem_thanh_tich") or {}).get("cac_truong_hop") or {}
+    else:
+        groups = (cases.get("diem_thuong") or {}).get("cac_truong_hop") or {}
+    rows = _bka_bonus_rows(groups.get(parts[1]))
+    if index < 0 or index >= len(rows):
+        return None
+    row = rows[index]
+    try:
+        points = float(row.get("diem"))
+    except (TypeError, ValueError):
+        return None
+    return str(row.get("thanh_tich") or ""), points
+
+
+def _default_regulation_calculator() -> Dict[str, Any]:
+    """Mọi quy chế đều đọc hồ sơ cá nhân, kể cả khi chưa có công thức riêng."""
+    return {
+        "lead": (
+            "Học bạ, điểm thi tốt nghiệp THPT, chứng chỉ, giải thưởng và điểm ưu tiên "
+            "lấy từ hồ sơ cá nhân."
+        ),
+        "inputs": [],
+    }
+
+
+def _regulation_calculator_spec(code: str) -> Optional[Dict[str, Any]]:
+    """Ô nhập thêm theo quy chế. Học bạ, điểm thi, chứng chỉ và ưu tiên lấy từ hồ sơ."""
+    if code == "DCN":
+        return _dcn_calculator_spec()
+    if code != "BKA":
+        return None
+    bonus = _load_bka_talent_bonus() or {}
+    cases = (bonus.get("cac_dien_xet_tuyen") or {}).get("dien_1_3") or {}
+    achievement_groups = (cases.get("diem_thanh_tich") or {}).get("cac_truong_hop") or {}
+    achievement_options = [{"value": "", "label": "Lấy mức cao nhất từ hồ sơ"}]
+    for group_key, node in achievement_groups.items():
+        for index, item in enumerate(_bka_bonus_rows(node)):
+            achievement_options.append({
+                "value": f"thanh:{group_key}:{index}",
+                "label": f"{item.get('thanh_tich')} — {item.get('diem')} điểm",
+            })
+    inputs: List[Dict[str, Any]] = [{
+        "id": "thanh_tich",
+        "label": "Điểm thành tích",
+        "group": "Xét tuyển tài năng — điểm thành tích",
+        "type": "select",
+        "hint": "Chỉ tính một thành tích cao nhất, tối đa 50 điểm. Bỏ trống thì lấy mức cao nhất đã lưu trong hồ sơ.",
+        "options": achievement_options,
+    }]
+    reward_groups = (cases.get("diem_thuong") or {}).get("cac_truong_hop") or {}
+    for group_key, label in _BKA_BONUS_FIELDS:
+        node = reward_groups.get(group_key)
+        options = [{"value": "", "label": "Không tính"}]
+        for index, item in enumerate(_bka_bonus_rows(node)):
+            options.append({
+                "value": f"thuong:{group_key}:{index}",
+                "label": f"{item.get('thanh_tich')} — {item.get('diem')} điểm",
+            })
+        if len(options) == 1:
+            continue
+        hint = node.get("ghi_chu") if isinstance(node, dict) else ""
+        inputs.append({
+            "id": f"thuong_{group_key}",
+            "label": label,
+            "group": "Xét tuyển tài năng — điểm thưởng",
+            "type": "select",
+            "hint": hint or "Chỉ tính thành tích chưa được cộng vào điểm thành tích. Tổng điểm thưởng tối đa 10.",
+            "options": options,
+        })
+    return {
+        "lead": (
+            "Điểm trung bình từng năm, điểm thi THPT, chứng chỉ và điểm ưu tiên lấy từ hồ sơ cá nhân. "
+            "Điểm thưởng xét tuyển tài năng tính theo bảng trong quy chế: chọn thành tích bên dưới nếu hồ sơ chưa đủ."
+        ),
+        "inputs": inputs,
+    }
+
+
+def _bka_ielts_reward_row(ielts: Optional[float], bonus: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    rows = (((bonus or {}).get("cac_dien_xet_tuyen") or {}).get("dien_1_2") or {}).get("bang_diem_thuong") or []
+    matched = None
+    if ielts is None:
+        return None
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        label = str(row.get("ielts_hoac_tuong_duong") or "").strip()
+        try:
+            threshold = float(label.replace(">=", "").replace(",", "."))
+        except ValueError:
+            continue
+        if ielts + 1e-9 >= threshold:
+            current = float(row.get("thang_100") or 0)
+            previous = float(matched.get("thang_100") or 0) if matched else -1
+            if matched is None or current >= previous:
+                matched = row
+    return matched
+
+
+def _bka_table_achievement(bonus: Optional[Dict[str, Any]], group_key: str, title: str) -> Optional[tuple]:
+    groups = (
+        (((bonus or {}).get("cac_dien_xet_tuyen") or {}).get("dien_1_3") or {}).get("diem_thanh_tich") or {}
+    ).get("cac_truong_hop") or {}
+    for item in _bka_bonus_rows(groups.get(group_key)):
+        if str(item.get("thanh_tich") or "") == title:
+            try:
+                return title, float(item.get("diem"))
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
+def _bka_english_reward(ielts: Optional[float], bonus: Optional[Dict[str, Any]]) -> Optional[tuple]:
+    rows = (
+        (((bonus or {}).get("cac_dien_xet_tuyen") or {}).get("dien_1_3") or {}).get("diem_thuong") or {}
+    ).get("cac_truong_hop", {}).get("chung_chi_tieng_anh") or []
+    if ielts is None:
+        return None
+    matched = None
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("thanh_tich") or "")
+        number = re.search(r"(\d+(?:[.,]\d+)?)", title)
+        if not number:
+            continue
+        threshold = float(number.group(1).replace(",", "."))
+        if ielts + 1e-9 >= threshold:
+            try:
+                points = float(item.get("diem"))
+            except (TypeError, ValueError):
+                continue
+            if matched is None or points >= matched[1]:
+                matched = (title, points)
+    return matched
+
+
+def _profile_number(raw: Any, lo: Optional[float] = None, hi: Optional[float] = None) -> Optional[float]:
+    text = str(raw or "").strip().replace(",", ".")
+    if not text:
+        return None
+    try:
+        value = float(text)
+    except ValueError:
+        return None
+    if (lo is not None and value < lo) or (hi is not None and value > hi):
+        return None
+    return value
+
+
+def _profile_vstep(raw: Any) -> Optional[str]:
+    text = str(raw or "").strip().upper().replace(" ", "")
+    if not text:
+        return None
+    named = {"B1": "B1", "B2": "B2", "C1": "C1", "C2": "C1", "A1": "A2", "A2": "A2"}
+    if text in named:
+        return named[text]
+    try:
+        level = int(float(text.replace(",", ".")))
+    except ValueError:
+        return None
+    return {1: "A2", 2: "A2", 3: "B1", 4: "B2", 5: "C1", 6: "C1"}.get(level)
+
+
+def _subject_label(key: str) -> str:
+    return _PROFILE_SUBJECT_LABELS.get(key, key)
+
+
+def _bka_from_profile(profile: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Điểm quy chế BKA lấy từ hồ sơ cá nhân: học bạ, điểm thi THPT, chứng chỉ, ưu tiên."""
+    profile = profile or {}
+    certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+    exam_raw = profile.get("diem_thi_thu") if isinstance(profile.get("diem_thi_thu"), dict) else {}
+    transcript = profile.get("hoc_ba") if isinstance(profile.get("hoc_ba"), dict) else {}
+    notes: List[str] = []
+    cert_values: Dict[str, Any] = {}
+    for key, bounds in _BKA_CERT_BOUNDS.items():
+        raw = certs.get(key)
+        if raw is None or str(raw).strip() == "":
+            continue
+        value = _profile_number(raw, bounds[0], bounds[1])
+        if value is None:
+            notes.append(f"{key} trong hồ sơ không nằm trong thang {_fmt_reg_score(bounds[0])}–{_fmt_reg_score(bounds[1])}.")
+            continue
+        cert_values[key.lower()] = value
+    vstep_raw = certs.get("VSTEP")
+    if vstep_raw is not None and str(vstep_raw).strip():
+        level = _profile_vstep(vstep_raw)
+        if level:
+            cert_values["vstep"] = level
+        else:
+            notes.append("VSTEP trong hồ sơ không đọc được (bậc 1–6 hoặc B1, B2, C1).")
+    exam: Dict[str, float] = {}
+    for key, raw in exam_raw.items():
+        value = _profile_number(raw, 0, 10)
+        if value is not None:
+            exam[str(key)] = value
+    gpa: Dict[str, float] = {}
+    gpa_counts: Dict[str, int] = {}
+    for grade in ("10", "11", "12"):
+        scores = []
+        grade_raw = transcript.get(grade) if isinstance(transcript.get(grade), dict) else {}
+        for raw in grade_raw.values():
+            value = _profile_number(raw, 0, 10)
+            if value is not None:
+                scores.append(value)
+        if scores:
+            gpa[grade] = sum(scores) / len(scores)
+            gpa_counts[grade] = len(scores)
+    region = str(profile.get("khu_vuc") or "")
+    obj = str(profile.get("doi_tuong") or "")
+    uu_tien = None
+    uu_label = ""
+    if region in _PROFILE_REGION_POINTS or obj in _PROFILE_OBJECT_POINTS:
+        region_points = _PROFILE_REGION_POINTS.get(region, 0.0)
+        object_points = _PROFILE_OBJECT_POINTS.get(obj, 0.0)
+        uu_tien = min(2.75, region_points + object_points)
+        parts = []
+        if region in _PROFILE_REGION_POINTS:
+            parts.append(f"{region} {_fmt_reg_score(region_points)}")
+        if obj in _PROFILE_OBJECT_POINTS:
+            parts.append(f"đối tượng {obj} {_fmt_reg_score(object_points)}")
+        uu_label = " + ".join(parts)
+    awards = {}
+    for key in ("HSG quốc gia", "HSG tỉnh", "KHKT"):
+        label = str(certs.get(key) or "").strip()
+        if label:
+            awards[key] = label
+    return {
+        "certs": cert_values,
+        "awards": awards,
+        "exam": exam,
+        "gpa": gpa,
+        "gpa_counts": gpa_counts,
+        "uu_tien": uu_tien,
+        "uu_label": uu_label,
+        "notes": notes,
+    }
+
+
+def _bka_profile_groups(profile: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Các dòng hiển thị điểm hồ sơ đang được dùng cho quy đổi BKA."""
+    bundle = _bka_from_profile(profile)
+    gpa_rows = []
+    low: List[str] = []
+    missing: List[str] = []
+    for grade in ("10", "11", "12"):
+        value = bundle["gpa"].get(grade)
+        if value is None:
+            missing.append(grade)
+            gpa_rows.append({"label": f"Lớp {grade}", "value": "Chưa có", "detail": "Chưa lưu học bạ năm này."})
+            continue
+        mark = "đạt" if value + 1e-9 >= 8 else "dưới 8,00"
+        if value + 1e-9 < 8:
+            low.append(grade)
+        count = bundle["gpa_counts"].get(grade, 0)
+        gpa_rows.append({
+            "label": f"Lớp {grade}",
+            "value": _fmt_reg_score(value),
+            "detail": f"{mark}, trung bình {count} môn đã lưu.",
+        })
+    if missing and len(missing) == 3:
+        verdict = "Chưa có học bạ"
+    elif missing or low:
+        verdict = "Chưa đủ 8,00 mỗi năm"
+    else:
+        verdict = "Đạt từ 8,00 mỗi năm"
+    gpa_rows.append({"label": "Điều kiện TBC", "value": verdict, "detail": "Diện xét tuyển tài năng cần từng năm lớp 10, 11, 12 từ 8,00."})
+
+    exam = bundle["exam"]
+    if exam:
+        exam_rows = [
+            {"label": _subject_label(key), "value": _fmt_reg_score(value), "detail": "Điểm thi THPT đã lưu."}
+            for key, value in exam.items()
+        ]
+    else:
+        exam_rows = [{"label": "Điểm thi THPT", "value": "Chưa có", "detail": "Chưa lưu điểm thi thử THPT trong hồ sơ."}]
+
+    cert_labels = {
+        "sat": "SAT", "act": "ACT", "tsa": "TSA", "ielts": "IELTS", "vstep": "VSTEP",
+        "a-level": "A-Level", "ap": "AP", "ib": "IB",
+    }
+    cert_rows = []
+    for key, value in bundle["certs"].items():
+        shown = value if isinstance(value, str) else _fmt_reg_score(value)
+        if key == "vstep" and value == "A2":
+            shown = "Dưới B1"
+        cert_rows.append({
+            "label": cert_labels.get(key, key.upper()),
+            "value": shown,
+            "detail": "Chứng chỉ đã lưu trong hồ sơ cá nhân.",
+        })
+    for key, label in (bundle.get("awards") or {}).items():
+        cert_rows.append({"label": key, "value": label, "detail": "Giải thưởng đã lưu trong hồ sơ cá nhân."})
+    if not cert_rows:
+        cert_rows.append({
+            "label": "Chứng chỉ",
+            "value": "Chưa có",
+            "detail": "Chưa lưu chứng chỉ, bài thi hoặc giải thưởng trong hồ sơ.",
+        })
+    for note in bundle["notes"]:
+        cert_rows.append({"label": "Lưu ý", "value": note, "detail": ""})
+
+    if bundle["uu_tien"] is None:
+        uu_rows = [{"label": "Điểm ưu tiên", "value": "Chưa có", "detail": "Chưa chọn khu vực hoặc đối tượng ưu tiên."}]
+    else:
+        uu_rows = [{"label": "Điểm ưu tiên", "value": _fmt_reg_score(bundle["uu_tien"]), "detail": bundle["uu_label"]}]
+    return [
+        {"label": "Học bạ", "rows": gpa_rows},
+        {"label": "Điểm thi THPT", "rows": exam_rows},
+        {"label": "Chứng chỉ và bài thi", "rows": cert_rows},
+        {"label": "Điểm ưu tiên", "rows": uu_rows},
+    ]
+
+
+def _read_regulation_score(raw: Any, spec: Dict[str, Any]) -> tuple:
+    label = spec["label"]
+    if spec.get("type") == "select":
+        value = str(raw or "").strip()
+        if not value:
+            return None, None
+        allowed = {opt.get("value") for opt in spec.get("options") or []}
+        if value not in allowed:
+            return None, f"{label} không hợp lệ."
+        return value, None
+    if raw is None or str(raw).strip() == "":
+        return None, None
+    try:
+        value = float(str(raw).strip().replace(",", "."))
+    except ValueError:
+        return None, f"{label} không phải số."
+    lo = spec.get("min")
+    hi = spec.get("max")
+    if (lo is not None and value < lo) or (hi is not None and value > hi):
+        return None, f"{label} phải từ {lo} đến {hi}."
+    return value, None
+
+
+def _convert_bka_scores(
+    scores: Dict[str, Any],
+    spec: Dict[str, Any],
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Tính các mức điểm BKA 2026. Học bạ, điểm thi THPT, chứng chỉ và ưu tiên lấy từ hồ sơ cá nhân."""
+    parsed: Dict[str, Any] = {}
+    errors: List[str] = []
+    for item in spec["inputs"]:
+        value, error = _read_regulation_score(scores.get(item["id"]), item)
+        if error:
+            errors.append(error)
+            continue
+        if value is not None and value != "":
+            parsed[item["id"]] = value
+    if errors:
+        return {"ok": False, "error": " ".join(errors)}
+
+    bundle = _bka_from_profile(profile)
+    certs = bundle["certs"]
+    exam: Dict[str, float] = bundle["exam"]
+
+    if not parsed and not certs and not exam and not bundle["gpa"]:
+        return {
+            "ok": False,
+            "error": "Hồ sơ cá nhân chưa có học bạ, điểm thi THPT hoặc chứng chỉ để quy đổi. Hãy bổ sung ở màn Cá nhân, hoặc nhập điểm thành tích và điểm thưởng.",
+        }
+
+    tiles: List[Dict[str, str]] = []
+    uu = bundle["uu_tien"]
+    uu_points = float(uu or 0)
+    if uu is None:
+        uu_note = " Chưa có khu vực hoặc đối tượng ưu tiên trong hồ sơ cá nhân, đang tính bằng 0."
+    else:
+        uu_note = f" Điểm ưu tiên {_fmt_reg_score(uu_points)} lấy từ hồ sơ ({bundle['uu_label']})."
+
+    if "sat" in certs or "act" in certs:
+        entered = []
+        if "sat" in certs:
+            entered.append(f"SAT {_fmt_reg_score(certs['sat'])}")
+        if "act" in certs:
+            entered.append(f"ACT {_fmt_reg_score(certs['act'])}")
+        tiles.append({
+            "label": "Chứng chỉ quốc tế",
+            "value": ", ".join(entered),
+            "detail": "Lấy từ hồ sơ cá nhân. Diện xét tuyển tài năng 1.2.",
+            "kind": "source",
+        })
+        tiles.append({
+            "label": "Điểm thi THPT tương đương",
+            "value": "Chưa có trong quy chế",
+            "detail": "Quy chế không công bố bảng đổi SAT hoặc ACT sang điểm thi tốt nghiệp THPT.",
+            "kind": "missing",
+        })
+        if "tsa" not in certs:
+            tiles.append({
+                "label": "Điểm tư duy tương đương",
+                "value": "Chưa có trong quy chế",
+                "detail": "Điểm tư duy chỉ quy đổi từ điểm TSA theo công thức TSA × 40/60, không quy đổi từ SAT hoặc ACT.",
+                "kind": "missing",
+            })
+
+    bonus = _load_bka_talent_bonus()
+    ielts_row = _bka_ielts_reward_row(certs.get("ielts"), bonus)
+    english_reward = _bka_english_reward(certs.get("ielts"), bonus)
+    chosen_achievement = _bka_choice_points(bonus or {}, parsed.get("thanh_tich"))
+    if chosen_achievement is None:
+        profile_achievements = []
+        for key, label in (bundle.get("awards") or {}).items():
+            mapped = _BKA_PROFILE_ACHIEVEMENTS.get((key, label))
+            if not mapped:
+                continue
+            found = _bka_table_achievement(bonus, mapped[0], mapped[1])
+            if found:
+                profile_achievements.append(found)
+        chosen_achievement = max(profile_achievements, key=lambda item: item[1]) if profile_achievements else None
+    achievement_points = min(50.0, chosen_achievement[1]) if chosen_achievement else 0.0
+    reward_parts = []
+    reward_sum = 0.0
+    if english_reward:
+        reward_parts.append(f"{english_reward[0]}: { _fmt_reg_score(english_reward[1]) }")
+        reward_sum += english_reward[1]
+    for group_key, _label in _BKA_BONUS_FIELDS:
+        picked = _bka_choice_points(bonus or {}, parsed.get(f"thuong_{group_key}"))
+        if not picked:
+            continue
+        reward_parts.append(f"{picked[0]}: {_fmt_reg_score(picked[1])}")
+        reward_sum += picked[1]
+    reward_points = min(10.0, reward_sum)
+    language_on_100 = 0.0
+    if ielts_row is not None:
+        try:
+            language_on_100 = float(ielts_row.get("thang_100") or 0)
+        except (TypeError, ValueError):
+            language_on_100 = 0.0
+
+    needs_gpa = bool(
+        bundle["gpa"]
+        or certs.get("sat")
+        or certs.get("act")
+        or certs.get("tsa")
+        or chosen_achievement
+        or reward_parts
+    )
+    if needs_gpa:
+        low = [grade for grade in ("10", "11", "12") if grade in bundle["gpa"] and bundle["gpa"][grade] + 1e-9 < 8]
+        missing_years = [grade for grade in ("10", "11", "12") if grade not in bundle["gpa"]]
+        lines = []
+        for grade in ("10", "11", "12"):
+            if grade in bundle["gpa"]:
+                count = bundle["gpa_counts"].get(grade, 0)
+                lines.append(f"Lớp {grade}: {_fmt_reg_score(bundle['gpa'][grade])} ({count} môn)")
+            else:
+                lines.append(f"Lớp {grade}: chưa có")
+        if len(missing_years) == 3:
+            gpa_value, gpa_kind = "Chưa có", "missing"
+        elif missing_years or low:
+            gpa_value, gpa_kind = "Chưa đủ", "missing"
+        else:
+            gpa_value, gpa_kind = "Đạt", "value"
+        tiles.append({
+            "label": "Điểm trung bình từng năm",
+            "value": gpa_value,
+            "detail": "Cần từ 8,00 mỗi năm lớp 10, 11, 12. " + ". ".join(lines) + ". Trung bình các môn học bạ đã lưu.",
+            "kind": gpa_kind,
+        })
+
+    tu_duy = None
+    if "tsa" in certs:
+        raw_tu_duy = certs["tsa"] * 40 / 60
+        tu_duy = min(40.0, raw_tu_duy)
+        detail = f"TSA {_fmt_reg_score(certs['tsa'])} lấy từ hồ sơ. Điểm TSA × 40/60, tối đa 40 điểm."
+        if tu_duy < raw_tu_duy - 1e-9:
+            detail += " Điểm đã chạm trần 40."
+        tiles.append({"label": "Điểm tư duy", "value": _fmt_reg_score(tu_duy), "detail": detail, "kind": "value"})
+        dx_tsa = certs["tsa"] + uu_points + language_on_100
+        bonus_note = "Điểm thi TSA + điểm ưu tiên + điểm thưởng chứng chỉ ngoại ngữ theo thang 100." + uu_note
+        if ielts_row is None:
+            bonus_note += " Hồ sơ chưa có IELTS từ 5,0 nên điểm thưởng ngoại ngữ = 0."
+        else:
+            bonus_note += f" IELTS {_fmt_reg_score(certs['ielts'])} được cộng {_fmt_reg_score(language_on_100)} điểm."
+        tiles.append({
+            "label": "Điểm xét tuyển theo TSA",
+            "value": _fmt_reg_score(dx_tsa),
+            "detail": bonus_note,
+            "kind": "value",
+        })
+
+    talent_ready = bool(
+        any(key in certs for key, _name, _scale in _BKA_INTL_SCALES)
+        or certs.get("tsa") is not None
+        or chosen_achievement
+        or reward_parts
+    )
+    if talent_ready:
+        national = []
+        for key, label in (bundle.get("awards") or {}).items():
+            if key in ("HSG quốc gia", "KHKT"):
+                national.append(f"{key} {label}")
+        tiles.append({
+            "label": "Diện 1.1 — xét tuyển thẳng",
+            "value": "Không cộng thưởng",
+            "detail": "Diện này không có điểm thưởng, chỉ xét điều kiện giải thưởng."
+            + (f" Hồ sơ có {', '.join(national)}." if national else " Hồ sơ chưa có giải HSG hoặc KHKT quốc gia."),
+            "kind": "source" if national else "missing",
+        })
+        intl_found = False
+        for key, name, scale in _BKA_INTL_SCALES:
+            if key not in certs:
+                continue
+            intl_found = True
+            added = 0.0
+            if ielts_row is not None:
+                try:
+                    added = float(ielts_row.get(scale) or 0)
+                except (TypeError, ValueError):
+                    added = 0.0
+            total = certs[key] + added
+            if ielts_row is None:
+                detail = f"{name} {_fmt_reg_score(certs[key])}. Hồ sơ chưa có IELTS từ 5,0 nên chưa cộng điểm thưởng ngoại ngữ."
+            else:
+                detail = (
+                    f"{name} {_fmt_reg_score(certs[key])} + điểm thưởng IELTS {_fmt_reg_score(certs['ielts'])} "
+                    f"= {_fmt_reg_score(added)} trên thang {name}."
+                )
+            tiles.append({
+                "label": f"Diện 1.2 — tổng {name}",
+                "value": _fmt_reg_score(total),
+                "detail": detail,
+                "kind": "value",
+            })
+        if not intl_found:
+            tiles.append({
+                "label": "Diện 1.2 — chứng chỉ quốc tế",
+                "value": "Chưa có",
+                "detail": "Hồ sơ chưa có SAT, ACT, A-Level, AP hoặc IB để cộng điểm thưởng ngoại ngữ.",
+                "kind": "missing",
+            })
+        interview = (
+            (((bonus or {}).get("cac_dien_xet_tuyen") or {}).get("dien_1_3") or {}).get("muc_toi_thieu_vao_phong_van")
+        )
+        try:
+            interview_mark = float(interview)
+        except (TypeError, ValueError):
+            interview_mark = 55.0
+        hsnl = (tu_duy or 0) + achievement_points + reward_points
+        parts = [f"Tư duy {_fmt_reg_score(tu_duy or 0)}"]
+        if chosen_achievement:
+            shown = achievement_points
+            parts.append(f"thành tích {_fmt_reg_score(shown)} ({chosen_achievement[0]})")
+            if chosen_achievement[1] > 50:
+                parts[-1] += ", quy về 50"
+        else:
+            parts.append("thành tích 0 vì hồ sơ chưa có giải được tính")
+        if reward_parts:
+            reward_text = f"thưởng {_fmt_reg_score(reward_points)} (" + "; ".join(reward_parts) + ")"
+            if reward_sum > 10:
+                reward_text += ", tổng vượt 10 nên quy về 10"
+            parts.append(reward_text)
+        else:
+            parts.append("thưởng 0")
+        if "tsa" not in certs:
+            parts.append("chưa có TSA nên tư duy = 0")
+        reached = hsnl + 1e-9 >= interview_mark
+        parts.append(
+            f"ngưỡng vào phỏng vấn {_fmt_reg_score(interview_mark)}: {'đủ' if reached else 'chưa đủ'}"
+        )
+        tiles.append({
+            "label": "Diện 1.3 — tổng hồ sơ năng lực",
+            "value": _fmt_reg_score(hsnl),
+            "detail": " + ".join(parts[:3]) + ". " + ". ".join(parts[3:]),
+            "kind": "value" if reached else "missing",
+        })
+
+    ready = []
+    missing_combos = []
+    for code, subjects in _BKA_THPT_COMBOS:
+        absent = [key for key in subjects if key not in exam]
+        if absent:
+            missing_combos.append(f"{code} thiếu {', '.join(_subject_label(key) for key in absent)}")
+            continue
+        total = sum(exam[key] for key in subjects) + uu_points
+        parts = [f"{_subject_label(key)} {_fmt_reg_score(exam[key])}" for key in subjects]
+        detail = " + ".join(parts) + " + điểm ưu tiên." + uu_note
+        if "toan" in subjects:
+            with_main = (sum(exam[key] for key in subjects) + exam["toan"]) * 3 / 4 + uu_points
+            detail += f" Nếu Toán là môn chính: {_fmt_reg_score(with_main)}."
+        ready.append({
+            "label": f"Điểm xét tuyển THPT {code}",
+            "value": _fmt_reg_score(total),
+            "detail": detail,
+            "kind": "value",
+        })
+    if exam:
+        tiles.extend(ready)
+        if missing_combos:
+            tiles.append({
+                "label": "Tổ hợp THPT còn thiếu môn",
+                "value": "Thiếu môn",
+                "detail": ". ".join(missing_combos) + ".",
+                "kind": "missing",
+            })
+        third_options = [(key, exam[key]) for key in _BKA_K01_THIRD if key in exam]
+        if "toan" in exam and "van" in exam and third_options:
+            third_key, third_score = max(third_options, key=lambda item: item[1])
+            dx_k = (exam["toan"] * 3 + exam["van"] + third_score * 2) / 2 + uu_points
+            choice = f"Môn thứ 3 lấy {_subject_label(third_key)} {_fmt_reg_score(third_score)}"
+            if len(third_options) > 1:
+                choice += ", cao nhất trong các môn Lý, Hóa, Sinh, Tin đã lưu"
+            tiles.append({
+                "label": "Điểm xét tuyển tổ hợp K01",
+                "value": _fmt_reg_score(dx_k),
+                "detail": f"(Toán × 3 + Ngữ văn × 1 + môn thứ 3 × 2) × 1/2 + điểm ưu tiên. {choice}." + uu_note,
+                "kind": "value",
+            })
+        elif "toan" in exam or "van" in exam or third_options:
+            tiles.append({
+                "label": "Điểm xét tuyển tổ hợp K01",
+                "value": "Thiếu môn",
+                "detail": "Cần đủ Toán, Ngữ văn và một môn Lý, Hóa, Sinh hoặc Tin trong điểm thi THPT đã lưu.",
+                "kind": "missing",
+            })
+    elif certs or bundle["gpa"] or parsed:
+        tiles.append({
+            "label": "Điểm xét tuyển THPT",
+            "value": "Chưa có",
+            "detail": "Chưa lưu điểm thi THPT trong hồ sơ cá nhân.",
+            "kind": "missing",
+        })
+
+    language_notes: List[str] = []
+    if "ielts" in certs:
+        ielts = certs["ielts"]
+        if ielts >= 5.5:
+            language_notes.append("IELTS đủ liên kết quốc tế (≥ 5,5) và chương trình giảng dạy bằng tiếng Anh (≥ 5,0).")
+        elif ielts >= 5.0:
+            language_notes.append("IELTS đủ chương trình giảng dạy bằng tiếng Anh (≥ 5,0), chưa đủ liên kết quốc tế (cần ≥ 5,5).")
+        else:
+            language_notes.append("IELTS chưa đạt 5,0 cho chương trình giảng dạy bằng tiếng Anh.")
+    if "vstep" in certs:
+        if certs["vstep"] in ("B1", "B2", "C1"):
+            language_notes.append(f"VSTEP {certs['vstep']} đủ chương trình giảng dạy bằng tiếng Anh.")
+        else:
+            language_notes.append("VSTEP dưới B1, chưa đủ chương trình giảng dạy bằng tiếng Anh.")
+    if "anh" in exam:
+        if exam["anh"] >= 6.5:
+            language_notes.append(f"Điểm tiếng Anh THPT {_fmt_reg_score(exam['anh'])} đủ chương trình giảng dạy bằng tiếng Anh (≥ 6,5).")
+        else:
+            language_notes.append(f"Điểm tiếng Anh THPT {_fmt_reg_score(exam['anh'])} chưa đạt 6,5.")
+    if language_notes:
+        reached = [
+            note for note in language_notes
+            if "đủ" in note.lower() and "chưa" not in note.lower() and "dưới" not in note.lower()
+        ]
+        if reached and len(reached) == len(language_notes):
+            verdict = "Đạt"
+        elif reached:
+            verdict = "Đạt một phần"
+        else:
+            verdict = "Chưa đạt"
+        tiles.append({
+            "label": "Điều kiện ngoại ngữ",
+            "value": verdict,
+            "detail": " ".join(language_notes),
+            "kind": "value" if verdict == "Đạt" else "missing",
+        })
+
+    if bundle["notes"]:
+        tiles.append({
+            "label": "Hồ sơ chưa dùng được",
+            "value": "Bỏ qua",
+            "detail": " ".join(bundle["notes"]),
+            "kind": "missing",
+        })
+    if not tiles:
+        return {
+            "ok": False,
+            "error": "Hồ sơ cá nhân chưa có học bạ, điểm thi THPT hoặc chứng chỉ để quy đổi.",
+        }
+    return {"ok": True, "results": tiles}
+
+
+_DCN_YEAR_WEIGHTS = (("10", 1), ("11", 1), ("12", 2))
+_DCN_CERT_BOUNDS = {"HSA": (0, 150), "TSA": (0, 100)}
+
+
+def _dcn_subject_options() -> List[Dict[str, str]]:
+    options = [{"value": "", "label": "Chọn môn"}]
+    options.extend(
+        {"value": item["key"], "label": item["label"]}
+        for item in dataset_store.PROFILE_SUBJECTS
+    )
+    return options
+
+
+def _dcn_calculator_spec() -> Dict[str, Any]:
+    """Chọn môn chính và hai môn còn lại. Điểm lấy từ hồ sơ cá nhân."""
+    return {
+        "lead": (
+            "Học bạ, điểm thi tốt nghiệp THPT, điểm ĐGNL (HSA), điểm đánh giá tư duy (TSA) "
+            "và điểm ưu tiên lấy từ hồ sơ cá nhân. Chọn môn chính và hai môn còn lại của tổ hợp "
+            "để tính điểm học bạ và điểm xét tuyển."
+        ),
+        "inputs": [
+            {
+                "id": "mon_chinh",
+                "label": "Môn chính M1",
+                "group": "Tổ hợp xét tuyển",
+                "type": "select",
+                "hint": (
+                    "M1 nhân hệ số 2 khi tính điểm học bạ. Ngữ văn áp dụng cho Thiết kế thời trang, "
+                    "Ngôn ngữ học, Trung Quốc học và các ngành Ngôn ngữ, Văn hóa nước ngoài, "
+                    "Du lịch, Khách sạn, Nhà hàng."
+                ),
+                "options": [
+                    {"value": "toan", "label": "Toán"},
+                    {"value": "van", "label": "Ngữ văn"},
+                ],
+            },
+            {
+                "id": "mon_2",
+                "label": "Môn 2",
+                "group": "Tổ hợp xét tuyển",
+                "type": "select",
+                "hint": "Hệ số 1 trong điểm học bạ và trong điểm thi tốt nghiệp THPT.",
+                "options": _dcn_subject_options(),
+            },
+            {
+                "id": "mon_3",
+                "label": "Môn 3",
+                "group": "Tổ hợp xét tuyển",
+                "type": "select",
+                "hint": "Hệ số 1 trong điểm học bạ và trong điểm thi tốt nghiệp THPT.",
+                "options": _dcn_subject_options(),
+            },
+        ],
+    }
+
+
+def _dcn_priority(profile: Optional[Dict[str, Any]]) -> tuple:
+    profile = profile or {}
+    region = str(profile.get("khu_vuc") or "")
+    obj = str(profile.get("doi_tuong") or "")
+    if region not in _PROFILE_REGION_POINTS and obj not in _PROFILE_OBJECT_POINTS:
+        return None, ""
+    region_points = _PROFILE_REGION_POINTS.get(region, 0.0)
+    object_points = _PROFILE_OBJECT_POINTS.get(obj, 0.0)
+    total = min(2.75, region_points + object_points)
+    parts = []
+    if region in _PROFILE_REGION_POINTS:
+        parts.append(f"{region} {_fmt_reg_score(region_points)}")
+    if obj in _PROFILE_OBJECT_POINTS:
+        parts.append(f"đối tượng {obj} {_fmt_reg_score(object_points)}")
+    return total, " + ".join(parts)
+
+
+def _dcn_transcript_component(hoc_ba: Dict[str, Any], key: str) -> Dict[str, Any]:
+    parts: List[str] = []
+    missing: List[str] = []
+    total = 0.0
+    for grade, weight in _DCN_YEAR_WEIGHTS:
+        grade_raw = hoc_ba.get(grade) if isinstance(hoc_ba.get(grade), dict) else {}
+        value = _profile_number(grade_raw.get(key), 0, 10)
+        if value is None:
+            missing.append(grade)
+            continue
+        total += value * weight
+        shown = _fmt_reg_score(value)
+        parts.append(f"lớp {grade}: {shown}" if weight == 1 else f"lớp {grade}: {shown} × {weight}")
+    return {
+        "total": None if missing else total,
+        "missing": missing,
+        "detail": "; ".join(parts) if parts else "chưa có điểm học bạ",
+    }
+
+
+def _dcn_from_profile(profile: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    profile = profile or {}
+    certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+    exam_raw = profile.get("diem_thi_thu") if isinstance(profile.get("diem_thi_thu"), dict) else {}
+    hoc_ba = profile.get("hoc_ba") if isinstance(profile.get("hoc_ba"), dict) else {}
+    notes: List[str] = []
+    cert_values: Dict[str, float] = {}
+    for key, bounds in _DCN_CERT_BOUNDS.items():
+        raw = certs.get(key)
+        if raw is None or str(raw).strip() == "":
+            continue
+        value = _profile_number(raw, bounds[0], bounds[1])
+        if value is None:
+            notes.append(
+                f"{key} trong hồ sơ không nằm trong thang {_fmt_reg_score(bounds[0])}–{_fmt_reg_score(bounds[1])}."
+            )
+            continue
+        cert_values[key] = value
+    exam: Dict[str, float] = {}
+    for key, raw in exam_raw.items():
+        value = _profile_number(raw, 0, 10)
+        if value is not None:
+            exam[str(key)] = value
+    uu_tien, uu_label = _dcn_priority(profile)
+    return {
+        "certs": cert_values,
+        "raw_certs": {str(key): str(value) for key, value in certs.items() if str(value).strip()},
+        "exam": exam,
+        "hoc_ba": hoc_ba,
+        "uu_tien": uu_tien,
+        "uu_label": uu_label,
+        "notes": notes,
+    }
+
+
+def _dcn_profile_groups(profile: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    bundle = _dcn_from_profile(profile)
+    hoc_ba = bundle["hoc_ba"]
+    transcript_rows = []
+    for item in dataset_store.PROFILE_SUBJECTS:
+        key = item["key"]
+        present = []
+        for grade, _weight in _DCN_YEAR_WEIGHTS:
+            grade_raw = hoc_ba.get(grade) if isinstance(hoc_ba.get(grade), dict) else {}
+            value = _profile_number(grade_raw.get(key), 0, 10)
+            present.append(_fmt_reg_score(value) if value is not None else "—")
+        if present == ["—", "—", "—"]:
+            continue
+        transcript_rows.append({
+            "label": item["label"],
+            "value": " · ".join(present),
+            "detail": "Lớp 10 · lớp 11 · lớp 12. Lớp 12 nhân hệ số 2 khi tính KQHB.",
+        })
+    if not transcript_rows:
+        transcript_rows.append({
+            "label": "Học bạ",
+            "value": "Chưa có",
+            "detail": "Chưa lưu điểm lớp 10, 11 hoặc 12.",
+        })
+
+    exam = bundle["exam"]
+    if exam:
+        exam_rows = [
+            {"label": _subject_label(key), "value": _fmt_reg_score(value), "detail": "Điểm thi THPT đã lưu."}
+            for key, value in exam.items()
+        ]
+    else:
+        exam_rows = [{
+            "label": "Điểm thi THPT",
+            "value": "Chưa có",
+            "detail": "Chưa lưu điểm thi tốt nghiệp THPT trong hồ sơ.",
+        }]
+
+    cert_rows = []
+    for key, label, scale in (("HSA", "ĐGNL (HSA)", "thang 150"), ("TSA", "ĐGTD (TSA)", "thang 100")):
+        value = bundle["certs"].get(key)
+        if value is None:
+            continue
+        cert_rows.append({
+            "label": label,
+            "value": _fmt_reg_score(value),
+            "detail": f"Đã lưu, {scale}.",
+        })
+    for key, raw in bundle["raw_certs"].items():
+        if key in _DCN_CERT_BOUNDS:
+            continue
+        cert_rows.append({
+            "label": key,
+            "value": raw,
+            "detail": "Chứng chỉ hoặc giải thưởng đã lưu. Quy chế chưa kèm bảng quy đổi sang thang 10.",
+        })
+    if not cert_rows:
+        cert_rows.append({
+            "label": "Bài thi và chứng chỉ",
+            "value": "Chưa có",
+            "detail": "Chưa lưu HSA, TSA, chứng chỉ quốc tế hoặc giải học sinh giỏi.",
+        })
+    for note in bundle["notes"]:
+        cert_rows.append({"label": "Lưu ý", "value": note, "detail": ""})
+
+    if bundle["uu_tien"] is None:
+        uu_rows = [{
+            "label": "Điểm ưu tiên",
+            "value": "Chưa có",
+            "detail": "Chưa chọn khu vực hoặc đối tượng ưu tiên.",
+        }]
+    else:
+        uu_rows = [{
+            "label": "Điểm ưu tiên",
+            "value": _fmt_reg_score(bundle["uu_tien"]),
+            "detail": bundle["uu_label"],
+        }]
+    return [
+        {"label": "Học bạ", "rows": transcript_rows},
+        {"label": "Điểm thi THPT", "rows": exam_rows},
+        {"label": "Bài thi, chứng chỉ và giải thưởng", "rows": cert_rows},
+        {"label": "Điểm ưu tiên", "rows": uu_rows},
+    ]
+
+
+def _dcn_priority_note(bundle: Dict[str, Any]) -> str:
+    if bundle["uu_tien"] is None:
+        return " Chưa có khu vực hoặc đối tượng ưu tiên trong hồ sơ, đang tính bằng 0."
+    return f" Điểm ưu tiên {_fmt_reg_score(bundle['uu_tien'])} lấy từ hồ sơ ({bundle['uu_label']})."
+
+
+def _dcn_scaled_admission(
+    raw: Optional[float],
+    source_max: float,
+    source_label: str,
+    method_label: str,
+    uu_points: float,
+    uu_note: str,
+) -> Dict[str, str]:
+    """Đổi bài thi sang thang 30 theo tỷ lệ thang điểm, rồi cộng điểm ưu tiên."""
+    if raw is None:
+        return {
+            "label": method_label,
+            "value": "Chưa có",
+            "detail": f"Chưa lưu {source_label} trong hồ sơ." + uu_note,
+            "kind": "missing",
+        }
+    converted = raw * 30 / source_max
+    total = converted + uu_points
+    return {
+        "label": method_label,
+        "value": _fmt_reg_score(total),
+        "detail": (
+            f"{source_label} {_fmt_reg_score(raw)} × 30/{_fmt_reg_score(source_max)} "
+            f"= {_fmt_reg_score(converted)}. "
+            f"ĐXT = {_fmt_reg_score(converted)} + điểm ưu tiên."
+            + uu_note
+            + " Thang 30, tương đương phương thức 3 theo tỷ lệ 1:1."
+        ),
+        "kind": "value",
+    }
+
+
+def _convert_dcn_scores(
+    scores: Dict[str, Any],
+    spec: Dict[str, Any],
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Tính điểm xét tuyển DCN. ĐGNL và ĐGTD đổi sang thang 30 theo tỷ lệ thang điểm."""
+    parsed: Dict[str, Any] = {}
+    errors: List[str] = []
+    for item in spec["inputs"]:
+        value, error = _read_regulation_score(scores.get(item["id"]), item)
+        if error:
+            errors.append(error)
+            continue
+        if value is not None and value != "":
+            parsed[item["id"]] = value
+    if errors:
+        return {"ok": False, "error": " ".join(errors)}
+    if "mon_2" not in parsed or "mon_3" not in parsed:
+        return {"ok": False, "error": "Chọn đủ môn 2 và môn 3 của tổ hợp xét tuyển."}
+    main = parsed.get("mon_chinh")
+    if main not in ("toan", "van"):
+        return {"ok": False, "error": "Chọn môn chính là Toán hoặc Ngữ văn."}
+    subjects = [main, parsed["mon_2"], parsed["mon_3"]]
+    if len(set(subjects)) < 3:
+        return {"ok": False, "error": "Ba môn trong tổ hợp phải khác nhau."}
+
+    bundle = _dcn_from_profile(profile)
+    uu_note = _dcn_priority_note(bundle)
+    uu_points = float(bundle["uu_tien"] or 0)
+    tiles: List[Dict[str, str]] = []
+
+    weighted = []
+    missing_bits = []
+    kqhb = None
+    for key, coef in ((subjects[0], 2), (subjects[1], 1), (subjects[2], 1)):
+        component = _dcn_transcript_component(bundle["hoc_ba"], key)
+        label = _subject_label(key)
+        if component["total"] is None:
+            years = ", ".join(f"lớp {grade}" for grade in component["missing"])
+            missing_bits.append(f"{label} thiếu {years}")
+        weighted.append((label, coef, component))
+    if missing_bits:
+        tiles.append({
+            "label": "KQHB — kết quả học tập THPT",
+            "value": "Chưa đủ học bạ",
+            "detail": (
+                "Cần đủ điểm lớp 10, lớp 11 và lớp 12 của cả ba môn. "
+                + ". ".join(missing_bits) + "."
+            ),
+            "kind": "missing",
+        })
+    else:
+        numerator = sum(component["total"] * coef for _label, coef, component in weighted)
+        kqhb = numerator / 16
+        breakdown = []
+        for label, coef, component in weighted:
+            shown = _fmt_reg_score(component["total"])
+            if coef == 1:
+                breakdown.append(f"{label} = {shown} ({component['detail']})")
+            else:
+                breakdown.append(f"{label} = {shown}, nhân {coef} ({component['detail']})")
+        tiles.append({
+            "label": "KQHB — kết quả học tập THPT",
+            "value": _fmt_reg_score(kqhb),
+            "detail": (
+                "Thang điểm 10. "
+                + ". ".join(breakdown)
+                + f". KQHB = ({_fmt_reg_score(numerator)}) / 16."
+            ),
+            "kind": "value",
+        })
+
+    exam = bundle["exam"]
+    absent = [key for key in subjects if key not in exam]
+    if absent:
+        tiles.append({
+            "label": "Phương thức 3 — thi tốt nghiệp THPT",
+            "value": "Thiếu môn",
+            "detail": (
+                "Cần điểm thi của "
+                + ", ".join(_subject_label(key) for key in absent)
+                + ". Công thức: M1 + M2 + M3 + điểm ưu tiên."
+                + uu_note
+            ),
+            "kind": "missing",
+        })
+    else:
+        raw = sum(exam[key] for key in subjects)
+        parts = [f"{_subject_label(key)} {_fmt_reg_score(exam[key])}" for key in subjects]
+        tiles.append({
+            "label": "Phương thức 3 — thi tốt nghiệp THPT",
+            "value": _fmt_reg_score(raw + uu_points),
+            "detail": " + ".join(parts) + " + điểm ưu tiên." + uu_note + " Thang điểm 30. Đây là phương thức cơ sở.",
+            "kind": "value",
+        })
+
+    if kqhb is None:
+        tiles.append({
+            "label": "Phương thức 2 — học bạ kết hợp chứng chỉ hoặc giải",
+            "value": "Chưa đủ học bạ",
+            "detail": "Cần đủ học bạ ba môn để có KQHB, rồi tính ĐXT = ĐKQHT × 2 + ĐQĐCC + điểm ưu tiên." + uu_note,
+            "kind": "missing",
+        })
+    else:
+        dxt_pt2 = kqhb * 2 + uu_points
+        tiles.append({
+            "label": "Phương thức 2 — học bạ kết hợp chứng chỉ hoặc giải",
+            "value": _fmt_reg_score(dxt_pt2),
+            "detail": (
+                f"ĐKQHT = KQHB {_fmt_reg_score(kqhb)} trên thang 10. "
+                f"ĐXT = {_fmt_reg_score(kqhb)} × 2 + điểm ưu tiên."
+                + uu_note
+                + " ĐQĐCC đang tính bằng 0 vì quy chế chưa kèm bảng quy đổi chứng chỉ hoặc giải sang thang 10."
+            ),
+            "kind": "value",
+        })
+
+    tiles.append(_dcn_scaled_admission(
+        bundle["certs"].get("HSA"),
+        150,
+        "HSA",
+        "Phương thức 4 — đánh giá năng lực",
+        uu_points,
+        uu_note,
+    ))
+    tiles.append(_dcn_scaled_admission(
+        bundle["certs"].get("TSA"),
+        100,
+        "TSA",
+        "Phương thức 5 — đánh giá tư duy",
+        uu_points,
+        uu_note,
+    ))
+    if bundle["notes"]:
+        tiles.append({
+            "label": "Hồ sơ chưa dùng được",
+            "value": "Bỏ qua",
+            "detail": " ".join(bundle["notes"]),
+            "kind": "missing",
+        })
+    return {"ok": True, "results": tiles}
+
+
+def calculate_regulation_scores(
+    code: str,
+    year: int,
+    scores: Dict[str, Any],
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    catalog = _load_conversion_regulations()
+    document = next(
+        (
+            item for item in catalog["documents"]
+            if item["code"] == code and int(item["year"]) == int(year)
+        ),
+        None,
+    )
+    if document is None:
+        return {"ok": False, "error": "Chưa có quy chế cho trường và năm đã chọn."}
+    spec = document.get("calculator")
+    if not spec:
+        return {"ok": False, "error": "Quy chế trường này chưa có công thức để quy đổi điểm."}
+    if code == "BKA":
+        return _convert_bka_scores(scores, spec, profile)
+    if code == "DCN":
+        return _convert_dcn_scores(scores, spec, profile)
+    return {"ok": False, "error": "Chưa hỗ trợ quy đổi cho trường này."}
+
+
+def _shared_profile_groups(profile: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Học bạ, điểm thi, chứng chỉ và ưu tiên — dùng cho mọi quy chế chưa có cách đọc riêng."""
+    profile = profile or {}
+    hoc_ba = profile.get("hoc_ba") if isinstance(profile.get("hoc_ba"), dict) else {}
+    exam_raw = profile.get("diem_thi_thu") if isinstance(profile.get("diem_thi_thu"), dict) else {}
+    certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+
+    transcript_rows = []
+    for item in dataset_store.PROFILE_SUBJECTS:
+        present = []
+        found = False
+        for grade in ("10", "11", "12"):
+            grade_raw = hoc_ba.get(grade) if isinstance(hoc_ba.get(grade), dict) else {}
+            value = _profile_number(grade_raw.get(item["key"]), 0, 10)
+            if value is None:
+                present.append("—")
+                continue
+            found = True
+            present.append(_fmt_reg_score(value))
+        if not found:
+            continue
+        transcript_rows.append({
+            "label": item["label"],
+            "value": " · ".join(present),
+            "detail": "Lớp 10 · lớp 11 · lớp 12, lấy từ hồ sơ cá nhân.",
+        })
+    if not transcript_rows:
+        transcript_rows.append({
+            "label": "Học bạ",
+            "value": "Chưa có",
+            "detail": "Chưa lưu điểm lớp 10, 11 hoặc 12.",
+        })
+
+    exam_rows = []
+    for item in dataset_store.PROFILE_SUBJECTS:
+        value = _profile_number(exam_raw.get(item["key"]), 0, 10)
+        if value is None:
+            continue
+        exam_rows.append({
+            "label": item["label"],
+            "value": _fmt_reg_score(value),
+            "detail": "Điểm thi THPT đã lưu trong hồ sơ cá nhân.",
+        })
+    if not exam_rows:
+        exam_rows.append({
+            "label": "Điểm thi THPT",
+            "value": "Chưa có",
+            "detail": "Chưa lưu điểm thi tốt nghiệp THPT trong hồ sơ.",
+        })
+
+    cert_rows = []
+    for key, raw in certs.items():
+        text = str(raw or "").strip()
+        if not text:
+            continue
+        cert_rows.append({
+            "label": str(key),
+            "value": text,
+            "detail": "Đã lưu trong hồ sơ cá nhân.",
+        })
+    if not cert_rows:
+        cert_rows.append({
+            "label": "Chứng chỉ",
+            "value": "Chưa có",
+            "detail": "Chưa lưu chứng chỉ, bài thi hoặc giải thưởng.",
+        })
+
+    uu_tien, uu_label = _dcn_priority(profile)
+    if uu_tien is None:
+        uu_rows = [{
+            "label": "Điểm ưu tiên",
+            "value": "Chưa có",
+            "detail": "Chưa chọn khu vực hoặc đối tượng ưu tiên.",
+        }]
+    else:
+        uu_rows = [{
+            "label": "Điểm ưu tiên",
+            "value": _fmt_reg_score(uu_tien),
+            "detail": uu_label,
+        }]
+    return [
+        {"label": "Học bạ", "rows": transcript_rows},
+        {"label": "Điểm thi THPT", "rows": exam_rows},
+        {"label": "Chứng chỉ, bài thi và giải thưởng", "rows": cert_rows},
+        {"label": "Điểm ưu tiên", "rows": uu_rows},
+    ]
+
+
+def regulation_profile_groups(code: str, profile: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Mọi quy chế đều lấy điểm từ hồ sơ cá nhân. Trường có công thức riêng thì hiển thị theo công thức đó."""
+    if code == "BKA":
+        return _bka_profile_groups(profile)
+    if code == "DCN":
+        return _dcn_profile_groups(profile)
+    return _shared_profile_groups(profile)
+
+
 def create_app() -> Flask:
     app = Flask(
         __name__,
@@ -632,7 +2126,10 @@ def create_app() -> Flask:
 
     @app.route("/thu-thap/quy-doi")
     def thu_thap_quy_doi_page():
-        return render_template("thu_thap/quy_doi.html")
+        return render_template(
+            "thu_thap/quy_doi.html",
+            regulations=_load_conversion_regulations(),
+        )
 
     @app.route("/thu-thap/diem-cong")
     def diem_cong_page():
@@ -677,6 +2174,29 @@ def create_app() -> Flask:
     @app.route("/quy-doi")
     def quy_doi_page():
         return render_template("quy_doi.html")
+
+    @app.post("/api/quy-che/tinh")
+    def api_quy_che_tinh():
+        data = request.get_json(silent=True) or {}
+        code = str(data.get("code") or "").strip().upper()
+        try:
+            year = int(data.get("year") or 0)
+        except (TypeError, ValueError):
+            year = 0
+        scores = data.get("scores") if isinstance(data.get("scores"), dict) else {}
+        if not code or not year:
+            return jsonify({"ok": False, "error": "Chọn trường và năm trước khi quy đổi."}), 400
+        profile = dataset_store.load_profile(ROOT)
+        return jsonify(calculate_regulation_scores(code, year, scores, profile))
+
+    @app.get("/api/quy-che/ho-so")
+    def api_quy_che_ho_so():
+        code = str(request.args.get("code") or "").strip().upper()
+        profile = dataset_store.load_profile(ROOT)
+        groups = regulation_profile_groups(code, profile)
+        if not groups:
+            return jsonify({"ok": False, "error": "Quy chế trường này chưa lấy điểm từ hồ sơ cá nhân."}), 404
+        return jsonify({"ok": True, "groups": groups})
 
     @app.route("/danh-gia")
     def danh_gia_page():

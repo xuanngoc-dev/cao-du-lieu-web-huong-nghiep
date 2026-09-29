@@ -296,6 +296,10 @@ textarea.form-control {
   background: #e7f4f2;
   border-color: var(--teal);
 }
+.calc-result-tile.is-missing .calc-est {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+}
 .calc-est {
   font-size: 1.55rem;
   font-weight: 400;
@@ -958,5 +962,98 @@ select.cn-multi-native {
   padding-top: 0.65rem;
   border-top: 1px dashed var(--line);
   font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.reg-doc {
+  max-width: 52rem;
+}
+
+.reg-head {
+  margin-bottom: 1.1rem;
+}
+
+.reg-kicker {
+  color: var(--teal-dark);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reg-title {
+  font-size: 1.45rem;
+  margin: 0.2rem 0 0.35rem;
+}
+
+.reg-lead {
+  color: var(--ink-soft);
+  margin-bottom: 0;
+}
+
+.reg-body h2,
+.reg-body h3,
+.reg-body h4 {
+  color: #0f2a3d;
+}
+
+.reg-body h2 {
+  font-size: 1.08rem;
+  margin: 1.35rem 0 0.7rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.reg-body h3 {
+  font-size: 1rem;
+  margin: 1.15rem 0 0.45rem;
+}
+
+.reg-body h4 {
+  font-size: 0.95rem;
+  margin: 0.95rem 0 0.4rem;
+}
+
+.reg-body p,
+.reg-body li {
+  line-height: 1.55;
+}
+
+.reg-body ul,
+.reg-body ol {
+  margin-bottom: 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.reg-body li + li {
+  margin-top: 0.35rem;
+}
+
+.reg-body li > ul,
+.reg-body li > ol {
+  margin-top: 0.35rem;
+  margin-bottom: 0.15rem;
+}
+
+.reg-body code {
+  color: var(--teal-dark);
+  background: rgba(13, 115, 119, 0.08);
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.3rem;
+}
+
+.reg-formula {
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--sand);
+}
+
+.reg-note {
+  margin-top: 1.15rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  background: rgba(196, 92, 38, 0.08);
   color: var(--ink-soft);
 }

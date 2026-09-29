@@ -3,182 +3,306 @@
 {% block content %}
 <div class="mb-3">
   <h1 class="h3 mb-1">Quy chế quy đổi điểm</h1>
-  <p class="text-muted mb-0">Quy chế quy đổi điểm chứng chỉ và điểm thi đã nhập.</p>
+  <p class="text-muted mb-0">Chọn trường để xem quy chế quy đổi điểm của trường đó.</p>
 </div>
-{% set icon = "bi-arrow-left-right" %}
-{% set button = "Thu thập quy chế quy đổi điểm" %}
-{% include "thu_thap/_bar.html" %}
-  <div class="card panel-card">
-    <div class="card-body border-bottom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <div class="small text-muted" id="convertInfo">Chưa có bảng quy đổi</div>
-      <div class="d-flex flex-wrap gap-2">
-        <button class="btn btn-outline-teal btn-sm" type="button" id="btnConvertUpload">
-          <i class="bi bi-upload"></i> Nhập quy chế
-        </button>
-        <button class="btn btn-outline-danger btn-sm" type="button" id="btnDeleteConvert" disabled>
-          <i class="bi bi-trash3"></i> Xoá đã chọn
-        </button>
-        <a class="btn btn-outline-teal btn-sm d-none" id="btnConvertExcel" href="#">
-        <i class="bi bi-file-earmark-excel"></i> Excel
-        </a>
-      </div>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive table-scroll-x" style="max-height: 520px;">
-        <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="convertTable">
-          <thead class="table-light sticky-top">
-            <tr>
-              <th class="text-center">
-                <input class="form-check-input" type="checkbox" id="convertCheckAll" aria-label="Chọn tất cả quy đổi">
-              </th>
-              <th>#</th>
-              <th>Trường</th>
-              <th>Năm</th>
-              <th>Loại</th>
-              <th>Nội dung quy đổi</th>
-              <th>Nguồn</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 
-<div class="modal fade" id="convertUploadModal" tabindex="-1" aria-labelledby="convertUploadModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h2 class="modal-title h5 mb-1" id="convertUploadModalLabel">Nhập quy chế quy đổi điểm</h2>
-          <div class="small text-muted" id="convertUploadSchool">Mỗi lần nhập một trường, một năm. JSON theo từng mức của mỗi phương thức.</div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+<section class="card panel-card mb-4" id="regCard">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-7">
+        <label class="form-label" for="regSchool">Trường</label>
+        <select id="regSchool" class="form-select">
+          <option value="">Chọn trường</option>
+          {% for school in regulations.schools %}
+          <option value="{{ school.code }}">{{ school.name }} ({{ school.code }})</option>
+          {% endfor %}
+        </select>
       </div>
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label" for="convertUploadSchoolSelect">Trường</label>
-            <select class="form-select form-select-sm js-multi-select" id="convertUploadSchoolSelect"
-              data-placeholder="Chọn một trường"></select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="convertUploadYear">Năm học</label>
-            <select class="form-select form-select-sm js-multi-select" id="convertUploadYear"
-              data-placeholder="Chọn một năm học">
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
-              <option value="2022">2022</option>
-              <option value="2021">2021</option>
-            </select>
-          </div>
-        </div>
-        <div class="mt-3">
-          <label class="form-label" for="convertUploadJson">Quy chế quy đổi</label>
-          <textarea class="form-control font-monospace small" id="convertUploadJson" rows="14" spellcheck="false" placeholder='{
-  "nguon": "https://www.haui.edu.vn/...",
-  "phuong_thuc": [
-    {
-      "ma": "HSA",
-      "ten": "Phương thức 4 - ĐGNL ĐHQGHN",
-      "muc": [
-        { "tu": 75, "diem": 20.48 },
-        { "tu": 130, "diem": 30 }
-      ]
-    }
-  ]
-}'></textarea>
-          <div class="form-text">Mỗi phương thức khai báo <code>muc</code>. <code>tu</code>/<code>den</code> là khoảng điểm nguồn, <code>diem</code> là điểm quy về THPT. Bỏ <code>den</code> ở mức cuối nghĩa là từ mức đó trở lên.</div>
-          <button class="btn btn-link btn-sm px-0 mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#convertJsonFormats" aria-expanded="false">Xem cấu trúc JSON</button>
-          <div class="collapse" id="convertJsonFormats">
-            <div class="border rounded p-3 mt-2 bg-light small">
-              <p class="mb-2"><b>Khoảng và điểm rời.</b> Học bạ dùng khoảng đóng; HSA/TSA có thể ghi từng mức hoặc khoảng.</p>
-              <pre class="mb-0 bg-white border rounded p-2"><code>{
-  "nguon": "https://www.haui.edu.vn/vn/tin-tuc/.../68002",
-  "phuong_thuc": [
-    {
-      "ma": "KQHB",
-      "ten": "Phương thức 2 - Kết quả học tập THPT",
-      "cong_thuc": "ĐXT = ĐKQHT x 2 + điểm chứng chỉ",
-      "muc": [
-        { "tu": 7.00, "den": 7.09, "diem": 6.00 },
-        { "tu": 10.00, "den": 10.00, "diem": 10.00 }
-      ]
-    },
-    {
-      "ma": "HSA",
-      "ten": "Phương thức 4 - ĐGNL ĐHQGHN",
-      "muc": [
-        { "tu": 75, "diem": 20.48 },
-        { "tu": 130, "diem": 30.00 }
-      ]
-    },
-    {
-      "ma": "TSA",
-      "ten": "Phương thức 5 - ĐGTD Bách khoa",
-      "muc": [
-        { "tu": 50.00, "den": 50.99, "diem": 22.00 },
-        { "tu": 85.00, "diem": 30.00 }
-      ]
-    }
-  ]
-}</code></pre>
-            </div>
-          </div>
-        </div>
-        <div class="alert d-none mt-3 mb-0" id="convertUploadResult"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="convertUploadClose">Đóng</button>
-        <button type="button" class="btn btn-primary" id="convertUploadStart">
-          <i class="bi bi-upload"></i> Lưu quy chế
-        </button>
+      <div class="col-md-3">
+        <label class="form-label" for="regYear">Năm</label>
+        <select id="regYear" class="form-select" disabled>
+          <option value="">—</option>
+        </select>
       </div>
     </div>
+    {% if not regulations.schools %}
+    <div class="alert alert-warning mb-0 mt-3">Chưa có quy chế quy đổi điểm nào trong hồ sơ.</div>
+    {% endif %}
   </div>
-</div>
-<div class="modal fade" id="resultSourceModal" tabindex="-1" aria-labelledby="resultSourceModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title h5" id="resultSourceModalLabel">Nguồn dữ liệu</h2>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-      </div>
-      <div class="modal-body">
-        <p class="small text-muted mb-2" id="resultSourceCaption"></p>
-        <ol class="mb-0" id="resultSourceList"></ol>
-      </div>
-    </div>
+  {% if regulations.schools %}
+  <button class="dg-collapse-btn border-top" type="button" id="regToggle"
+    data-bs-toggle="collapse" data-bs-target="#regCollapse" aria-expanded="false" aria-controls="regCollapse" disabled>
+    <span class="dg-collapse-title">Quy chế của trường</span>
+    <i class="bi bi-chevron-down dg-collapse-chevron"></i>
+  </button>
+  <div class="collapse" id="regCollapse">
+    <div class="card-body border-top text-muted" id="regEmpty">Chọn trường để xem quy chế.</div>
+    <article class="reg-doc card-body border-top d-none" id="regArticle"></article>
   </div>
-</div>
-<div class="modal fade" id="resultDeleteModal" tabindex="-1" aria-labelledby="resultDeleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header border-0 pb-0">
-        <h2 class="modal-title h5 text-danger" id="resultDeleteModalLabel">
-          <i class="bi bi-exclamation-triangle me-1"></i> Xác nhận xoá
-        </h2>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-      </div>
-      <div class="modal-body pt-2">
-        <p class="mb-0" id="resultDeleteMessage"></p>
-      </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
-        <button type="button" class="btn btn-danger" id="resultDeleteConfirm">
-          <i class="bi bi-trash3"></i> Xoá
-        </button>
-      </div>
-    </div>
+  <div class="card-body border-top d-none" id="regScorePane">
+    <h2 class="h6 mb-1">Nhập điểm quy đổi</h2>
+    <p class="small text-muted mb-3" id="regScoreLead">Điểm lấy từ hồ sơ cá nhân. Chọn trường để nhập các mục quy chế yêu cầu thêm.</p>
+    <div id="regProfile" class="mb-3"></div>
+    <form id="regScoreForm">
+      <div id="regScoreFields" class="vstack gap-3"></div>
+      <button class="btn btn-teal mt-3" type="submit">
+        <i class="bi bi-arrow-left-right"></i> Quy đổi
+      </button>
+    </form>
+    <div id="regScoreMsg" class="mt-3"></div>
+    <div id="regScoreResult" class="mt-3"></div>
   </div>
-</div>
+  <script id="regCatalog" type="application/json">{{ regulations|tojson }}</script>
+  {% endif %}
+</section>
 
 {% endblock %}
+{% block head %}
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$']],
+    displayMath: [['$$', '$$']]
+  },
+  chtml: { mtextInheritFont: true, mtextFont: '' },
+  options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+{% endblock %}
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
-<script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20260925b"></script>
-<script src="{{ url_for('static', filename='js/thu-thap-convert.js') }}?v=20260925c"></script>
+<script>
+(function () {
+  const catalogEl = document.getElementById('regCatalog');
+  const schoolSel = document.getElementById('regSchool');
+  const yearSel = document.getElementById('regYear');
+  const empty = document.getElementById('regEmpty');
+  const article = document.getElementById('regArticle');
+  const toggle = document.getElementById('regToggle');
+  const scorePane = document.getElementById('regScorePane');
+  const fields = document.getElementById('regScoreFields');
+  const profileBox = document.getElementById('regProfile');
+  const form = document.getElementById('regScoreForm');
+  const msg = document.getElementById('regScoreMsg');
+  const result = document.getElementById('regScoreResult');
+  const scoreLead = document.getElementById('regScoreLead');
+  if (!catalogEl || !schoolSel || !yearSel || !article || !form || !profileBox) return;
+
+  const catalog = JSON.parse(catalogEl.textContent || '{}');
+  const documents = catalog.documents || [];
+
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
+  function yearsOf(code) {
+    return documents
+      .filter(doc => doc.code === code)
+      .sort((a, b) => b.year - a.year);
+  }
+
+  function typeset(el) {
+    const run = () => {
+      if (!el.isConnected || !window.MathJax || !MathJax.typesetPromise) return false;
+      MathJax.typesetClear([el]);
+      MathJax.typesetPromise([el]).catch(() => {});
+      return true;
+    };
+    if (run()) return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (run() || tries > 40) clearInterval(timer);
+    }, 100);
+  }
+
+  function currentDoc() {
+    return documents.find(item =>
+      item.code === schoolSel.value && String(item.year) === String(yearSel.value)
+    );
+  }
+
+  function renderFields(doc) {
+    const inputs = (doc && doc.calculator && doc.calculator.inputs) || [];
+    const submit = form.querySelector('button[type="submit"]');
+    if (!inputs.length) {
+      fields.innerHTML = '<p class="text-muted mb-0">Điểm lấy từ hồ sơ cá nhân. Quy chế này chưa có công thức quy đổi riêng.</p>';
+      if (submit) submit.disabled = true;
+      return;
+    }
+    if (submit) submit.disabled = false;
+    const groups = [];
+    inputs.forEach(input => {
+      let group = groups.find(item => item.name === input.group);
+      if (!group) {
+        group = { name: input.group, inputs: [] };
+        groups.push(group);
+      }
+      group.inputs.push(input);
+    });
+    fields.innerHTML = groups.map(group => `
+      <fieldset class="border rounded-3 p-3 mb-0">
+        <legend class="float-none w-auto px-2 fs-6">${esc(group.name)}</legend>
+        <div class="row g-3">
+          ${group.inputs.map(input => {
+            const hint = input.hint ? `<div class="form-text">${esc(input.hint)}</div>` : '';
+            if (input.type === 'select') {
+              const options = (input.options || []).map(opt =>
+                `<option value="${esc(opt.value)}">${esc(opt.label)}</option>`
+              ).join('');
+              return `<div class="col-md-4">
+                <label class="form-label" for="regScore-${esc(input.id)}">${esc(input.label)}</label>
+                <select class="form-select" id="regScore-${esc(input.id)}" name="${esc(input.id)}">${options}</select>
+                ${hint}
+              </div>`;
+            }
+            return `<div class="col-md-4">
+              <label class="form-label" for="regScore-${esc(input.id)}">${esc(input.label)}</label>
+              <input class="form-control" id="regScore-${esc(input.id)}" name="${esc(input.id)}"
+                type="number" inputmode="decimal" step="${esc(input.step || '0.01')}"
+                min="${esc(input.min ?? '')}" max="${esc(input.max ?? '')}"
+                placeholder="${esc(input.placeholder || '')}">
+              ${hint}
+            </div>`;
+          }).join('')}
+        </div>
+      </fieldset>
+    `).join('');
+  }
+
+  const collapseEl = document.getElementById('regCollapse');
+
+  function paintArticle(doc) {
+    article.innerHTML =
+      `<header class="reg-head">
+        <div class="reg-kicker">${esc(doc.code)} · Năm ${esc(doc.year)}</div>
+        <h2 class="reg-title">${esc(doc.name)}</h2>
+        <p class="reg-lead">${esc(doc.title)}</p>
+      </header>
+      <div class="reg-body">${doc.html}</div>`;
+    if (collapseEl && collapseEl.classList.contains('show')) typeset(article);
+  }
+
+  if (collapseEl) {
+    collapseEl.addEventListener('shown.bs.collapse', () => {
+      if (!article.classList.contains('d-none')) typeset(article);
+    });
+  }
+
+  function renderResult(payload) {
+    if (!payload.ok) {
+      msg.innerHTML = `<div class="alert alert-warning py-2 mb-0">${esc(payload.error || 'Không quy đổi được.')}</div>`;
+      result.innerHTML = '';
+      return;
+    }
+    msg.innerHTML = '';
+    result.innerHTML = `<div class="row g-3">${(payload.results || []).map(item => `
+      <div class="col-sm-6 col-lg-4">
+        <div class="calc-result-tile ${item.kind === 'source' ? 'is-source' : ''} ${item.kind === 'missing' ? 'is-missing' : ''}">
+          <div class="small text-muted">${esc(item.label)}</div>
+          <div class="calc-est">${esc(item.value)}</div>
+          <div class="small">${esc(item.detail)}</div>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  let profileToken = 0;
+
+  function paintProfile(groups) {
+    const rows = (groups || []).map(group => `
+      <div class="mb-2">
+        <div class="small text-teal fw-semibold">${esc(group.label)}</div>
+        <ul class="small mb-0 ps-3">
+          ${(group.rows || []).map(row => `<li><b>${esc(row.label)}:</b> ${esc(row.value)}${row.detail ? ` <span class="text-muted">— ${esc(row.detail)}</span>` : ''}</li>`).join('')}
+        </ul>
+      </div>`).join('');
+    profileBox.innerHTML = `
+      <div class="border rounded-3 p-3">
+        <div class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
+          <h3 class="h6 mb-0">Điểm lấy từ hồ sơ cá nhân</h3>
+          <a href="/ca-nhan">Sửa hồ sơ</a>
+        </div>
+        ${rows || '<p class="small text-muted mb-0">Chưa có điểm trong hồ sơ cá nhân.</p>'}
+      </div>`;
+  }
+
+  async function loadProfile(doc) {
+    const token = ++profileToken;
+    profileBox.innerHTML = '<div class="small text-muted">Đang đọc hồ sơ cá nhân…</div>';
+    try {
+      const res = await fetch(`/api/quy-che/ho-so?code=${encodeURIComponent(doc.code)}&year=${encodeURIComponent(doc.year)}`);
+      const data = await res.json();
+      if (token !== profileToken) return;
+      if (!data.ok) {
+        profileBox.innerHTML = `<div class="alert alert-warning py-2 mb-0">${esc(data.error || 'Không đọc được hồ sơ.')}</div>`;
+        return;
+      }
+      paintProfile(data.groups || []);
+    } catch (error) {
+      if (token !== profileToken) return;
+      profileBox.innerHTML = `<div class="alert alert-danger py-2 mb-0">${esc(error.message)}</div>`;
+    }
+  }
+
+  function render() {
+    const doc = currentDoc();
+    msg.innerHTML = '';
+    result.innerHTML = '';
+    if (!doc) {
+      article.classList.add('d-none');
+      article.innerHTML = '';
+      empty.classList.remove('d-none');
+      scorePane.classList.add('d-none');
+      profileBox.innerHTML = '';
+      profileToken += 1;
+      if (toggle) toggle.disabled = true;
+      return;
+    }
+    empty.classList.add('d-none');
+    article.classList.remove('d-none');
+    if (scoreLead) {
+      scoreLead.textContent = (doc.calculator && doc.calculator.lead)
+        || 'Điểm lấy từ hồ sơ cá nhân.';
+    }
+    if (toggle) toggle.disabled = false;
+    paintArticle(doc);
+    scorePane.classList.remove('d-none');
+    renderFields(doc);
+    loadProfile(doc);
+  }
+
+  schoolSel.addEventListener('change', () => {
+    const years = yearsOf(schoolSel.value);
+    yearSel.innerHTML = years.length
+      ? years.map(doc => `<option value="${esc(doc.year)}">${esc(doc.year)}</option>`).join('')
+      : '<option value="">—</option>';
+    yearSel.disabled = years.length === 0;
+    render();
+  });
+  yearSel.addEventListener('change', render);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const doc = currentDoc();
+    if (!doc) return;
+    const scores = {};
+    new FormData(form).forEach((value, key) => {
+      if (String(value).trim() !== '') scores[key] = value;
+    });
+    msg.innerHTML = '<div class="spinner-border spinner-border-sm text-teal"></div> Đang quy đổi…';
+    result.innerHTML = '';
+    try {
+      const res = await fetch('/api/quy-che/tinh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: doc.code, year: doc.year, scores })
+      });
+      renderResult(await res.json());
+    } catch (error) {
+      msg.innerHTML = `<div class="alert alert-danger py-2 mb-0">${esc(error.message)}</div>`;
+    }
+  });
+})();
+</script>
 {% endblock %}
