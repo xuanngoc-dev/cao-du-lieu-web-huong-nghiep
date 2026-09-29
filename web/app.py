@@ -84,6 +84,31 @@ from core import dataset_store
 
 
 CONVERSION_IMPORT_SOURCE = "Nhập quy chế quy đổi"
+CERTIFICATE_CATALOG_PATH = os.path.join(ROOT, "data", "constants", "bang_cap_chung_chi.md")
+
+
+def _load_certificate_catalog() -> Dict[str, Any]:
+    """Danh mục bằng cấp, chứng chỉ theo nhóm — nguồn data/constants/bang_cap_chung_chi.md."""
+    empty: Dict[str, Any] = {"certificate_categories": [], "item_count": 0}
+    try:
+        with open(CERTIFICATE_CATALOG_PATH, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return empty
+    if not isinstance(data, dict):
+        return empty
+    categories = data.get("certificate_categories")
+    if not isinstance(categories, list):
+        data["certificate_categories"] = []
+        data["item_count"] = 0
+        return data
+    total = 0
+    for category in categories:
+        items = category.get("items") if isinstance(category, dict) else None
+        total += len(items) if isinstance(items, list) else 0
+    data["item_count"] = total
+    return data
+
 
 _CONVERSION_METHOD_ALIASES = {
     "THPT": "THPT",
@@ -359,7 +384,7 @@ def create_app() -> Flask:
 
     @app.route("/thu-thap/bang-cap")
     def bang_cap_page():
-        return render_template("thu_thap/bang_cap.html")
+        return render_template("thu_thap/bang_cap.html", catalog=_load_certificate_catalog())
 
     @app.route("/kiem-chung")
     def kiem_chung_page():
