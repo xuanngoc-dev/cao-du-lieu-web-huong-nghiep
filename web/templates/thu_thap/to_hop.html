@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Tổ hợp môn học{% endblock %}
+{% block content %}
+{% set items = catalog['items'] or [] %}
+{% set groups = catalog.groups or [] %}
+<div class="mb-3 d-flex flex-wrap justify-content-between align-items-end gap-2">
+  <div>
+    <h1 class="h3 mb-1">Tổ hợp môn học</h1>
+    <p class="text-muted mb-0">Danh sách mã tổ hợp xét tuyển và các môn trong từng tổ hợp.</p>
+  </div>
+  <div class="small text-muted">{{ items|length }} tổ hợp</div>
+</div>
+
+{% if not items %}
+<div class="alert alert-warning">Chưa đọc được danh sách tổ hợp môn học.</div>
+{% else %}
+<div class="card panel-card mb-3">
+  <div class="card-body">
+    <div class="row g-2 align-items-center">
+      <div class="col-lg-5">
+        <label class="visually-hidden" for="comboSearch">Tìm tổ hợp môn học</label>
+        <input id="comboSearch" class="form-control" type="search" placeholder="Tìm theo mã hoặc môn…" autocomplete="off">
+      </div>
+      <div class="col-lg-7">
+        <div class="cert-nav d-flex flex-wrap gap-2" role="group" aria-label="Nhóm tổ hợp">
+          <button type="button" class="btn btn-sm btn-outline-teal active" data-group="all">Tất cả</button>
+          {% for group in groups %}
+          <button type="button" class="btn btn-sm btn-outline-teal" data-group="{{ group.id }}">
+            {{ group.name }}
+            <span class="ms-1">{{ group.count }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card panel-card">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 8rem;">Mã tổ hợp</th>
+          <th style="width: 7rem;">Nhóm</th>
+          <th>Các môn</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr class="combo-row" data-group="{{ item.group }}" data-search="{{ (item.code ~ ' ' ~ item.group_name ~ ' ' ~ item.subjects)|lower }}">
+          <td class="fw-semibold">{{ item.code }}</td>
+          <td>{{ item.group_name }}</td>
+          <td>{{ item.subjects }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p id="comboEmpty" class="small text-muted mb-0 p-3 d-none">Không có tổ hợp khớp bộ lọc.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const search = document.getElementById('comboSearch');
+  const nav = document.querySelector('.cert-nav');
+  const rows = Array.from(document.querySelectorAll('.combo-row'));
+  const empty = document.getElementById('comboEmpty');
+  if (!search || !nav || !rows.length) return;
+
+  let activeGroup = 'all';
+
+  function applyFilter() {
+    const query = search.value.trim().toLowerCase();
+    let visible = 0;
+    rows.forEach((row) => {
+      const groupOn = activeGroup === 'all' || row.dataset.group === activeGroup;
+      const match = !query || (row.dataset.search || '').includes(query);
+      const show = groupOn && match;
+      row.classList.toggle('d-none', !show);
+      if (show) visible += 1;
+    });
+    if (empty) empty.classList.toggle('d-none', visible !== 0);
+  }
+
+  nav.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-group]');
+    if (!button) return;
+    activeGroup = button.dataset.group || 'all';
+    nav.querySelectorAll('button[data-group]').forEach((item) => {
+      item.classList.toggle('active', item === button);
+    });
+    applyFilter();
+  });
+
+  search.addEventListener('input', applyFilter);
+})();
+</script>
+{% endblock %}

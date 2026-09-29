@@ -86,6 +86,55 @@ from core import dataset_store
 CONVERSION_IMPORT_SOURCE = "Nhập quy chế quy đổi"
 CERTIFICATE_CATALOG_PATH = os.path.join(ROOT, "data", "constants", "bang_cap_chung_chi.md")
 EXAM_CATALOG_PATH = os.path.join(ROOT, "data", "constants", "ky_thi.txt")
+SUBJECT_COMBO_PATH = os.path.join(ROOT, "data", "constants", "to_hop_mon_hoc.txt")
+_COMBO_GROUP_NAMES = {
+    "A": "Khối A",
+    "B": "Khối B",
+    "C": "Khối C",
+    "D": "Khối D",
+    "H": "Khối H",
+    "V": "Khối V",
+}
+
+
+def _load_subject_combinations() -> Dict[str, Any]:
+    """Danh sách mã tổ hợp môn xét tuyển từ to_hop_mon_hoc.txt."""
+    empty: Dict[str, Any] = {"items": [], "groups": []}
+    try:
+        with open(SUBJECT_COMBO_PATH, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return empty
+    if not isinstance(data, list):
+        return empty
+    items: List[Dict[str, str]] = []
+    for row in data:
+        if not isinstance(row, dict):
+            continue
+        code = str(row.get("ma_to_hop") or "").strip()
+        subjects = str(row.get("cac_mon") or "").strip()
+        if not code or not subjects:
+            continue
+        group = code[:1].upper()
+        items.append({
+            "code": code,
+            "subjects": subjects,
+            "group": group,
+            "group_name": _COMBO_GROUP_NAMES.get(group, f"Nhóm {group}"),
+        })
+    groups: List[Dict[str, Any]] = []
+    for item in items:
+        group = item["group"]
+        found = next((entry for entry in groups if entry["id"] == group), None)
+        if found:
+            found["count"] += 1
+            continue
+        groups.append({
+            "id": group,
+            "name": item["group_name"],
+            "count": 1,
+        })
+    return {"items": items, "groups": groups}
 
 
 def _load_thpt_exam_category() -> Optional[Dict[str, Any]]:
@@ -596,6 +645,10 @@ def create_app() -> Flask:
     @app.route("/thu-thap/bang-cap")
     def bang_cap_page():
         return render_template("thu_thap/bang_cap.html", catalog=_load_certificate_catalog())
+
+    @app.route("/thu-thap/to-hop")
+    def to_hop_page():
+        return render_template("thu_thap/to_hop.html", catalog=_load_subject_combinations())
 
     @app.route("/kiem-chung")
     def kiem_chung_page():
