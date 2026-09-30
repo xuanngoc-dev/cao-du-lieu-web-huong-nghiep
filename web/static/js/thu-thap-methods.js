@@ -100,8 +100,18 @@ function methodColumnNames(rows) {
     });
   });
   const school = String((rows[0] || {}).ma_truong || '').toUpperCase();
-  if (school !== 'TMU') return names;
-  const preferred = TMU_METHOD_NOTES.map(([code]) => code);
+  const preferred = school === 'TMU'
+    ? TMU_METHOD_NOTES.map(([code]) => code)
+    : (school === 'BVH' || school === 'BVS')
+      ? ['301', '415', '402', '410', '100']
+      : (school === 'NTH' || school === 'NTS')
+        ? ['100', '200', '301', '402_HSA', '402_V-ACT', '402_TSA', '402_CCNN_HSA', '402_CCNN_V-ACT', '409', '410', '415']
+        : school === 'QHE'
+          ? ['100', '409', '402', '301', '500', '410', '415']
+          : (school === 'HTC' || school === 'HTS' || school === 'HTY')
+            ? ['301', '410', '409', '407', '415', '500', '100', '200']
+            : null;
+  if (!preferred) return names;
   return [
     ...preferred.filter(code => names.includes(code)),
     ...names.filter(name => !preferred.includes(name)),

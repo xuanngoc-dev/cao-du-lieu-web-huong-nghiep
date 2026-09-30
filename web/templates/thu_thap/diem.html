@@ -165,7 +165,7 @@
   { "Ma_xet_tuyen": "IT-E10", "diem_chuan": 29.54 }
 ]</code></pre>
               <p class="mb-2"><b>Phương thức và tổ hợp dùng chung.</b> Mỗi mã trong <code>phuong_thuc</code> nhận cùng danh sách <code>To_hop</code>.</p>
-              <pre class="mb-0 bg-white border rounded p-2"><code>[
+              <pre class="mb-3 bg-white border rounded p-2"><code>[
   {
     "STT": 1,
     "Ma_xet_tuyen": "7210404",
@@ -175,6 +175,16 @@
     "To_hop": ["C01", "C03", "C04", "D01"]
   }
 ]</code></pre>
+              <p class="mb-2"><b>Học viện Tài chính.</b> Có thể dán nguyên file điểm. <code>diem_trung_tuyen</code> (thang 30) được ghi vào phương thức 100 của mã trường trong file, thường là HTC.</p>
+              <pre class="mb-0 bg-white border rounded p-2"><code>{
+  "thong_tin_chung": { "ma_truong": "HTC", "nam": 2026 },
+  "chuong_trinh_chuan": [
+    { "ma_xet_tuyen": "HC1001", "ten_nganh": "Kiểm toán", "diem_trung_tuyen": 28.07 }
+  ],
+  "chuong_trinh_chat_luong_cao": [
+    { "ma_xet_tuyen": "HC1001QT", "ten_nganh": "Kiểm toán (Theo định hướng ICAEW CFAB)", "diem_trung_tuyen": 24.68 }
+  ]
+}</code></pre>
             </div>
           </div>
         </div>
@@ -225,5 +235,5 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
 <script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20260925b"></script>
-<script src="{{ url_for('static', filename='js/thu-thap-scores.js') }}?v=20260925c"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-scores.js') }}?v=20260930b"></script>
 {% endblock %}

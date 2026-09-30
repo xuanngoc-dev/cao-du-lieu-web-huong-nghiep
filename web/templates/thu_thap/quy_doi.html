@@ -43,6 +43,7 @@
     <h2 class="h6 mb-1">Nhập điểm quy đổi</h2>
     <p class="small text-muted mb-3" id="regScoreLead">Điểm lấy từ hồ sơ cá nhân. Chọn trường để nhập các mục quy chế yêu cầu thêm.</p>
     <div id="regProfile" class="mb-3"></div>
+    <div id="regAutoCards" class="mb-3"></div>
     <form id="regScoreForm">
       <div id="regScoreFields" class="vstack gap-3"></div>
       <button class="btn btn-teal mt-3" type="submit">
@@ -85,6 +86,7 @@ window.MathJax = {
   const form = document.getElementById('regScoreForm');
   const msg = document.getElementById('regScoreMsg');
   const result = document.getElementById('regScoreResult');
+  const autoCards = document.getElementById('regAutoCards');
   const scoreLead = document.getElementById('regScoreLead');
   if (!catalogEl || !schoolSel || !yearSel || !article || !form || !profileBox) return;
 
@@ -182,9 +184,9 @@ window.MathJax = {
       const spec = el.dataset.showWhen || '';
       const eq = spec.indexOf('=');
       const id = eq >= 0 ? spec.slice(0, eq) : '';
-      const expected = eq >= 0 ? spec.slice(eq + 1) : '';
+      const expected = eq >= 0 ? spec.slice(eq + 1).split(',') : [];
       const control = id ? fields.querySelector(`[name="${id}"]`) : null;
-      const visible = !!(control && control.value === expected);
+      const visible = !!(control && expected.includes(control.value));
       el.classList.toggle('d-none', !visible);
       if (!visible) {
         el.querySelectorAll('select, input').forEach(input => { input.value = ''; });
@@ -216,14 +218,8 @@ window.MathJax = {
     });
   }
 
-  function renderResult(payload) {
-    if (!payload.ok) {
-      msg.innerHTML = `<div class="alert alert-warning py-2 mb-0">${esc(payload.error || 'Không quy đổi được.')}</div>`;
-      result.innerHTML = '';
-      return;
-    }
-    msg.innerHTML = '';
-    result.innerHTML = `<div class="row g-3">${(payload.results || []).map(item => `
+  function tileHtml(items) {
+    return `<div class="row g-3">${(items || []).map(item => `
       <div class="col-sm-6 col-lg-4">
         <div class="calc-result-tile ${item.kind === 'source' ? 'is-source' : ''} ${item.kind === 'missing' ? 'is-missing' : ''}">
           <div class="small text-muted">${esc(item.label)}</div>
@@ -231,6 +227,27 @@ window.MathJax = {
           <div class="small">${esc(item.detail)}</div>
         </div>
       </div>`).join('')}</div>`;
+  }
+
+  function renderResult(payload) {
+    if (!payload.ok) {
+      msg.innerHTML = `<div class="alert alert-warning py-2 mb-0">${esc(payload.error || 'Không quy đổi được.')}</div>`;
+      result.innerHTML = '';
+      return;
+    }
+    msg.innerHTML = '';
+    result.innerHTML = tileHtml(payload.results);
+  }
+
+  function renderAutoCards(cards) {
+    if (!autoCards) return;
+    if (!cards || !cards.length) {
+      autoCards.innerHTML = '';
+      return;
+    }
+    autoCards.innerHTML = `
+      <h3 class="h6 mb-2">Quy đổi sang điểm THPT</h3>
+      ${tileHtml(cards)}`;
   }
 
   let profileToken = 0;
@@ -262,12 +279,15 @@ window.MathJax = {
       if (token !== profileToken) return;
       if (!data.ok) {
         profileBox.innerHTML = `<div class="alert alert-warning py-2 mb-0">${esc(data.error || 'Không đọc được hồ sơ.')}</div>`;
+        renderAutoCards([]);
         return;
       }
       paintProfile(data.groups || []);
+      renderAutoCards(data.cards || []);
     } catch (error) {
       if (token !== profileToken) return;
       profileBox.innerHTML = `<div class="alert alert-danger py-2 mb-0">${esc(error.message)}</div>`;
+      renderAutoCards([]);
     }
   }
 
@@ -275,12 +295,14 @@ window.MathJax = {
     const doc = currentDoc();
     msg.innerHTML = '';
     result.innerHTML = '';
+    renderAutoCards([]);
     if (!doc) {
       article.classList.add('d-none');
       article.innerHTML = '';
       empty.classList.remove('d-none');
       scorePane.classList.add('d-none');
       profileBox.innerHTML = '';
+      renderAutoCards([]);
       profileToken += 1;
       if (toggle) toggle.disabled = true;
       return;

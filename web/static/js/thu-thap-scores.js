@@ -45,10 +45,19 @@ function scoreColumnNames(rows) {
     if (!name || names.includes(name) || !scoreMethodMatches(row, selected)) return;
     names.push(name);
   });
+  const schools = new Set((rows || [])
+    .map(row => String(row.ma_truong || '').trim().toUpperCase())
+    .filter(Boolean));
+  const ptitOnly = schools.size > 0 && [...schools].every(code => code === 'BVH' || code === 'BVS');
   const officialOrder = OFFICIAL_METHODS.map(item => item.ma);
+  const preferred = ptitOnly
+    ? ['100', '301', '415_SAT', '415_ACT', '402_TSA', '402_HSA', '402_V-ACT', '402_SPT', '410']
+    : officialOrder;
   return [
-    ...officialOrder.filter(code => names.includes(code)),
-    ...names.filter(name => !officialMethod(name)).sort((a, b) => a.localeCompare(b, 'vi')),
+    ...preferred.filter(code => names.includes(code)),
+    ...officialOrder.filter(code => names.includes(code) && !preferred.includes(code)),
+    ...names.filter(name => !officialMethod(name) && !preferred.includes(name))
+      .sort((a, b) => a.localeCompare(b, 'vi')),
   ];
 }
 
@@ -64,10 +73,17 @@ function majorByAdmissionCode(school, year, code) {
 }
 
 function scoreMajorLabel(group) {
+  const code = group.ma_xet_tuyen || group.ma_nganh;
+  const own = String(group.ten_nganh || '').trim();
   const hit = majorByAdmissionCode(group.ma_truong, selectedResultYear(), group.ma_xet_tuyen)
     || majorByAdmissionCode(group.ma_truong, '', group.ma_xet_tuyen);
-  const code = group.ma_xet_tuyen || group.ma_nganh;
-  const name = (hit && (hit.ten_nganh || hit.ten_chuong_trinh)) || group.ten_nganh || '';
+  const school = String(group.ma_truong || '').trim().toUpperCase();
+  const program = hit && String(hit.ten_chuong_trinh || '').trim();
+  if (program && (school === 'HTC' || school === 'HTS' || school === 'HTY')) {
+    return codeName(code, program);
+  }
+  if (own.includes(';')) return codeName(code, own);
+  const name = (hit && (hit.ten_nganh || program)) || own;
   return codeName(code, name);
 }
 

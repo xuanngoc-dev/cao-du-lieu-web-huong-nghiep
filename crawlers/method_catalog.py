@@ -866,8 +866,115 @@ def _combo_codes(value) -> List[str]:
     return [clean_text(str(part)) for part in value if clean_text(str(part))]
 
 
+_HVTC_CAMPUSES = {
+    "mien_bac_ha_noi_htc": ("HTC", "Học viện Tài chính"),
+    "mien_nam_tphcm_hts": ("HTS", "Học viện Tài chính (Phân hiệu TP. Hồ Chí Minh)"),
+    "mien_bac_hung_yen_hty": ("HTY", "Học viện Tài chính (Phân hiệu Hưng Yên)"),
+}
+
+# PT1–PT4 của HVTC map sang mã phương thức chuẩn dùng bởi bộ lọc.
+_HVTC_METHOD_MAP = {
+    "PT1": [("301", "Xét tuyển thẳng theo quy chế của Bộ GD&ĐT")],
+    "PT2": [
+        ("410", "Xét tuyển kết hợp: học bạ với chứng chỉ quốc tế"),
+        ("409", "Xét tuyển kết hợp: điểm thi tốt nghiệp THPT với chứng chỉ quốc tế"),
+        ("407", "Xét tuyển kết hợp: điểm thi tốt nghiệp THPT với học bạ"),
+        ("415", "Xét tuyển kết hợp: chứng chỉ SAT, ACT"),
+        ("500", "Xét tuyển kết hợp: giải học sinh giỏi"),
+    ],
+    "PT3": [("100", "Xét kết quả thi tốt nghiệp THPT")],
+    "PT4": [("200", "Xét kết quả học tập cấp THPT (học bạ)")],
+}
+
+
+def _is_hvtc_payload(payload) -> bool:
+    return (
+        isinstance(payload, dict)
+        and isinstance(payload.get("chi_tieu_theo_khu_vuc"), dict)
+        and isinstance(payload.get("phuong_thuc_tuyen_sinh"), list)
+    )
+
+
+def _hvtc_combos(group: Dict[str, object], major: Dict[str, object]) -> List[str]:
+    own = _combo_codes(major.get("to_hop"))
+    if own:
+        return own
+    shared = _combo_codes(group.get("to_hop"))
+    if shared:
+        return shared
+    if str(major.get("ma_nganh") or "") == "7220201":
+        language = _combo_codes(group.get("to_hop_ngon_ngu_anh"))
+        if language:
+            return language
+    return _combo_codes(group.get("to_hop_mac_dinh"))
+
+
+def _hvtc_methods(codes, combos: List[str]) -> List[Dict[str, object]]:
+    methods: List[Dict[str, object]] = []
+    seen = set()
+    for raw in codes or []:
+        for code, label in _HVTC_METHOD_MAP.get(str(raw).strip().upper(), []):
+            if code in seen:
+                continue
+            seen.add(code)
+            detail = {"to_hop_xet_tuyen": list(combos)} if combos else {}
+            methods.append({
+                "id": code,
+                "ten": code,
+                "ap_dung": True,
+                "mo_ta": f"{label}. Tổ hợp: {', '.join(combos)}" if combos else label,
+                "chi_tiet": detail,
+            })
+    return methods
+
+
+def hvtc_program_rows(payload: Dict[str, object]) -> List[Dict[str, object]]:
+    """Bóc chỉ tiêu HVTC và đổi PT1–PT4 sang mã phương thức chuẩn."""
+    areas = payload.get("chi_tieu_theo_khu_vuc") or {}
+    rows: List[Dict[str, object]] = []
+    for area_key, area in areas.items():
+        campus = _HVTC_CAMPUSES.get(str(area_key))
+        if not campus or not isinstance(area, dict):
+            continue
+        school_code, school_name = campus
+        for group in area.values():
+            if not isinstance(group, dict) or not isinstance(group.get("nganh"), list):
+                continue
+            for major in group["nganh"]:
+                if not isinstance(major, dict):
+                    continue
+                admission = clean_text(str(major.get("ma_xet_tuyen") or ""))
+                program = clean_text(str(major.get("ten_chuong_trinh") or ""))
+                major_code = clean_text(str(major.get("ma_nganh") or ""))
+                major_name = clean_text(str(major.get("ten_nganh") or ""))
+                if not any((admission, program, major_code, major_name)):
+                    continue
+                combos = _hvtc_combos(group, major)
+                methods = _hvtc_methods(major.get("phuong_thuc") or group.get("phuong_thuc"), combos)
+                quota = major.get("chi_tieu")
+                quota_text = ""
+                if quota is not None and str(quota).strip() not in {"", "None"}:
+                    quota_text = re.sub(r"[^\d]", "", str(quota))[:6]
+                rows.append({
+                    "ma_truong": school_code,
+                    "ten_truong": school_name,
+                    "ma_xet_tuyen": admission,
+                    "ten_chuong_trinh": program,
+                    "ma_nganh": major_code,
+                    "ten_nganh": major_name or program,
+                    "chi_tieu": quota_text,
+                    "ghi_chu": clean_text(str(major.get("ghi_chu") or "")),
+                    "hinh_thuc": methods,
+                })
+    if not rows:
+        raise ValueError("Không thấy ngành nào trong dữ liệu Học viện Tài chính.")
+    return rows
+
+
 def program_rows_from_payload(payload) -> List[Dict[str, object]]:
     """Đọc nhiều cấu trúc JSON ngành và phương thức xét tuyển."""
+    if _is_hvtc_payload(payload):
+        return hvtc_program_rows(payload)
     if isinstance(payload, dict):
         folded = _folded_item(payload)
         payload = next(
