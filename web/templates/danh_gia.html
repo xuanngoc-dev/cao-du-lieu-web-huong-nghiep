@@ -6,49 +6,72 @@
 {% block content %}
 <h1 class="h3 mb-1"><i class="bi bi-clipboard2-pulse me-1"></i> Đánh giá năng lực</h1>
 <p class="text-muted mb-3">
-  Chọn trường từ dữ liệu đã tổng hợp được (bước ②), rồi tổng hợp:
-  biến động điểm chuẩn, quy chế cộng điểm theo chứng chỉ, quy đổi phương thức,
-  và đánh giá cơ hội trúng tuyển.
+  Xem biến động điểm chuẩn, quy chế cộng điểm theo chứng chỉ, quy đổi phương thức
+  và đánh giá cơ hội trúng tuyển từ dữ liệu đã thu thập (bước ②).
   Chưa có dữ liệu? Hãy
   <a href="{{ url_for('crawl_page') }}">Thu thập dữ liệu</a>
   trước.
 </p>
 
-<div class="card panel-card mb-3">
+<div class="card panel-card mb-3" id="tuVanCard">
+  <div class="card-header">
+    <span class="fw-normal"><i class="bi bi-chat-left-text me-1"></i> Tư vấn theo tiêu chí</span>
+  </div>
   <div class="card-body">
-    <div class="row g-3 align-items-end">
-      <div class="col-md-8">
-        <label class="form-label" for="scopeSchools">
-          Trường cần tổng hợp
-          <i class="bi bi-info-circle text-muted ms-1"
-             role="button" tabindex="0" aria-label="Cách bổ sung trường"
-             data-bs-toggle="tooltip" data-bs-placement="top"
-             data-bs-html="true"
-             title="Danh sách lấy từ dữ liệu đã tổng hợp được ở bước ②. Muốn thêm trường: mở <b>② Thu thập dữ liệu</b>, thêm mã trường rồi thu thập lại (dữ liệu mới được lưu và hiện ở đây)."></i>
-        </label>
-        <select id="scopeSchools" class="form-select js-multi-select" multiple
-          data-placeholder="Chọn một / nhiều / hết trường đã tổng hợp được"></select>
+    <p class="small text-muted mb-3">
+      Chọn khu vực, loại trường, trường và tổ hợp xét tuyển. Điểm môn lấy từ
+      <a href="{{ url_for('ca_nhan_page') }}">hồ sơ cá nhân</a>
+      và sửa được ngay tại đây. Hỏi ví dụ: với điểm thi THPT khối A00, ngành nào của khối kỹ thuật có thể dự tuyển.
+    </p>
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label class="form-label" for="tvRegion">Khu vực</label>
+        <select id="tvRegion" class="form-select js-multi-select" multiple data-placeholder="Mọi khu vực"></select>
       </div>
       <div class="col-md-4">
-        <button class="btn btn-accent w-100" type="button" id="btnTongHop">
-          <i class="bi bi-layers"></i> Tổng hợp thông tin
-        </button>
+        <label class="form-label" for="tvSector">Loại hình trường</label>
+        <select id="tvSector" class="form-select js-multi-select" multiple data-placeholder="Kỹ thuật, kinh tế, nghệ thuật…"></select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="tvSchool">Trường học</label>
+        <select id="tvSchool" class="form-select js-multi-select" multiple data-placeholder="Mọi trường trong phạm vi đã chọn"></select>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="tvCombo">Tổ hợp xét tuyển</label>
+        <select id="tvCombo" class="form-select js-multi-select" multiple data-placeholder="Chọn một hoặc nhiều tổ hợp"></select>
       </div>
     </div>
-    <div id="tongHopProgress" class="d-none mt-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
-        <div class="small text-muted" id="tongHopProgressStatus">Chuẩn bị…</div>
-        <div class="small" id="tongHopProgressPct">0%</div>
-      </div>
-      <div class="progress" style="height: 1.1rem;">
-        <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent"
-          id="tongHopProgressBar" role="progressbar" style="width:0%"
-          aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <div class="small text-muted mb-0" id="tvScoreHint">Điểm thi THPT</div>
+      <div class="d-flex flex-wrap gap-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Nguồn điểm">
+          <button type="button" class="btn btn-accent" id="tvSrcThi">Điểm thi THPT</button>
+          <button type="button" class="btn btn-outline-teal" id="tvSrcHb">Học bạ</button>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="tvReloadScores">Lấy lại từ hồ sơ</button>
       </div>
     </div>
-    <div id="scopeAlert" class="mt-3 mb-0"></div>
+    <div class="row g-2 mb-2" id="tvScores"></div>
+    <div class="small text-muted mb-3" id="tvComboPreview"></div>
+
+    <div class="tu-van-log mb-2" id="tvLog" aria-live="polite">
+      <div class="tu-van-msg bot">
+        Chọn tiêu chí rồi đặt câu hỏi. Mình đối chiếu tổ hợp, điểm của bạn với điểm chuẩn thi THPT và phương thức tuyển sinh đã thu thập.
+      </div>
+    </div>
+    <div class="tu-van-suggest mb-2" id="tvSuggest"></div>
+    <form id="tvForm" class="d-flex gap-2">
+      <input id="tvInput" class="form-control" type="text" maxlength="500" autocomplete="off"
+        placeholder="Ví dụ: với điểm A00 của tôi, ngành kỹ thuật nào có thể dự tuyển?">
+      <button class="btn btn-accent" type="submit" id="tvSend">
+        <i class="bi bi-send"></i>
+      </button>
+    </form>
   </div>
 </div>
+
+<div id="pageAlert"></div>
 
 <div id="analysisWrap" class="d-none">
 <!-- Quy chế cộng điểm theo chứng chỉ -->
@@ -88,7 +111,7 @@
       </div>
     </div>
     <div id="bonusBody">
-      <p class="small text-muted mb-0">Đang chờ tổng hợp…</p>
+      <p class="small text-muted mb-0">Đang tải…</p>
     </div>
   </div>
   </div>
@@ -157,22 +180,9 @@
   <div id="quyDoiCollapse" class="collapse">
   <div class="card-body pt-2">
     <p class="small text-muted mb-3">
-      Dùng bảng quy đổi đã lưu (bước ③ / khi thu thập). Thiếu trường nào sẽ tự lấy bổ sung.
+      Dùng bảng quy đổi đã lưu ở bước ③.
       Chi tiết đầy đủ: <a href="{{ url_for('quy_doi_page') }}">③ Quy đổi điểm</a>.
     </p>
-    <textarea id="qdCodes" class="d-none"></textarea>
-
-    <div id="qdProgress" class="d-none mb-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
-        <div class="small text-muted" id="qdProgressStatus">Chuẩn bị…</div>
-        <div class="small" id="qdProgressPct">0%</div>
-      </div>
-      <div class="progress" style="height: 1.1rem;">
-        <div class="progress-bar progress-bar-striped progress-bar-animated bg-accent"
-          id="qdProgressBar" role="progressbar" style="width:0%"
-          aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-      </div>
-    </div>
     <div id="qdSummary" class="mb-3"></div>
 
     <div id="calcBlock" class="d-none">
@@ -353,7 +363,6 @@ let lastQuyDoi = null;
 let lastTrends = null;
 let lastBonus = null;
 let trendChart = null;
-let scopeSchoolOptions = [];
 const METHOD_COLORS = [
   '#0d7377', '#c45c26', '#2a6f97', '#bc4749', '#6a994e',
   '#e09f3e', '#5e548e', '#9b2226', '#0077b6', '#606c38',
@@ -866,7 +875,7 @@ function renderTrendChart(trends) {
 async function refreshChartFromServer() {
   const school = document.getElementById('chartSchool').value;
   const method = document.getElementById('chartMethod').value;
-  const scopeCodes = window.App.getSelectValues(document.getElementById('scopeSchools'));
+  const scopeCodes = (lastCrawl && lastCrawl.codes) || [];
   const params = new URLSearchParams();
   if (school) params.set('school', school);
   if (method) params.set('method', method);
@@ -1341,137 +1350,6 @@ function renderQuyDoi(data) {
     ? `<a class="btn btn-accent btn-sm" href="${data.download_url}"><i class="bi bi-file-earmark-excel"></i> Tải ${esc(data.filename)}</a>`
     : '';
 }
-
-async function fetchQuyDoi(codesText, opts = {}) {
-  const {
-    onProgress = null,
-    showLocalProgress = true,
-  } = opts;
-  const prog = document.getElementById('qdProgress');
-  const bar = document.getElementById('qdProgressBar');
-  const statusEl = document.getElementById('qdProgressStatus');
-  const pctEl = document.getElementById('qdProgressPct');
-
-  function setProgress(index, total, status) {
-    const pct = total > 0 ? Math.min(100, Math.round((index / total) * 100)) : 0;
-    if (showLocalProgress && bar) {
-      bar.style.width = pct + '%';
-      bar.textContent = pct + '%';
-      bar.setAttribute('aria-valuenow', String(pct));
-      if (pctEl) pctEl.textContent = pct + '%';
-      if (statusEl) statusEl.textContent = status || '';
-    }
-    if (typeof onProgress === 'function') {
-      onProgress(index, total, status, pct);
-    }
-  }
-
-  if (showLocalProgress && prog) prog.classList.remove('d-none');
-  setProgress(0, 1, 'Bắt đầu lấy bảng quy đổi…');
-  if (showLocalProgress) {
-    document.getElementById('qdSummary').innerHTML = '';
-  }
-
-  try {
-    const res = await fetch('/api/quy-doi/stream', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ codes: codesText, limit: 0 })
-    });
-    if (!res.ok) {
-      let err = `HTTP ${res.status}`;
-      try { err = (await res.json()).error || err; } catch (_) {}
-      throw new Error(err);
-    }
-    if (!res.body) throw new Error('Trình duyệt không hỗ trợ stream.');
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = '';
-    let finalPayload = null;
-    let total = 1;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop() || '';
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        let evt;
-        try { evt = JSON.parse(line); } catch (_) { continue; }
-        if (evt.type === 'start') {
-          total = evt.total || 1;
-          setProgress(0, total, `0/${total} trường…`);
-        } else if (evt.type === 'school') {
-          total = evt.total || total;
-          const mark = evt.ok ? '✓' : '✗';
-          const extra = evt.ok
-            ? `${evt.rows || 0} dòng`
-            : (evt.error || 'lỗi');
-          setProgress(
-            evt.index,
-            total,
-            `${mark} ${evt.index}/${total}: ${evt.code} — ${extra}`
-          );
-          if (evt.total && evt.index >= evt.total) {
-            setProgress(total, total, 'Đã lấy xong các trường — đang lưu dữ liệu…');
-          }
-        } else if (evt.type === 'finalize') {
-          setProgress(total, total, evt.message || 'Đang lưu / xuất Excel…');
-        } else if (evt.type === 'done') {
-          finalPayload = evt;
-          setProgress(total, total, '100% — đang nạp kết quả…');
-        }
-      }
-    }
-
-    if (!finalPayload || !finalPayload.ok) {
-      throw new Error((finalPayload && finalPayload.error) || 'Lỗi lấy quy đổi điểm');
-    }
-
-    let full = finalPayload;
-    if (finalPayload.saved) {
-      setProgress(total, total, 'Đang nạp dữ liệu đã lưu…');
-      try {
-        const sessRes = await fetch('/api/quy-doi/session');
-        const sess = await sessRes.json();
-        if (sess.ok && sess.has_data) full = sess;
-      } catch (_) {}
-    }
-
-    if (prog) prog.classList.add('d-none');
-    renderQuyDoi(full);
-    const nSchools = (full.school_results || []).length
-      || (full.summary && full.summary.schools)
-      || (finalPayload.summary && finalPayload.summary.schools)
-      || total;
-    const nRows = (full.rows || []).length
-      || (full.summary && full.summary.rows)
-      || (finalPayload.summary && finalPayload.summary.rows)
-      || 0;
-    if (showLocalProgress) {
-      window.App.toast(`Đã lấy xong dữ liệu quy đổi điểm (${nSchools} trường, ${nRows} dòng bảng).`);
-      document.getElementById('qdSummary').insertAdjacentHTML(
-        'afterbegin',
-        `<div class="alert alert-success py-2 mb-3 d-flex align-items-center gap-2">
-          <i class="bi bi-check-circle-fill"></i>
-          <span>Đã lấy xong dữ liệu quy đổi điểm — ${esc(nSchools)} trường, ${esc(nRows)} dòng bảng.</span>
-        </div>`
-      );
-    }
-    return full;
-  } catch (e) {
-    if (prog) prog.classList.add('d-none');
-    if (showLocalProgress) {
-      document.getElementById('qdSummary').innerHTML =
-        `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
-    }
-    throw e;
-  }
-}
-
 
 function levelBadge(level, label) {
   const map = {
@@ -2019,156 +1897,73 @@ function filterQuyDoiBySchools(data, codes) {
   return out;
 }
 
-function fillScopeSchools(trends, preferCodes) {
+function allSchoolCodes(trends) {
   const opts = (trends && trends.school_options) || [];
-  scopeSchoolOptions = opts;
-  const schools = opts.length ? opts.map(o => o.id) : ((trends && trends.schools) || []);
-  const html = schools.map(s =>
-    `<option value="${esc(s)}">${esc(schoolOptionLabel(s, trends))}</option>`
-  ).join('');
-  let prefer = preferCodes;
-  if (!prefer || !prefer.length) prefer = [];
-  const sel = document.getElementById('scopeSchools');
-  window.App.setSelectOptions(sel, html, prefer, {
-    placeholder: 'Chọn một / nhiều / hết trường đã tổng hợp được',
-  });
-  const alertBox = document.getElementById('scopeAlert');
-  if (!schools.length) {
-    alertBox.innerHTML =
-      '<div class="alert alert-light border py-2 mb-0 small">Chưa có trường trong dữ liệu đã tổng hợp được. Hãy <a href="/crawl">Thu thập dữ liệu</a> trước.</div>';
-  } else if (alertBox && !alertBox.querySelector('.alert-success')) {
-    alertBox.innerHTML = '';
-  }
+  if (opts.length) return opts.map(o => o.id).filter(Boolean);
+  return ((trends && trends.schools) || []).filter(Boolean);
 }
 
-function setTongHopProgress(pct, status) {
-  const bar = document.getElementById('tongHopProgressBar');
-  const statusEl = document.getElementById('tongHopProgressStatus');
-  const pctEl = document.getElementById('tongHopProgressPct');
-  const p = Math.max(0, Math.min(100, Math.round(pct)));
-  if (bar) {
-    bar.style.width = p + '%';
-    bar.textContent = p + '%';
-    bar.setAttribute('aria-valuenow', String(p));
-  }
-  if (pctEl) pctEl.textContent = p + '%';
-  if (statusEl) statusEl.textContent = status || '';
+function showPageAlert(html) {
+  const box = document.getElementById('pageAlert');
+  if (box) box.innerHTML = html || '';
 }
 
-async function tongHopThongTin() {
-  const codes = window.App.getSelectValues(document.getElementById('scopeSchools'));
-  const alertBox = document.getElementById('scopeAlert');
-  const prog = document.getElementById('tongHopProgress');
-  const btn = document.getElementById('btnTongHop');
-  if (!codes.length) {
-    alertBox.innerHTML = '<div class="alert alert-warning py-2 mb-0">Chọn ít nhất một trường.</div>';
-    return;
-  }
-
-  alertBox.innerHTML = '';
-  prog.classList.remove('d-none');
-  btn.disabled = true;
-  setTongHopProgress(0, `Bắt đầu tổng hợp ${codes.length} trường…`);
+async function loadSavedAnalysis(codes) {
+  showPageAlert('');
   document.getElementById('analysisWrap').classList.remove('d-none');
-  document.getElementById('qdCodes').value = codes.join('\n');
 
-  try {
-    setTongHopProgress(8, 'Đang tổng hợp quy chế cộng điểm và biểu đồ điểm chuẩn…');
-    const bonusTask = loadBonusPolicy(codes).catch(err => {
-      document.getElementById('bonusBody').innerHTML =
-        `<div class="alert alert-warning py-2 mb-0 small">${esc(err.message)}</div>`;
-    });
-    const params = new URLSearchParams({ school: codes[0] });
-    const trRes = await fetch('/api/crawl/trends?' + params.toString());
-    const trData = await trRes.json();
-    if (!trData.ok) throw new Error(trData.error || 'Chưa có dữ liệu điểm chuẩn đã lưu.');
-    lastTrends = trData.trends;
-    lastCrawl = { trends: trData.trends, codes };
-    const filteredTrends = Object.assign({}, trData.trends, {
-      schools: codes,
-      school_options: (trData.trends.school_options || []).filter(o => codes.includes(o.id)),
-      school: codes[0],
-    });
-    setTongHopProgress(18, `Đã tải biểu đồ · đang gắn ${codes.length} trường…`);
-    renderTrendChart(filteredTrends);
-    fillSchoolSelects(filteredTrends, codes[0], codes);
+  const bonusTask = loadBonusPolicy(codes).catch(err => {
+    document.getElementById('bonusBody').innerHTML =
+      `<div class="alert alert-warning py-2 mb-0 small">${esc(err.message)}</div>`;
+  });
 
-    setTongHopProgress(25, 'Đang kiểm tra bảng quy đổi điểm…');
-    let qd = null;
-    const qdRes = await fetch('/api/quy-doi/session');
-    const qdSession = await qdRes.json();
-    if (qdSession.ok && qdSession.has_data) {
-      qd = filterQuyDoiBySchools(qdSession, codes);
-      const have = new Set((qd.school_results || []).map(s => (s.code || '').toUpperCase()));
-      const missing = codes.filter(c =>
-        !have.has(c.toUpperCase())
-        && !(qd.rows || []).some(r => (r.ma_truong || '').toUpperCase() === c.toUpperCase())
-      );
-      if (missing.length) {
-        setTongHopProgress(28, `Thiếu ${missing.length}/${codes.length} trường — đang lấy bổ sung…`);
-        await fetchQuyDoi(missing.join('\n'), {
-          showLocalProgress: false,
-          onProgress: (index, total, status) => {
-            const pct = 28 + Math.round((index / Math.max(total, 1)) * 70);
-            setTongHopProgress(pct, status || `Đang lấy quy đổi ${index}/${total}…`);
-          },
-        });
-      } else {
-        // Lọc theo từng trường để thanh progress vẫn chạy khi chọn nhiều
-        const n = codes.length;
-        for (let i = 0; i < n; i++) {
-          setTongHopProgress(
-            30 + Math.round(((i + 1) / n) * 65),
-            `Đang lọc quy đổi ${i + 1}/${n}: ${codes[i]}`
-          );
-          // nhường UI để thanh progress kịp vẽ khi số trường lớn
-          if (i % 8 === 7) await new Promise(r => setTimeout(r, 0));
-        }
-        renderQuyDoi(qd);
-      }
-    } else {
-      setTongHopProgress(28, `Đang lấy quy đổi cho ${codes.length} trường…`);
-      await fetchQuyDoi(codes.join('\n'), {
-        showLocalProgress: false,
-        onProgress: (index, total, status) => {
-          const pct = 28 + Math.round((index / Math.max(total, 1)) * 70);
-          setTongHopProgress(pct, status || `Đang lấy quy đổi ${index}/${total}…`);
-        },
-      });
-    }
+  const params = new URLSearchParams({ school: codes[0] });
+  const trRes = await fetch('/api/crawl/trends?' + params.toString());
+  const trData = await trRes.json();
+  if (!trData.ok) throw new Error(trData.error || 'Chưa có dữ liệu điểm chuẩn đã lưu.');
+  lastTrends = trData.trends;
+  lastCrawl = { trends: trData.trends, codes };
+  const filteredTrends = Object.assign({}, trData.trends, {
+    schools: codes,
+    school_options: (trData.trends.school_options || []).filter(o => codes.includes(o.id)),
+    school: codes[0],
+  });
+  renderTrendChart(filteredTrends);
+  fillSchoolSelects(filteredTrends, codes[0], codes);
 
-    await bonusTask;
-    setTongHopProgress(100, `Hoàn tất — ${codes.length} trường`);
-    prog.classList.add('d-none');
-    alertBox.innerHTML = `<div class="alert alert-success py-2 mb-0">
-      Đã tổng hợp <b>${codes.length}</b> trường từ dữ liệu đã lưu.
-    </div>`;
-    window.App.toast(`Đã tổng hợp xong ${codes.length} trường.`);
-    document.getElementById('bonusCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (e) {
-    prog.classList.add('d-none');
-    alertBox.innerHTML = `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
-  } finally {
-    btn.disabled = false;
+  const qdRes = await fetch('/api/quy-doi/session');
+  const qdSession = await qdRes.json();
+  if (qdSession.ok && qdSession.has_data) {
+    renderQuyDoi(filterQuyDoiBySchools(qdSession, codes));
   }
-}
 
-document.getElementById('btnTongHop').addEventListener('click', tongHopThongTin);
+  await bonusTask;
+}
+</script>
+<script src="{{ url_for('static', filename='js/danh-gia-tu-van.js') }}?v=20261001j"></script>
+<script>
 
 (async function bootDanhGia() {
   try {
     const res = await fetch('/api/crawl/session');
     const data = await res.json();
     if (!data.ok || !data.has_data) {
-      document.getElementById('scopeAlert').innerHTML =
-        '<div class="alert alert-light border py-2 mb-0 small">Chưa có điểm chuẩn trên máy — mở bước <a href="/crawl">② Thu thập dữ liệu</a> để bổ sung trường.</div>';
+      showPageAlert(
+        '<div class="alert alert-light border py-2 mb-0 small">Chưa có điểm chuẩn trên máy — mở bước <a href="/crawl">② Thu thập dữ liệu</a> để bổ sung trường.</div>'
+      );
       return;
     }
-    lastCrawl = data;
-    fillScopeSchools(data.trends || {}, []);
+    const codes = allSchoolCodes(data.trends || {});
+    if (!codes.length) {
+      showPageAlert(
+        '<div class="alert alert-light border py-2 mb-0 small">Chưa có trường trong dữ liệu đã thu thập. Hãy <a href="/crawl">Thu thập dữ liệu</a> trước.</div>'
+      );
+      return;
+    }
+    lastCrawl = Object.assign({}, data, { codes });
+    await loadSavedAnalysis(codes);
   } catch (e) {
-    document.getElementById('scopeAlert').innerHTML =
-      `<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`;
+    showPageAlert(`<div class="alert alert-danger py-2 mb-0">${esc(e.message)}</div>`);
   }
 })();
 </script>

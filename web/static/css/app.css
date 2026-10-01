@@ -1057,3 +1057,43 @@ select.cn-multi-native {
   background: rgba(196, 92, 38, 0.08);
   color: var(--ink-soft);
 }
+
+.tu-van-log {
+  max-height: 28rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--sand);
+}
+.tu-van-msg {
+  max-width: min(100%, 46rem);
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.8rem;
+  line-height: 1.5;
+  font-weight: 300;
+}
+.tu-van-msg.bot {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+.tu-van-msg.user {
+  align-self: flex-end;
+  background: rgba(13, 115, 119, 0.12);
+}
+.tu-van-msg table {
+  font-size: 0.82rem;
+}
+.tu-van-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.tu-van-suggest .btn {
+  font-weight: 300;
+  text-align: left;
+}

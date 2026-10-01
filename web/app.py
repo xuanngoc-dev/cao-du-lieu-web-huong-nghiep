@@ -82,6 +82,7 @@ from core.admission_chance import (
 from core.aggregator import METHOD_COLUMN_LABELS, build_grouped_score_view
 from core.bonus_policy import list_bonus_records, summarize_certificate_bonus
 from core import dataset_store
+from core.tu_van import advisor_options, answer_advisor
 
 
 CONVERSION_IMPORT_SOURCE = "Nhập quy chế quy đổi"
@@ -5156,6 +5157,19 @@ def create_app() -> Flask:
     @app.route("/danh-gia")
     def danh_gia_page():
         return render_template("danh_gia.html")
+
+    @app.get("/api/danh-gia/tieu-chi")
+    def api_danh_gia_tieu_chi():
+        return jsonify(advisor_options(ROOT))
+
+    @app.post("/api/danh-gia/hoi")
+    def api_danh_gia_hoi():
+        data = request.get_json(silent=True) or {}
+        if not isinstance(data, dict):
+            return jsonify({"ok": False, "error": "Dữ liệu không hợp lệ."}), 400
+        cached = app.config.get("LAST_CRAWL") or {}
+        live = cached.get("admissions") if isinstance(cached.get("admissions"), list) else None
+        return jsonify(answer_advisor(ROOT, data, admissions=live or None))
 
     @app.route("/du-lieu")
     def datasets_page():
