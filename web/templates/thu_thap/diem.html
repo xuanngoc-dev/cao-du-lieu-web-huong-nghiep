@@ -185,6 +185,52 @@
     { "ma_xet_tuyen": "HC1001QT", "ten_nganh": "Kiểm toán (Theo định hướng ICAEW CFAB)", "diem_trung_tuyen": 24.68 }
   ]
 }</code></pre>
+              <p class="mb-2"><b>Đại học Bách khoa – ĐHQG TP.HCM.</b> Có thể dán nguyên file điểm. <code>diem_chuan</code> là điểm xét tuyển tổng hợp, ghi vào phương thức 402 và 407.</p>
+              <pre class="mb-3 bg-white border rounded p-2"><code>[
+  {
+    "ma_tuyen_sinh": "106",
+    "ten_nghanh": "Khoa học Máy tính",
+    "diem_chuan": 85.45,
+    "chuong_trinh": "Tiêu chuẩn"
+  }
+]</code></pre>
+              <p class="mb-2"><b>Đại học Công Thương TP.HCM (DCT).</b> Có thể dán nguyên file điểm. <code>diem_thi_tn_thpt</code> ghi vào 100, <code>hoc_ba_thpt</code> vào 200, <code>dgnl_dhqg_hcm</code> vào 402_V-ACT (thang 1200), <code>diem_chuyen_biet_dhsp</code> vào 402_SPT. Cả <code>diem_chuan_chinh_quy</code> và <code>diem_chuan_lien_ket_quoc_te</code> đều được nhập. Chọn trường DCT và năm khớp <code>nam</code> trong file.</p>
+              <pre class="mb-3 bg-white border rounded p-2"><code>{
+  "ma_truong": "DCT",
+  "nam": 2026,
+  "diem_chuan_chinh_quy": [
+    {
+      "ma_nganh": "7220201",
+      "ten_nganh": "Ngôn ngữ Anh",
+      "diem_thi_tn_thpt": 22.5,
+      "hoc_ba_thpt": 25.25,
+      "dgnl_dhqg_hcm": 800,
+      "diem_chuyen_biet_dhsp": 24.13
+    }
+  ],
+  "diem_chuan_lien_ket_quoc_te": [
+    {
+      "ma_nganh": "LK7220204",
+      "ten_nganh": "Ngôn ngữ Trung Quốc - LK ĐH Lỗ Đông, Trung Quốc",
+      "diem_thi_tn_thpt": 16,
+      "hoc_ba_thpt": 20,
+      "dgnl_dhqg_hcm": 600,
+      "diem_chuyen_biet_dhsp": 20
+    }
+  ]
+}</code></pre>
+              <p class="mb-2"><b>Đại học Giao thông Vận tải TP.HCM (UTH).</b> Có thể dán nguyên file điểm. <code>diem_chuan</code> là điểm xét tuyển kết hợp, thang UTH120, ghi vào phương thức 407. Chọn trường UTH và năm khớp <code>nam</code> trong file.</p>
+              <pre class="mb-0 bg-white border rounded p-2"><code>{
+  "ma_truong": "UTH",
+  "nam": 2026,
+  "danh_sach_diem_chuan": [
+    {
+      "ma_xet_tuyen": "UTHCCK01A",
+      "ten_nganh": "Công nghệ kỹ thuật cơ khí – chương trình tiên tiến",
+      "diem_chuan": 936
+    }
+  ]
+}</code></pre>
             </div>
           </div>
         </div>
@@ -234,6 +280,6 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
-<script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20260925b"></script>
-<script src="{{ url_for('static', filename='js/thu-thap-scores.js') }}?v=20260930b"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20261001b"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-scores.js') }}?v=20261001d"></script>
 {% endblock %}

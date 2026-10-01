@@ -919,6 +919,10 @@ def _regulation_calculator_spec(code: str) -> Optional[Dict[str, Any]]:
         return _nth_calculator_spec()
     if code == "QHE":
         return _qhe_calculator_spec()
+    if code == "QSB":
+        return _qsb_calculator_spec()
+    if code == "UTH":
+        return _uth_calculator_spec()
     if code != "BKA":
         return None
     bonus = _load_bka_talent_bonus() or {}
@@ -3989,6 +3993,774 @@ def _convert_qhe_scores(
     return {"ok": True, "results": tiles}
 
 
+def _qsb_calculator_spec() -> Dict[str, Any]:
+    """Xét tuyển tổng hợp QSB. Học bạ, điểm thi, V-ACT và ưu tiên lấy từ hồ sơ."""
+    when_foreign = {"id": "doi_tuong", "value": "2.3"}
+    when_foreign_exam = {"id": "co_thi_nuoc_ngoai", "value": "co"}
+    when_cert = {"id": "doi_tuong", "value": "2.4"}
+    return {
+        "lead": (
+            "Điểm học lực thang 100 = điểm năng lực × 70% + điểm thi tốt nghiệp THPT quy đổi × 20% "
+            "+ học bạ quy đổi × 10%. Điểm xét tuyển = điểm học lực + điểm cộng (tối đa 10) "
+            "+ điểm ưu tiên đã quy đổi sang thang 100. Toán nhân đôi trong tổ hợp. "
+            "Chứng chỉ tiếng Anh đạt ngưỡng được tính 10 điểm môn Tiếng Anh ở phần thi tốt nghiệp."
+        ),
+        "inputs": [
+            {
+                "id": "doi_tuong",
+                "label": "Đối tượng",
+                "group": "Đối tượng dự tuyển",
+                "type": "select",
+                "hint": "Áp dụng cho chương trình tiêu chuẩn, tiếng Anh, tiên tiến và định hướng Nhật Bản.",
+                "options": [
+                    {"value": "", "label": "Chọn đối tượng"},
+                    {"value": "2.1", "label": "2.1 — Có điểm ĐGNL ĐHQG-HCM (V-ACT) năm 2026"},
+                    {"value": "2.2", "label": "2.2 — Không có điểm ĐGNL ĐHQG-HCM năm 2026"},
+                    {"value": "2.3", "label": "2.3 — Tốt nghiệp chương trình THPT nước ngoài"},
+                    {"value": "2.4", "label": "2.4 — Dùng chứng chỉ tuyển sinh quốc tế"},
+                ],
+            },
+            {
+                "id": "mon_2",
+                "label": "Môn 2",
+                "group": "Tổ hợp xét tuyển",
+                "type": "select",
+                "hint": "Toán luôn là môn nhân đôi. Chọn hai môn còn lại trong tổ hợp.",
+                "options": _dcn_subject_options(),
+            },
+            {
+                "id": "mon_3",
+                "label": "Môn 3",
+                "group": "Tổ hợp xét tuyển",
+                "type": "select",
+                "hint": "Khác môn 2. Tiếng Anh được thay bằng 10 điểm nếu chứng chỉ đạt ngưỡng quy chế.",
+                "options": _dcn_subject_options(),
+            },
+            {
+                "id": "co_thi_nuoc_ngoai",
+                "label": "Nước có kỳ thi tốt nghiệp",
+                "group": "THPT nước ngoài",
+                "type": "select",
+                "hint": "Không có kỳ thi thì điểm tốt nghiệp quy đổi lấy bằng điểm học bạ quy đổi.",
+                "show_when": when_foreign,
+                "options": [
+                    {"value": "khong", "label": "Không có kỳ thi tốt nghiệp"},
+                    {"value": "co", "label": "Có kỳ thi tốt nghiệp"},
+                ],
+            },
+            {
+                "id": "diem_tn_nuoc_ngoai",
+                "label": "Điểm thi tốt nghiệp đã quy đổi",
+                "group": "THPT nước ngoài",
+                "type": "number",
+                "min": 0,
+                "max": 100,
+                "step": "0.01",
+                "placeholder": "0–100",
+                "hint": "Hội đồng tuyển sinh quy đổi điểm thi nước ngoài về thang 100. Nhập mức đã quy đổi.",
+                "show_when": when_foreign_exam,
+            },
+            {
+                "id": "diem_nang_luc_cc",
+                "label": "Điểm năng lực từ chứng chỉ",
+                "group": "Chứng chỉ tuyển sinh quốc tế",
+                "type": "number",
+                "min": 0,
+                "max": 100,
+                "step": "0.01",
+                "placeholder": "0–100",
+                "hint": "SAT, ACT, IB, A-Level được quy đổi sang thang 100. Quy chế không công bố bảng mốc, nên nhập mức đã quy đổi.",
+                "show_when": when_cert,
+            },
+            {
+                "id": "diem_thuong",
+                "label": "Điểm thưởng",
+                "group": "Điểm cộng",
+                "type": "number",
+                "min": 0,
+                "max": 10,
+                "step": "0.01",
+                "placeholder": "0–10",
+                "hint": "Dành cho thí sinh thuộc diện xét tuyển thẳng nhưng không dùng quyền này. Chỉ cộng một lần, tối đa 10.",
+            },
+            {
+                "id": "diem_xet_thuong",
+                "label": "Điểm xét thưởng",
+                "group": "Điểm cộng",
+                "type": "number",
+                "min": 0,
+                "max": 5,
+                "step": "0.01",
+                "placeholder": "0–5",
+                "hint": "Thành tích học tập nổi bật, năng khiếu văn – thể – mỹ hoặc hoạt động xã hội. Tối đa 5.",
+            },
+            {
+                "id": "diem_khuyen_khich",
+                "label": "Điểm khuyến khích",
+                "group": "Điểm cộng",
+                "type": "number",
+                "min": 0,
+                "max": 5,
+                "step": "0.01",
+                "placeholder": "0–5",
+                "hint": "Chứng chỉ ngoại ngữ khác tiếng Anh, hoặc tin học quốc tế như MOS, IC3. Tối đa 5.",
+            },
+        ],
+    }
+
+
+def _qsb_year_average(hoc_ba: Dict[str, Any], key: str) -> Dict[str, Any]:
+    parts: List[str] = []
+    missing: List[str] = []
+    total = 0.0
+    for grade in ("10", "11", "12"):
+        grade_raw = hoc_ba.get(grade) if isinstance(hoc_ba.get(grade), dict) else {}
+        value = _profile_number(grade_raw.get(key), 0, 10)
+        if value is None:
+            missing.append(grade)
+            continue
+        total += value
+        parts.append(f"lớp {grade}: {_fmt_reg_score(value)}")
+    return {
+        "value": None if missing else total / 3,
+        "missing": missing,
+        "detail": "; ".join(parts),
+    }
+
+
+def _qsb_english_exam(certs: Dict[str, Any]) -> Optional[str]:
+    """Chứng chỉ đạt ngưỡng thì môn Tiếng Anh trong điểm thi được tính 10."""
+    ielts = _profile_number(certs.get("IELTS"), 0, 9)
+    if ielts is not None and ielts + 1e-9 >= 6:
+        return f"IELTS {_fmt_reg_score(ielts)} đạt từ 6.0"
+    toefl = _profile_number(certs.get("TOEFL iBT"), 0, 120)
+    if toefl is not None and toefl + 1e-9 >= 60:
+        return f"TOEFL iBT {_fmt_reg_score(toefl)} đạt từ 60"
+    toeic = _profile_number(certs.get("TOEIC"), 0, 990)
+    toeic_sw = _profile_number(certs.get("TOEIC SW"), 0, 400)
+    if (
+        toeic is not None and toeic_sw is not None
+        and toeic + 1e-9 >= 570 and toeic_sw + 1e-9 >= 310
+    ):
+        return (
+            f"TOEIC {_fmt_reg_score(toeic)} và TOEIC SW {_fmt_reg_score(toeic_sw)} "
+            "đạt ngưỡng"
+        )
+    pte = _profile_number(certs.get("PTE"), 0, 90)
+    if pte is not None and pte + 1e-9 >= 47:
+        return f"PTE Academic {_fmt_reg_score(pte)} đạt từ 47"
+    return None
+
+
+def _qsb_weighted(toan: float, second: float, third: float) -> float:
+    return (toan * 2 + second + third) / 4 * 10
+
+
+def _convert_qsb_scores(
+    scores: Dict[str, Any],
+    spec: Dict[str, Any],
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Tính điểm xét tuyển tổng hợp QSB 2026 từ hồ sơ cá nhân."""
+    parsed: Dict[str, Any] = {}
+    errors: List[str] = []
+    for item in spec["inputs"]:
+        value, error = _read_regulation_score(scores.get(item["id"]), item)
+        if error:
+            errors.append(error)
+            continue
+        if value is not None and value != "":
+            parsed[item["id"]] = value
+    if errors:
+        return {"ok": False, "error": " ".join(errors)}
+    group = parsed.get("doi_tuong")
+    if group not in ("2.1", "2.2", "2.3", "2.4"):
+        return {"ok": False, "error": "Chọn đối tượng dự tuyển."}
+    second = parsed.get("mon_2")
+    third = parsed.get("mon_3")
+    if not second or not third:
+        return {"ok": False, "error": "Chọn đủ môn 2 và môn 3. Toán là môn nhân đôi."}
+    chosen = ["toan", second, third]
+    if len(set(chosen)) < 3:
+        return {"ok": False, "error": "Toán, môn 2 và môn 3 phải khác nhau."}
+
+    profile = profile or {}
+    hoc_ba = profile.get("hoc_ba") if isinstance(profile.get("hoc_ba"), dict) else {}
+    exam_raw = profile.get("diem_thi_thu") if isinstance(profile.get("diem_thi_thu"), dict) else {}
+    certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+    english = _qsb_english_exam(certs)
+    exam: Dict[str, float] = {}
+    exam_notes: List[str] = []
+    exam_missing: List[str] = []
+    for key in chosen:
+        if key == "anh" and english:
+            exam[key] = 10
+            exam_notes.append(f"Tiếng Anh 10 ({english})")
+            continue
+        value = _profile_number(exam_raw.get(key), 0, 10)
+        if value is None:
+            exam_missing.append(_subject_label(key))
+            continue
+        exam[key] = value
+        exam_notes.append(f"{_subject_label(key)} {_fmt_reg_score(value)}")
+
+    transcript: Dict[str, float] = {}
+    transcript_notes: List[str] = []
+    transcript_missing: List[str] = []
+    for key in chosen:
+        part = _qsb_year_average(hoc_ba, key)
+        if part["value"] is None:
+            transcript_missing.append(
+                f"{_subject_label(key)} thiếu lớp {', '.join(part['missing'])}"
+            )
+            continue
+        transcript[key] = part["value"]
+        transcript_notes.append(f"{_subject_label(key)} {_fmt_reg_score(part['value'])} ({part['detail']})")
+
+    def tile(label: str, value: str, detail: str, kind: str = "value") -> Dict[str, str]:
+        return {"label": label, "value": value, "detail": detail, "kind": kind}
+
+    tiles: List[Dict[str, str]] = []
+    tn_score = None
+    if group == "2.3" and parsed.get("co_thi_nuoc_ngoai") == "co":
+        foreign = parsed.get("diem_tn_nuoc_ngoai")
+        if foreign is None:
+            tiles.append(tile(
+                "Điểm thi tốt nghiệp quy đổi",
+                "Thiếu điểm",
+                "Nhập điểm thi tốt nghiệp nước ngoài đã quy đổi về thang 100.",
+                "missing",
+            ))
+        else:
+            tn_score = float(foreign)
+            tiles.append(tile(
+                "Điểm thi tốt nghiệp quy đổi",
+                _fmt_reg_score(tn_score),
+                "Điểm thi nước ngoài do hội đồng tuyển sinh quy đổi về thang 100.",
+            ))
+    elif group != "2.3" and exam_missing:
+        tiles.append(tile(
+            "Điểm thi tốt nghiệp quy đổi",
+            "Thiếu môn",
+            "Cần điểm thi của " + ", ".join(exam_missing) + ".",
+            "missing",
+        ))
+    elif group != "2.3" and len(exam) == 3:
+        tn_score = _qsb_weighted(exam["toan"], exam[second], exam[third])
+        detail = (
+            f"(Toán {_fmt_reg_score(exam['toan'])} × 2 + {_subject_label(second)} "
+            f"{_fmt_reg_score(exam[second])} + {_subject_label(third)} "
+            f"{_fmt_reg_score(exam[third])}) / 4 × 10. "
+            + "; ".join(exam_notes)
+        )
+        tiles.append(tile("Điểm thi tốt nghiệp quy đổi", _fmt_reg_score(tn_score), detail))
+
+    hb_score = None
+    if transcript_missing:
+        tiles.append(tile(
+            "Điểm học bạ quy đổi",
+            "Thiếu học bạ",
+            "Cần trung bình lớp 10, 11 và 12 của " + "; ".join(transcript_missing) + ".",
+            "missing",
+        ))
+    else:
+        hb_score = _qsb_weighted(transcript["toan"], transcript[second], transcript[third])
+        tiles.append(tile(
+            "Điểm học bạ quy đổi",
+            _fmt_reg_score(hb_score),
+            "Trung bình lớp 10, 11, 12 rồi (Toán × 2 + môn 2 + môn 3) / 4 × 10. "
+            + "; ".join(transcript_notes),
+        ))
+
+    nl_score = None
+    if group == "2.1":
+        raw = _profile_number(certs.get("V-ACT"), 0, 1500)
+        if raw is None:
+            tiles.append(tile(
+                "Điểm năng lực",
+                "Chưa có V-ACT",
+                "Hồ sơ chưa có điểm V-ACT (ĐGNL ĐHQG-HCM), thang 1500.",
+                "missing",
+            ))
+        else:
+            nl_score = raw / 15
+            tiles.append(tile(
+                "Điểm năng lực",
+                _fmt_reg_score(nl_score),
+                f"V-ACT {_fmt_reg_score(raw)} / 15. Điểm đã tính hệ số Toán × 2.",
+                "source",
+            ))
+    elif group == "2.2":
+        if tn_score is None:
+            tiles.append(tile(
+                "Điểm năng lực",
+                "Chưa có",
+                "Không có V-ACT nên điểm năng lực bằng điểm thi tốt nghiệp quy đổi × 0,75.",
+                "missing",
+            ))
+        else:
+            nl_score = tn_score * 0.75
+            tiles.append(tile(
+                "Điểm năng lực",
+                _fmt_reg_score(nl_score),
+                f"Không có V-ACT: {_fmt_reg_score(tn_score)} × 0,75.",
+            ))
+    elif group == "2.3":
+        if hb_score is None:
+            tiles.append(tile(
+                "Điểm năng lực",
+                "Chưa có",
+                "Tốt nghiệp THPT nước ngoài: điểm năng lực lấy bằng điểm học bạ quy đổi.",
+                "missing",
+            ))
+        else:
+            nl_score = hb_score
+            tiles.append(tile(
+                "Điểm năng lực",
+                _fmt_reg_score(nl_score),
+                "Lấy bằng điểm học bạ quy đổi.",
+            ))
+        if parsed.get("co_thi_nuoc_ngoai") != "co" and hb_score is not None:
+            tn_score = hb_score
+            tiles.append(tile(
+                "Điểm thi tốt nghiệp quy đổi",
+                _fmt_reg_score(tn_score),
+                "Nước không có kỳ thi tốt nghiệp: lấy bằng điểm học bạ quy đổi.",
+            ))
+    else:
+        entered = parsed.get("diem_nang_luc_cc")
+        if entered is None:
+            tiles.append(tile(
+                "Điểm năng lực",
+                "Thiếu điểm",
+                "Nhập điểm năng lực đã quy đổi từ SAT, ACT, IB hoặc A-Level sang thang 100.",
+                "missing",
+            ))
+        else:
+            nl_score = float(entered)
+            tiles.append(tile(
+                "Điểm năng lực",
+                _fmt_reg_score(nl_score),
+                "Điểm chứng chỉ tuyển sinh quốc tế đã quy đổi sang thang 100.",
+                "source",
+            ))
+
+    if nl_score is None or tn_score is None or hb_score is None:
+        return {"ok": True, "results": tiles}
+
+    academic = nl_score * 0.70 + tn_score * 0.20 + hb_score * 0.10
+    bonus_parts = []
+    bonus = 0.0
+    for key, label, cap in (
+        ("diem_thuong", "thưởng", 10),
+        ("diem_xet_thuong", "xét thưởng", 5),
+        ("diem_khuyen_khich", "khuyến khích", 5),
+    ):
+        value = float(parsed.get(key) or 0)
+        bonus += value
+        if value:
+            bonus_parts.append(f"{label} {_fmt_reg_score(value)}")
+    capped = bonus > 10 + 1e-9
+    bonus = min(bonus, 10)
+    priority_raw, priority_label = _dcn_priority(profile)
+    if priority_raw is None:
+        priority = 0.0
+        priority_detail = "Chưa chọn khu vực hoặc đối tượng ưu tiên, tính 0."
+    else:
+        priority = priority_raw / 3 * 10
+        priority_detail = f"({priority_label}) / 3 × 10."
+    total = academic + bonus + priority
+    tiles.extend([
+        tile(
+            "Điểm học lực",
+            _fmt_reg_score(academic),
+            "Năng lực × 70% + điểm thi tốt nghiệp quy đổi × 20% + học bạ quy đổi × 10%.",
+        ),
+        tile(
+            "Điểm cộng",
+            _fmt_reg_score(bonus),
+            ("Tổng " + ", ".join(bonus_parts) + (". " if bonus_parts else "") + "Tối đa 10 điểm.")
+            + (" Đã cắt về 10." if capped else ""),
+        ),
+        tile("Điểm ưu tiên quy đổi", _fmt_reg_score(priority), priority_detail),
+        tile(
+            "Điểm xét tuyển",
+            _fmt_reg_score(total),
+            "Điểm học lực + điểm cộng + điểm ưu tiên quy đổi, thang 100.",
+            "source",
+        ),
+    ])
+    return {"ok": True, "results": tiles}
+
+
+def _uth_number(field_id: str, label: str, group: str, hint: str, hi: float) -> Dict[str, Any]:
+    return {
+        "id": field_id,
+        "label": label,
+        "group": group,
+        "type": "number",
+        "min": 0,
+        "max": hi,
+        "step": "0.01",
+        "placeholder": f"0–{hi:g}",
+        "hint": hint,
+    }
+
+
+def _uth_calculator_spec() -> Dict[str, Any]:
+    """Xét tuyển kết hợp UTH120. Điểm để trống thì lấy từ hồ sơ cá nhân."""
+    subjects = _dcn_subject_options()
+    blank = "Mặc định lấy từ hồ sơ khi chọn môn. Sửa nếu điểm khác."
+    return {
+        "lead": (
+            "UTH120 = 0,4 × max(k1 × ĐGNL, k2 × học bạ lớp 12, k3 × điểm thi tốt nghiệp) "
+            "+ 0,3 × học bạ lớp 12 + 0,3 × điểm thi tốt nghiệp + điểm ưu tiên. "
+            "Mỗi môn học bạ lớp 12 trong hồ sơ là trung bình năm, tức (HK1 + HK2) / 2. "
+            "Học bạ và điểm thi được đưa về thang 1200 bằng (ba môn + môn cao nhất) × 30. "
+            "Hệ số k để trống thì tính bằng 1 vì quy chế chưa công bố. "
+            "Điểm ưu tiên khu vực và đối tượng trên thang 30 được nhân 40 để về thang UTH120."
+        ),
+        "inputs": [
+            {
+                "id": "mon_1",
+                "label": "Môn 1",
+                "group": "Tổ hợp xét tuyển",
+                "type": "select",
+                "hint": "Ba môn dùng cho học bạ lớp 12 và điểm thi tốt nghiệp.",
+                "options": subjects,
+            },
+            {
+                "id": "mon_2",
+                "label": "Môn 2",
+                "group": "Tổ hợp xét tuyển",
+                "type": "select",
+                "hint": "Khác môn 1 và môn 3.",
+                "options": subjects,
+            },
+            {
+                "id": "mon_3",
+                "label": "Môn 3",
+                "group": "Tổ hợp xét tuyển",
+                "type": "select",
+                "hint": "Môn cao nhất trong ba môn được cộng thêm một lần.",
+                "options": subjects,
+            },
+            _uth_number("hb_1", "Học bạ môn 1", "Học bạ lớp 12", blank + " Thang 10.", 10),
+            _uth_number("hb_2", "Học bạ môn 2", "Học bạ lớp 12", blank + " Thang 10.", 10),
+            _uth_number("hb_3", "Học bạ môn 3", "Học bạ lớp 12", blank + " Thang 10.", 10),
+            _uth_number("tn_1", "Điểm thi môn 1", "Điểm thi tốt nghiệp", blank + " Thang 10.", 10),
+            _uth_number("tn_2", "Điểm thi môn 2", "Điểm thi tốt nghiệp", blank + " Thang 10.", 10),
+            _uth_number("tn_3", "Điểm thi môn 3", "Điểm thi tốt nghiệp", blank + " Thang 10.", 10),
+            _uth_number(
+                "diem_dgnl",
+                "Điểm ĐGNL",
+                "Đánh giá năng lực",
+                "Mặc định lấy V-ACT trong hồ sơ, thang 1200. Sửa nếu dùng điểm ĐGNL khác. "
+                "ĐGNL ĐHQG Hà Nội chưa có bảng quy đổi, hãy nhập mức đã quy đổi sang thang 1200.",
+                1200,
+            ),
+            _uth_number(
+                "k1",
+                "Hệ số k1",
+                "Hệ số quy đổi",
+                "Nhân với điểm ĐGNL. Để trống thì dùng 1.",
+                5,
+            ),
+            _uth_number("k2", "Hệ số k2", "Hệ số quy đổi", "Nhân với điểm học bạ. Để trống thì dùng 1.", 5),
+            _uth_number("k3", "Hệ số k3", "Hệ số quy đổi", "Nhân với điểm thi tốt nghiệp. Để trống thì dùng 1.", 5),
+            _uth_number(
+                "diem_khuyen_khich",
+                "Điểm khuyến khích của trường",
+                "Điểm ưu tiên",
+                "Cộng thêm trên thang UTH120. Quy chế nêu điều kiện nhưng không công bố mức điểm. Để trống thì tính 0.",
+                200,
+            ),
+        ],
+    }
+
+
+def _uth_scaled(values: List[float]) -> float:
+    return (sum(values) + max(values)) * 30
+
+
+def _score_input_text(value: float) -> str:
+    text = f"{value:.2f}".rstrip("0").rstrip(".")
+    return text or "0"
+
+
+def _profile_form_defaults(profile: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Điểm hồ sơ dùng để điền sẵn các ô quy đổi."""
+    profile = profile or {}
+    hoc_ba = profile.get("hoc_ba") if isinstance(profile.get("hoc_ba"), dict) else {}
+    grade_12 = hoc_ba.get("12") if isinstance(hoc_ba.get("12"), dict) else {}
+    exam_raw = profile.get("diem_thi_thu") if isinstance(profile.get("diem_thi_thu"), dict) else {}
+    certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+
+    def bag(store: Dict[str, Any]) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        for item in dataset_store.PROFILE_SUBJECTS:
+            value = _profile_number(store.get(item["key"]), 0, 10)
+            if value is not None:
+                found[item["key"]] = _score_input_text(value)
+        return found
+
+    vact = _profile_number(certs.get("V-ACT"), 0, 1200)
+    return {
+        "hoc_ba_12": bag(grade_12),
+        "diem_thi": bag(exam_raw),
+        "v_act": _score_input_text(vact) if vact is not None else "",
+    }
+
+
+def _uth_component(
+    entered: Optional[float],
+    store: Dict[str, Any],
+    key: str,
+) -> Dict[str, Any]:
+    profile_value = _profile_number(store.get(key), 0, 10)
+    if entered is not None:
+        same = profile_value is not None and abs(float(entered) - profile_value) < 1e-6
+        return {"value": float(entered), "source": "hồ sơ" if same else "đã sửa"}
+    if profile_value is None:
+        return {"value": None, "source": ""}
+    return {"value": profile_value, "source": "hồ sơ"}
+
+
+def _convert_uth_scores(
+    scores: Dict[str, Any],
+    spec: Dict[str, Any],
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Tính UTH120 từ điểm nhập tay hoặc hồ sơ cá nhân."""
+    parsed: Dict[str, Any] = {}
+    errors: List[str] = []
+    for item in spec["inputs"]:
+        value, error = _read_regulation_score(scores.get(item["id"]), item)
+        if error:
+            errors.append(error)
+            continue
+        if value is not None and value != "":
+            parsed[item["id"]] = value
+    if errors:
+        return {"ok": False, "error": " ".join(errors)}
+    keys = [parsed.get("mon_1"), parsed.get("mon_2"), parsed.get("mon_3")]
+    if not all(keys):
+        return {"ok": False, "error": "Chọn đủ môn 1, môn 2 và môn 3."}
+    if len(set(keys)) < 3:
+        return {"ok": False, "error": "Ba môn xét tuyển phải khác nhau."}
+
+    profile = profile or {}
+    hoc_ba = profile.get("hoc_ba") if isinstance(profile.get("hoc_ba"), dict) else {}
+    grade_12 = hoc_ba.get("12") if isinstance(hoc_ba.get("12"), dict) else {}
+    exam_raw = profile.get("diem_thi_thu") if isinstance(profile.get("diem_thi_thu"), dict) else {}
+    certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+
+    def tile(label: str, value: str, detail: str, kind: str = "value") -> Dict[str, str]:
+        return {"label": label, "value": value, "detail": detail, "kind": kind}
+
+    tiles: List[Dict[str, str]] = []
+    transcript: List[float] = []
+    transcript_notes: List[str] = []
+    transcript_missing: List[str] = []
+    exam: List[float] = []
+    exam_notes: List[str] = []
+    exam_missing: List[str] = []
+    for index, key in enumerate(keys, start=1):
+        label = _subject_label(str(key))
+        learned = _uth_component(parsed.get(f"hb_{index}"), grade_12, str(key))
+        if learned["value"] is None:
+            transcript_missing.append(label)
+        else:
+            transcript.append(learned["value"])
+            transcript_notes.append(f"{label} {_fmt_reg_score(learned['value'])} ({learned['source']})")
+        tested = _uth_component(parsed.get(f"tn_{index}"), exam_raw, str(key))
+        if tested["value"] is None:
+            exam_missing.append(label)
+        else:
+            exam.append(tested["value"])
+            exam_notes.append(f"{label} {_fmt_reg_score(tested['value'])} ({tested['source']})")
+
+    hb_score = None
+    if transcript_missing:
+        tiles.append(tile(
+            "Điểm học bạ lớp 12",
+            "Thiếu môn",
+            "Cần học bạ lớp 12 của " + ", ".join(transcript_missing) + ".",
+            "missing",
+        ))
+    else:
+        hb_score = _uth_scaled(transcript)
+        tiles.append(tile(
+            "Điểm học bạ lớp 12",
+            _fmt_reg_score(hb_score),
+            "(ba môn + môn cao nhất) × 30. " + "; ".join(transcript_notes) + ".",
+        ))
+    tn_score = None
+    if exam_missing:
+        tiles.append(tile(
+            "Điểm thi tốt nghiệp",
+            "Thiếu môn",
+            "Cần điểm thi của " + ", ".join(exam_missing) + ".",
+            "missing",
+        ))
+    else:
+        tn_score = _uth_scaled(exam)
+        tiles.append(tile(
+            "Điểm thi tốt nghiệp",
+            _fmt_reg_score(tn_score),
+            "(ba môn + môn cao nhất) × 30. " + "; ".join(exam_notes) + ".",
+        ))
+
+    dgnl = parsed.get("diem_dgnl")
+    vact = _profile_number(certs.get("V-ACT"), 0, 1200)
+    if dgnl is None:
+        dgnl = vact
+        dgnl_source = "V-ACT trong hồ sơ"
+    elif vact is not None and abs(float(dgnl) - vact) < 1e-6:
+        dgnl_source = "V-ACT trong hồ sơ"
+    else:
+        dgnl_source = "đã sửa"
+    if dgnl is None:
+        tiles.append(tile(
+            "Điểm ĐGNL",
+            "Không dùng",
+            "Không có V-ACT và chưa nhập điểm ĐGNL. Phần max chỉ so học bạ và điểm thi.",
+        ))
+    else:
+        dgnl = float(dgnl)
+        tiles.append(tile(
+            "Điểm ĐGNL",
+            _fmt_reg_score(dgnl),
+            f"{dgnl_source}, thang 1200.",
+            "source",
+        ))
+
+    coefficients = []
+    assumed = []
+    for name in ("k1", "k2", "k3"):
+        if parsed.get(name) is None:
+            coefficients.append(1.0)
+            assumed.append(name)
+        else:
+            coefficients.append(float(parsed[name]))
+    k1, k2, k3 = coefficients
+    k_note = "Đang dùng hệ số đã nhập."
+    if assumed:
+        k_note = "Quy chế chưa công bố " + ", ".join(assumed) + ", tính bằng 1."
+    tiles.append(tile(
+        "Hệ số k1, k2, k3",
+        " · ".join(_fmt_reg_score(item) for item in coefficients),
+        k_note,
+    ))
+
+    if hb_score is None or tn_score is None:
+        return {"ok": True, "results": tiles}
+
+    options = [("k2 × học bạ", k2 * hb_score), ("k3 × điểm thi", k3 * tn_score)]
+    if dgnl is not None:
+        options.insert(0, ("k1 × ĐGNL", k1 * dgnl))
+    best_label, best = max(options, key=lambda item: item[1])
+    academic = 0.4 * best + 0.3 * hb_score + 0.3 * tn_score
+    priority_raw, priority_label = _dcn_priority(profile)
+    if priority_raw is None:
+        priority = 0.0
+        priority_detail = "Chưa chọn khu vực hoặc đối tượng ưu tiên, tính 0."
+    else:
+        priority = priority_raw * 40
+        priority_detail = f"({priority_label}) × 40 để về thang UTH120."
+    bonus = float(parsed.get("diem_khuyen_khich") or 0)
+    total = academic + priority + bonus
+    tiles.extend([
+        tile(
+            "Thành phần cao nhất",
+            _fmt_reg_score(best),
+            f"{best_label} cao hơn các thành phần còn lại.",
+        ),
+        tile(
+            "Điểm học lực",
+            _fmt_reg_score(academic),
+            "0,4 × thành phần cao nhất + 0,3 × học bạ + 0,3 × điểm thi.",
+        ),
+        tile("Điểm ưu tiên quy đổi", _fmt_reg_score(priority), priority_detail),
+        tile(
+            "Điểm khuyến khích",
+            _fmt_reg_score(bonus),
+            "Điểm khuyến khích của trường trên thang UTH120." if bonus else "Không nhập, tính 0.",
+        ),
+        tile(
+            "Điểm xét tuyển UTH120",
+            _fmt_reg_score(total),
+            "Điểm học lực + điểm ưu tiên quy đổi + điểm khuyến khích.",
+            "source",
+        ),
+    ])
+    return {"ok": True, "results": tiles}
+
+
+def _uth_profile_groups(profile: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Học bạ lớp 12, điểm thi, V-ACT và ưu tiên — đúng các mục công thức UTH dùng."""
+    profile = profile or {}
+    hoc_ba = profile.get("hoc_ba") if isinstance(profile.get("hoc_ba"), dict) else {}
+    grade_12 = hoc_ba.get("12") if isinstance(hoc_ba.get("12"), dict) else {}
+    exam_raw = profile.get("diem_thi_thu") if isinstance(profile.get("diem_thi_thu"), dict) else {}
+    certs = profile.get("chung_chi") if isinstance(profile.get("chung_chi"), dict) else {}
+
+    transcript_rows = []
+    exam_rows = []
+    for item in dataset_store.PROFILE_SUBJECTS:
+        learned = _profile_number(grade_12.get(item["key"]), 0, 10)
+        if learned is not None:
+            transcript_rows.append({
+                "label": item["label"],
+                "value": _fmt_reg_score(learned),
+                "detail": "Trung bình năm lớp 12, hiểu là (HK1 + HK2) / 2.",
+            })
+        tested = _profile_number(exam_raw.get(item["key"]), 0, 10)
+        if tested is not None:
+            exam_rows.append({
+                "label": item["label"],
+                "value": _fmt_reg_score(tested),
+                "detail": "Điểm thi tốt nghiệp THPT trong hồ sơ.",
+            })
+    if not transcript_rows:
+        transcript_rows.append({
+            "label": "Học bạ lớp 12",
+            "value": "Chưa có",
+            "detail": "Có thể nhập trực tiếp ở form bên dưới.",
+        })
+    if not exam_rows:
+        exam_rows.append({
+            "label": "Điểm thi THPT",
+            "value": "Chưa có",
+            "detail": "Có thể nhập trực tiếp ở form bên dưới.",
+        })
+    vact = _profile_number(certs.get("V-ACT"), 0, 1200)
+    cert_rows = [{
+        "label": "V-ACT",
+        "value": _fmt_reg_score(vact) if vact is not None else "Chưa có",
+        "detail": "ĐGNL ĐHQG-HCM, thang 1200. Có thể nhập điểm ĐGNL khác ở form.",
+    }]
+    priority, priority_label = _dcn_priority(profile)
+    if priority is None:
+        priority_rows = [{
+            "label": "Điểm ưu tiên",
+            "value": "Chưa có",
+            "detail": "Chưa chọn khu vực hoặc đối tượng ưu tiên.",
+        }]
+    else:
+        priority_rows = [{
+            "label": "Điểm ưu tiên",
+            "value": _fmt_reg_score(priority),
+            "detail": f"{priority_label}. Khi tính UTH120, mức này được nhân 40.",
+        }]
+    return [
+        {"label": "Học bạ lớp 12", "rows": transcript_rows},
+        {"label": "Điểm thi tốt nghiệp", "rows": exam_rows},
+        {"label": "Đánh giá năng lực", "rows": cert_rows},
+        {"label": "Ưu tiên", "rows": priority_rows},
+    ]
+
+
 def calculate_regulation_scores(
     code: str,
     year: int,
@@ -4022,6 +4794,10 @@ def calculate_regulation_scores(
         return _convert_nth_scores(scores, spec, profile)
     if code == "QHE":
         return _convert_qhe_scores(scores, spec, profile)
+    if code == "QSB":
+        return _convert_qsb_scores(scores, spec, profile)
+    if code == "UTH":
+        return _convert_uth_scores(scores, spec, profile)
     return {"ok": False, "error": "Chưa hỗ trợ quy đổi cho trường này."}
 
 
@@ -4121,7 +4897,110 @@ def regulation_profile_groups(code: str, profile: Optional[Dict[str, Any]]) -> L
         return _dcn_profile_groups(profile)
     if code == "KHA":
         return _kha_profile_groups(profile)
+    if code == "UTH":
+        return _uth_profile_groups(profile)
     return _shared_profile_groups(profile)
+
+
+def qsb_cutoff_rows(payload: Any) -> Optional[List[Dict[str, Any]]]:
+    """Điểm chuẩn QSB là điểm xét tuyển tổng hợp, ghi cho 402 và 407."""
+    if not isinstance(payload, list) or not payload:
+        return None
+    sample = [item for item in payload[:3] if isinstance(item, dict)]
+    if not sample or not all("ma_tuyen_sinh" in item and "diem_chuan" in item for item in sample):
+        return None
+    if not any("chuong_trinh" in item or "ten_nghanh" in item for item in sample):
+        return None
+    rows: List[Dict[str, Any]] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        score = item.get("diem_chuan")
+        code = str(item.get("ma_tuyen_sinh") or "").strip()
+        if not code or score is None or score == "":
+            continue
+        name = str(item.get("ten_nghanh") or item.get("ten_nganh") or "").strip()
+        track = str(item.get("chuong_trinh") or "").strip()
+        if track and name and f"({track})" not in name:
+            name = f"{name} ({track})"
+        rows.append({
+            "Ma_xet_tuyen": code,
+            "Ten_nganh": name,
+            "phuong_thuc": [
+                {"ten": "402", "diem": score},
+                {"ten": "407", "diem": score},
+            ],
+        })
+    return rows
+
+
+_HUIT_SCORE_FIELDS = (
+    ("diem_thi_tn_thpt", "100"),
+    ("hoc_ba_thpt", "200"),
+    ("dgnl_dhqg_hcm", "402_V-ACT"),
+    ("diem_chuyen_biet_dhsp", "402_SPT"),
+)
+
+
+def huit_cutoff_rows(payload: Any) -> Optional[List[Dict[str, Any]]]:
+    """Điểm chuẩn HUIT (DCT) theo từng phương thức, gồm cả ngành liên kết quốc tế."""
+    if not isinstance(payload, dict):
+        return None
+    if str(payload.get("ma_truong") or "").strip().upper() != "DCT":
+        return None
+    regular = payload.get("diem_chuan_chinh_quy")
+    if not isinstance(regular, list):
+        return None
+    linked = payload.get("diem_chuan_lien_ket_quoc_te")
+    if linked is not None and not isinstance(linked, list):
+        return None
+    rows: List[Dict[str, Any]] = []
+    for item in list(regular) + list(linked or []):
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("ma_nganh") or item.get("ma_xet_tuyen") or "").strip()
+        if not code:
+            continue
+        methods = []
+        for field, method in _HUIT_SCORE_FIELDS:
+            score = item.get(field)
+            if score is None or score == "":
+                continue
+            methods.append({"ten": method, "diem": score})
+        if not methods:
+            continue
+        rows.append({
+            "Ma_xet_tuyen": code,
+            "Ma_nganh": code,
+            "Ten_nganh": str(item.get("ten_nganh") or "").strip(),
+            "phuong_thuc": methods,
+        })
+    return rows
+
+
+def uth_cutoff_rows(payload: Any) -> Optional[List[Dict[str, Any]]]:
+    """Điểm chuẩn UTH là điểm xét tuyển kết hợp, thang UTH120, ghi cho phương thức 407."""
+    if not isinstance(payload, dict):
+        return None
+    if str(payload.get("ma_truong") or "").strip().upper() != "UTH":
+        return None
+    majors = payload.get("danh_sach_diem_chuan")
+    if not isinstance(majors, list):
+        return None
+    rows: List[Dict[str, Any]] = []
+    for item in majors:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("ma_xet_tuyen") or "").strip()
+        score = item.get("diem_chuan")
+        if not code or score is None or score == "":
+            continue
+        rows.append({
+            "Ma_xet_tuyen": code,
+            "Ten_nganh": str(item.get("ten_nganh") or "").strip(),
+            "phuong_thuc": [{"ten": "407", "diem": score}],
+        })
+    return rows
 
 
 def hvtc_cutoff_rows(payload: Any) -> Optional[List[Dict[str, Any]]]:
@@ -4267,7 +5146,12 @@ def create_app() -> Flask:
         if not groups:
             return jsonify({"ok": False, "error": "Quy chế trường này chưa lấy điểm từ hồ sơ cá nhân."}), 404
         cards = _xda_auto_cards(profile) if code == "XDA" else []
-        return jsonify({"ok": True, "groups": groups, "cards": cards})
+        return jsonify({
+            "ok": True,
+            "groups": groups,
+            "cards": cards,
+            "defaults": _profile_form_defaults(profile),
+        })
 
     @app.route("/danh-gia")
     def danh_gia_page():
@@ -6758,7 +7642,58 @@ def create_app() -> Flask:
             if not hvtc_rows:
                 return jsonify({"ok": False, "error": "Không thấy điểm trúng tuyển trong dữ liệu Học viện Tài chính."}), 400
             raw_rows = hvtc_rows
-        elif isinstance(raw_rows, dict):
+        else:
+            qsb_rows = qsb_cutoff_rows(raw_rows)
+            if qsb_rows is not None:
+                if code != "QSB":
+                    return jsonify({
+                        "ok": False,
+                        "error": "File điểm này thuộc Trường Đại học Bách khoa - ĐHQG TP.HCM (QSB).",
+                    }), 400
+                if not qsb_rows:
+                    return jsonify({"ok": False, "error": "Không thấy điểm chuẩn trong dữ liệu QSB."}), 400
+                raw_rows = qsb_rows
+            else:
+                huit_rows = huit_cutoff_rows(raw_rows)
+                if huit_rows is not None:
+                    if code != "DCT":
+                        return jsonify({
+                            "ok": False,
+                            "error": "File điểm này thuộc Trường Đại học Công Thương TP.HCM (DCT).",
+                        }), 400
+                    try:
+                        file_year = int(raw_rows.get("nam") or 0)
+                    except (TypeError, ValueError):
+                        file_year = 0
+                    if file_year and file_year != year:
+                        return jsonify({
+                            "ok": False,
+                            "error": f"File điểm thuộc năm {file_year}. Hãy chọn đúng năm học.",
+                        }), 400
+                    if not huit_rows:
+                        return jsonify({"ok": False, "error": "Không thấy điểm chuẩn trong dữ liệu DCT."}), 400
+                    raw_rows = huit_rows
+                else:
+                    uth_rows = uth_cutoff_rows(raw_rows)
+                    if uth_rows is not None:
+                        if code != "UTH":
+                            return jsonify({
+                                "ok": False,
+                                "error": "File điểm này thuộc Trường Đại học Giao thông Vận tải TP.HCM (UTH).",
+                            }), 400
+                        try:
+                            file_year = int(raw_rows.get("nam") or 0)
+                        except (TypeError, ValueError):
+                            file_year = 0
+                        if file_year and file_year != year:
+                            return jsonify({
+                                "ok": False,
+                                "error": f"File điểm thuộc năm {file_year}. Hãy chọn đúng năm học.",
+                            }), 400
+                        if not uth_rows:
+                            return jsonify({"ok": False, "error": "Không thấy điểm chuẩn trong dữ liệu UTH."}), 400
+                        raw_rows = uth_rows
+        if isinstance(raw_rows, dict):
             raw_rows = next(
                 (
                     raw_rows.get(key)

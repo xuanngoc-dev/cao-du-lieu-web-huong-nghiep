@@ -152,7 +152,7 @@
   }
 ]</code></pre>
               <p class="mb-2"><b>Phương thức có tổ hợp riêng.</b> Mỗi phần tử <code>phuong_thuc</code> khai báo <code>ma_phuong_thuc</code> và <code>to_hop</code> của chính nó.</p>
-              <pre class="mb-0 bg-white border rounded p-2"><code>[
+              <pre class="mb-3 bg-white border rounded p-2"><code>[
   {
     "ma_xet_tuyen": "7210404",
     "ma_nganh": "7210404",
@@ -164,6 +164,82 @@
     ]
   }
 ]</code></pre>
+              <p class="mb-2"><b>Đại học Công Thương TP.HCM (DCT).</b> Có thể dán nguyên file tuyển sinh. Ngành trong <code>nganh_chinh_quy</code> và <code>nganh_lien_ket_quoc_te</code> đều được nhập. PT1 ghi vào 100, PT2 vào 200, PT4 vào 301; PT3 và PT5 cùng ghi vào 402. Tổ hợp lấy từ <code>to_hop_xet_tuyen</code> của từng ngành. Ngành liên kết được gắn chương trình «Liên kết quốc tế».</p>
+              <pre class="mb-3 bg-white border rounded p-2"><code>{
+  "truong": "Trường Đại học Công Thương Thành phố Hồ Chí Minh",
+  "ma_truong": "DCT",
+  "phuong_thuc_tuyen_sinh": [
+    { "ma": "PT1", "ten": "Xét kết quả thi tốt nghiệp THPT năm 2026" },
+    { "ma": "PT2", "ten": "Xét kết quả học tập THPT (lớp 10, 11 và 12)" },
+    { "ma": "PT3", "ten": "Xét kết quả kỳ thi Đánh giá năng lực ĐHQG TP.HCM năm 2026" },
+    { "ma": "PT4", "ten": "Xét tuyển thẳng theo quy định của Bộ GD&amp;ĐT" },
+    { "ma": "PT5", "ten": "Xét kết quả ĐGNL chuyên biệt ĐH Sư phạm TP.HCM kết hợp học bạ" }
+  ],
+  "nganh_chinh_quy": [
+    {
+      "ma_nganh": "7220201",
+      "ten_nganh": "Ngôn ngữ Anh",
+      "to_hop_xet_tuyen": ["D01", "A01", "D09", "D14"]
+    }
+  ],
+  "nganh_lien_ket_quoc_te": [
+    {
+      "ma_nganh": "LK7220204",
+      "ten_nganh": "Ngôn ngữ Trung Quốc - Chương trình liên kết với Đại học Lỗ Đông, Trung Quốc",
+      "to_hop_xet_tuyen": ["A00", "A01", "B00", "B08", "C00", "C01", "C02", "C03", "D01", "D07", "D09", "D14", "D15", "X01", "X26"]
+    },
+    {
+      "ma_nganh": "LK7340101",
+      "ten_nganh": "Quản trị kinh doanh - Chương trình liên kết với Đại học Shinawatra, Thái Lan",
+      "to_hop_xet_tuyen": ["A00", "A01", "B00", "B08", "C00", "C01", "C02", "C03", "D01", "D07", "D09", "D14", "D15", "X01", "X26"]
+    },
+    {
+      "ma_nganh": "BL7220204",
+      "ten_nganh": "Ngôn ngữ Trung Quốc - Chương trình liên kết Đại học Ngôn ngữ và Văn hoá Bắc Kinh, Trung Quốc (BLCU)",
+      "to_hop_xet_tuyen": ["A00", "A01", "B00", "B08", "C00", "C01", "C02", "C03", "D01", "D07", "D09", "D14", "D15", "X01", "X26"]
+    },
+    {
+      "ma_nganh": "CU7220204",
+      "ten_nganh": "Ngôn ngữ Trung Quốc (Chuyên ngành Hán ngữ ứng dụng) - LK với ĐH Văn hóa Trung Quốc, Đài Loan",
+      "to_hop_xet_tuyen": ["A00", "A01", "B00", "B08", "C00", "C01", "C02", "C03", "D01", "D07", "D09", "D14", "D15", "X01", "X26"]
+    },
+    {
+      "ma_nganh": "CU7340120",
+      "ten_nganh": "Kinh doanh quốc tế - LK với ĐH Văn hóa Trung Quốc, Đài Loan",
+      "to_hop_xet_tuyen": ["A00", "A01", "B00", "B08", "C00", "C01", "C02", "C03", "D01", "D07", "D09", "D14", "D15", "X01", "X26"]
+    }
+  ]
+}</code></pre>
+              <p class="mb-2"><b>Đại học Giao thông Vận tải TP.HCM (UTH).</b> Có thể dán nguyên file tuyển sinh. PT1 ghi vào 301, PT2 ghi vào 407 (học bạ năm 12, điểm thi tốt nghiệp THPT và điểm ĐGNL nếu có). Ô phương thức hiện môn bắt buộc và nhóm tự chọn; địa điểm đào tạo ghi vào ghi chú.</p>
+              <pre class="mb-0 bg-white border rounded p-2"><code>{
+  "truong": "Trường Đại học Giao thông Vận tải TP. Hồ Chí Minh",
+  "ma_truong": "UTH",
+  "phuong_thuc_tuyen_sinh": [
+    { "ma": "PT1", "ten": "Xét tuyển thẳng theo quy định của Bộ Giáo dục và Đào tạo" },
+    { "ma": "PT2", "ten": "Xét tuyển kết hợp (điểm học bạ năm 12 + điểm thi tốt nghiệp THPT + điểm ĐGNL nếu có)" }
+  ],
+  "nhom_mon_tu_chon": {
+    "NTC1": ["Ngữ văn", "Vật lý", "Hóa học", "Sinh học", "Lịch sử", "Địa lý", "Tiếng Anh"]
+  },
+  "danh_muc_nganh": [
+    {
+      "ma_xet_tuyen": "UTHKDL01A",
+      "ten_nganh": "Khoa học dữ liệu (chuyên ngành Khoa học dữ liệu; Blockchain và AI) - chương trình tiên tiến",
+      "mon_bat_buoc": "Toán",
+      "mon_tu_chon": "2 môn trong NTC1",
+      "phuong_thuc": ["PT1", "PT2"],
+      "dia_diem": "Trụ sở chính TP.HCM"
+    },
+    {
+      "ma_xet_tuyen": "UTHLAW01A",
+      "ten_nganh": "Luật (Chuyên ngành Luật và chính sách hàng hải) – chương trình tiên tiến",
+      "mon_bat_buoc": "Toán; Ngữ văn",
+      "mon_tu_chon": "1 môn trong NTC3",
+      "phuong_thuc": ["PT1", "PT2"],
+      "dia_diem": "Trụ sở chính TP.HCM"
+    }
+  ]
+}</code></pre>
             </div>
           </div>
         </div>
@@ -215,5 +291,5 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/multi-select.js') }}?v=20260923a"></script>
 <script src="{{ url_for('static', filename='js/thu-thap-common.js') }}?v=20260925b"></script>
-<script src="{{ url_for('static', filename='js/thu-thap-methods.js') }}?v=20260930c"></script>
+<script src="{{ url_for('static', filename='js/thu-thap-methods.js') }}?v=20261001c"></script>
 {% endblock %}

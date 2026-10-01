@@ -23,12 +23,20 @@ function scoreMethodMatches(row, selected) {
   return methodGroupCodes(row.ma_truong, row.nam, name).some(code => selected.has(code));
 }
 
+function scoreColumnNote(name, school, year) {
+  if (String(school || '').trim().toUpperCase() === 'UTH' && name === '407') {
+    const title = '407: Điểm xét tuyển kết hợp, thang UTH120.';
+    return {kind: 'official', title, lines: [title]};
+  }
+  return methodColumnNote(name, school, year);
+}
+
 function scoreHeaderNote(name, rows, year) {
   const schools = [...new Set((rows || [])
     .filter(row => String(row.phuong_thuc || '').trim() === name)
     .map(row => String(row.ma_truong || '').trim().toUpperCase())
     .filter(Boolean))];
-  if (schools.length === 1) return {note: methodColumnNote(name, schools[0], year), school: schools[0]};
+  if (schools.length === 1) return {note: scoreColumnNote(name, schools[0], year), school: schools[0]};
   const notes = schools.map(school => methodColumnNote(name, school, year));
   const titles = [...new Set(notes.map(note => note.title))];
   return {
@@ -48,11 +56,15 @@ function scoreColumnNames(rows) {
   const schools = new Set((rows || [])
     .map(row => String(row.ma_truong || '').trim().toUpperCase())
     .filter(Boolean));
-  const ptitOnly = schools.size > 0 && [...schools].every(code => code === 'BVH' || code === 'BVS');
+  const schoolList = [...schools];
+  const ptitOnly = schoolList.length > 0 && schoolList.every(code => code === 'BVH' || code === 'BVS');
+  const dctOnly = schoolList.length > 0 && schoolList.every(code => code === 'DCT');
   const officialOrder = OFFICIAL_METHODS.map(item => item.ma);
   const preferred = ptitOnly
     ? ['100', '301', '415_SAT', '415_ACT', '402_TSA', '402_HSA', '402_V-ACT', '402_SPT', '410']
-    : officialOrder;
+    : dctOnly
+      ? ['100', '200', '402_V-ACT', '402_SPT']
+      : officialOrder;
   return [
     ...preferred.filter(code => names.includes(code)),
     ...officialOrder.filter(code => names.includes(code) && !preferred.includes(code)),
@@ -232,7 +244,7 @@ function renderResults(rows, downloadUrl, years, methods) {
     const scoreCells = methodNames.length
       ? methodNames.map(code => {
         const cell = group.byMethod[code] || {diem: null, sources: []};
-        return editCell(key, year, code, cell.diem, methodColumnNote(code, group.ma_truong, year).title);
+        return editCell(key, year, code, cell.diem, scoreColumnNote(code, group.ma_truong, year).title);
       }).join('')
       : '<td class="text-center text-muted">—</td>';
     return `

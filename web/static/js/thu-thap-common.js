@@ -166,6 +166,9 @@ function aliasMethodName(school, year, name) {
 function methodGroupCodes(school, year, name) {
   const direct = readGroupCodes(school, year, name);
   if (direct.length) return direct;
+  if (String(school || '').trim().toUpperCase() === 'DCT' && (name === '402_V-ACT' || name === '402_SPT')) {
+    return ['402'];
+  }
   const alias = aliasMethodName(school, year, name);
   return alias ? readGroupCodes(school, year, alias) : [];
 }
@@ -173,6 +176,13 @@ function methodGroupCodes(school, year, name) {
 function methodColumnNote(name, school, year) {
   const official = officialMethod(name);
   if (official) return {kind: 'official', title: `${official.ma}: ${official.ten}`, lines: [`${official.ma}: ${official.ten}`]};
+  if (String(school || '').trim().toUpperCase() === 'DCT') {
+    const dctNotes = {
+      '402_V-ACT': '402: Điểm ĐGNL ĐHQG TP.HCM (PT3), thang 1200.',
+      '402_SPT': '402: Điểm ĐGNL chuyên biệt ĐH Sư phạm TP.HCM kết hợp học bạ (PT5).',
+    };
+    if (dctNotes[name]) return {kind: 'group', title: dctNotes[name], lines: [dctNotes[name]]};
+  }
   const codes = methodGroupCodes(school, year, name);
   if (!codes.length) {
     return {

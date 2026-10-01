@@ -110,7 +110,13 @@ function methodColumnNames(rows) {
           ? ['100', '409', '402', '301', '500', '410', '415']
           : (school === 'HTC' || school === 'HTS' || school === 'HTY')
             ? ['301', '410', '409', '407', '415', '500', '100', '200']
-            : null;
+            : school === 'QSB'
+              ? ['301', '402', '407']
+              : school === 'DCT'
+                ? ['100', '200', '402', '301']
+                : school === 'UTH'
+                  ? ['301', '407']
+                  : null;
   if (!preferred) return names;
   return [
     ...preferred.filter(code => names.includes(code)),

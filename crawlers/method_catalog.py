@@ -971,10 +971,307 @@ def hvtc_program_rows(payload: Dict[str, object]) -> List[Dict[str, object]]:
     return rows
 
 
+_QSB_TRACKS = (
+    ("chuong_trinh_tieu_chuan", "Chương trình tiêu chuẩn", ""),
+    ("chuong_trinh_tien_tien", "Chương trình tiên tiến", "IELTS Academic ≥ 6.0 (tạm chấp nhận 5.5)"),
+    (
+        "chuong_trinh_day_va_hoc_bang_tieng_anh",
+        "Chương trình dạy và học bằng tiếng Anh",
+        "IELTS Academic ≥ 6.0 (tạm chấp nhận 5.5)",
+    ),
+)
+
+# PT1 xét thẳng theo Bộ; PT2 là một phương thức tổng hợp nên tách theo thành phần điểm.
+_QSB_METHOD_MAP = {
+    "PT1-TTBO": [("301", "Xét tuyển thẳng, ưu tiên xét tuyển theo quy chế của Bộ GD&ĐT")],
+    "PT2-THOP": [
+        ("402", "Xét tuyển tổng hợp: điểm ĐGNL ĐHQG-HCM chiếm 70%. Điểm Toán được nhân đôi"),
+        ("407", "Xét tuyển tổng hợp: điểm thi tốt nghiệp THPT (20%) kết hợp học bạ (10%). Điểm Toán được nhân đôi"),
+    ],
+}
+
+
+def _is_qsb_payload(payload) -> bool:
+    info = payload.get("thong_tin_chung") if isinstance(payload, dict) else None
+    return (
+        isinstance(payload, dict)
+        and isinstance(info, dict)
+        and str(info.get("ma_truong") or "").strip().upper() == "QSB"
+        and isinstance(payload.get("chuong_trinh_tieu_chuan"), list)
+        and isinstance(payload.get("phuong_thuc_tuyen_sinh"), list)
+    )
+
+
+def _qsb_methods(codes, combos: List[str]) -> List[Dict[str, object]]:
+    methods: List[Dict[str, object]] = []
+    seen = set()
+    for raw in codes or []:
+        token = str(raw.get("ma") if isinstance(raw, dict) else raw).strip().upper()
+        for code, label in _QSB_METHOD_MAP.get(token, []):
+            if code in seen:
+                continue
+            seen.add(code)
+            detail = {"to_hop_xet_tuyen": list(combos)} if combos else {}
+            methods.append({
+                "id": code,
+                "ten": code,
+                "ap_dung": True,
+                "mo_ta": f"{label}. Tổ hợp: {'; '.join(combos)}" if combos else label,
+                "chi_tiet": detail,
+            })
+    return methods
+
+
+def qsb_program_rows(payload: Dict[str, object]) -> List[Dict[str, object]]:
+    """Bóc ngành QSB và đổi PT1-TTBO, PT2-THOP sang mã phương thức chuẩn."""
+    info = payload.get("thong_tin_chung") or {}
+    school_name = clean_text(str(info.get("ten_truong") or "Trường Đại học Bách khoa - ĐHQG TP.HCM"))
+    method_codes = payload.get("phuong_thuc_tuyen_sinh") or []
+    rows: List[Dict[str, object]] = []
+    for key, track_name, track_note in _QSB_TRACKS:
+        programs = payload.get(key) or []
+        if not isinstance(programs, list):
+            continue
+        for major in programs:
+            if not isinstance(major, dict):
+                continue
+            admission = clean_text(str(major.get("ma_tuyen_sinh") or major.get("ma_xet_tuyen") or ""))
+            major_name = clean_text(str(major.get("ten_nganh") or ""))
+            if not admission and not major_name:
+                continue
+            combo_text = clean_text(str(major.get("to_hop") or ""))
+            combos = [combo_text] if combo_text else []
+            notes = []
+            if "nganh moi" in strip_accents(major_name).lower():
+                notes.append("Ngành mới")
+            if track_note:
+                notes.append(track_note)
+            quota = major.get("chi_tieu")
+            quota_text = ""
+            if quota is not None and str(quota).strip() not in {"", "None"}:
+                quota_text = re.sub(r"[^\d]", "", str(quota))[:6]
+            rows.append({
+                "ma_truong": "QSB",
+                "ten_truong": school_name,
+                "ma_xet_tuyen": admission,
+                "ten_chuong_trinh": track_name,
+                "ma_nganh": clean_text(str(major.get("ma_nganh") or "")),
+                "ten_nganh": major_name,
+                "chi_tieu": quota_text,
+                "ghi_chu": ". ".join(notes),
+                "hinh_thuc": _qsb_methods(major.get("phuong_thuc") or method_codes, combos),
+            })
+    if not rows:
+        raise ValueError("Không thấy ngành nào trong dữ liệu Trường Đại học Bách khoa - ĐHQG TP.HCM.")
+    return rows
+
+
+_HUIT_TRACKS = (
+    ("nganh_chinh_quy", ""),
+    ("nganh_lien_ket_quoc_te", "Liên kết quốc tế"),
+)
+
+# PT1–PT4 khớp một mã chuẩn. PT3 và PT5 đều dùng kỳ thi của đơn vị khác nên cùng mã 402.
+_HUIT_METHOD_MAP = {
+    "PT1": [("100", "PT1: Xét kết quả thi tốt nghiệp THPT năm 2026")],
+    "PT2": [("200", "PT2: Xét kết quả học tập THPT (lớp 10, 11 và 12)")],
+    "PT3": [(
+        "402",
+        "PT3: Xét kết quả kỳ thi Đánh giá năng lực do Đại học Quốc gia TP. Hồ Chí Minh tổ chức năm 2026",
+    )],
+    "PT4": [("301", "PT4: Xét tuyển thẳng theo quy định của Bộ GD&ĐT")],
+    "PT5": [(
+        "402",
+        "PT5: Xét kết quả môn thi Đánh giá năng lực chuyên biệt của Đại học Sư phạm TP. Hồ Chí Minh năm 2026 kết hợp kết quả học tập THPT",
+    )],
+}
+
+
+def _is_huit_payload(payload) -> bool:
+    return (
+        isinstance(payload, dict)
+        and str(payload.get("ma_truong") or "").strip().upper() == "DCT"
+        and isinstance(payload.get("nganh_chinh_quy"), list)
+        and isinstance(payload.get("phuong_thuc_tuyen_sinh"), list)
+    )
+
+
+def _huit_methods(codes, combos: List[str]) -> List[Dict[str, object]]:
+    grouped: Dict[str, List[str]] = {}
+    order: List[str] = []
+    for raw in codes or []:
+        token = str(raw.get("ma") if isinstance(raw, dict) else raw).strip().upper()
+        for code, label in _HUIT_METHOD_MAP.get(token, []):
+            if code not in grouped:
+                grouped[code] = []
+                order.append(code)
+            if label not in grouped[code]:
+                grouped[code].append(label)
+    methods: List[Dict[str, object]] = []
+    detail = {"to_hop_xet_tuyen": list(combos)} if combos else {}
+    combo_note = f" Tổ hợp: {', '.join(combos)}" if combos else ""
+    for code in order:
+        body = ". ".join(grouped[code])
+        methods.append({
+            "id": code,
+            "ten": code,
+            "ap_dung": True,
+            "mo_ta": f"{body}.{combo_note}" if combo_note else body,
+            "chi_tiet": detail,
+        })
+    return methods
+
+
+def huit_program_rows(payload: Dict[str, object]) -> List[Dict[str, object]]:
+    """Bóc ngành HUIT (DCT) và đổi PT1–PT5 sang mã phương thức chuẩn."""
+    school_name = clean_text(str(
+        payload.get("truong") or "Trường Đại học Công Thương Thành phố Hồ Chí Minh"
+    ))
+    source = clean_text(str(payload.get("nguon") or ""))
+    method_codes = payload.get("phuong_thuc_tuyen_sinh") or []
+    rows: List[Dict[str, object]] = []
+    for key, track_name in _HUIT_TRACKS:
+        programs = payload.get(key) or []
+        if not isinstance(programs, list):
+            continue
+        for major in programs:
+            if not isinstance(major, dict):
+                continue
+            major_code = clean_text(str(major.get("ma_nganh") or major.get("ma_xet_tuyen") or ""))
+            major_name = clean_text(str(major.get("ten_nganh") or ""))
+            if not major_code and not major_name:
+                continue
+            combos = _combo_codes(major.get("to_hop_xet_tuyen") or major.get("to_hop"))
+            notes = []
+            if not combos and track_name:
+                notes.append("Chưa liệt kê đủ tổ hợp môn")
+            rows.append({
+                "ma_truong": "DCT",
+                "ten_truong": school_name,
+                "ma_xet_tuyen": major_code,
+                "ten_chuong_trinh": track_name,
+                "ma_nganh": major_code,
+                "ten_nganh": major_name,
+                "chi_tieu": "",
+                "ghi_chu": ". ".join(notes),
+                "nguon": source,
+                "hinh_thuc": _huit_methods(method_codes, combos),
+            })
+    if not rows:
+        raise ValueError("Không thấy ngành nào trong dữ liệu Trường Đại học Công Thương TP.HCM.")
+    return rows
+
+
+# PT1 là xét tuyển thẳng. PT2 là một phương thức kết hợp học bạ, điểm thi và ĐGNL nếu có.
+_UTH_METHOD_MAP = {
+    "PT1": ("301", "PT1: Xét tuyển thẳng theo quy định của Bộ Giáo dục và Đào tạo"),
+    "PT2": (
+        "407",
+        "PT2: Xét tuyển kết hợp điểm học bạ năm 12, điểm thi tốt nghiệp THPT và điểm ĐGNL nếu có",
+    ),
+}
+
+
+def _is_uth_payload(payload) -> bool:
+    return (
+        isinstance(payload, dict)
+        and str(payload.get("ma_truong") or "").strip().upper() == "UTH"
+        and isinstance(payload.get("danh_muc_nganh"), list)
+        and isinstance(payload.get("phuong_thuc_tuyen_sinh"), list)
+    )
+
+
+def _uth_subject_formula(major: Dict[str, object]) -> str:
+    required = clean_text(str(major.get("mon_bat_buoc") or "")).replace(";", ",")
+    optional = clean_text(str(major.get("mon_tu_chon") or ""))
+    parts = [part for part in (required, optional) if part]
+    return " + ".join(parts)
+
+
+def _uth_group_note(optional: str, groups: Dict[str, object]) -> str:
+    notes = []
+    for code, subjects in groups.items():
+        if code not in optional or not isinstance(subjects, list):
+            continue
+        names = [clean_text(str(item)) for item in subjects if clean_text(str(item))]
+        if names:
+            notes.append(f"{code}: {', '.join(names)}")
+    return ". ".join(notes)
+
+
+def _uth_methods(codes, formula: str, group_note: str) -> List[Dict[str, object]]:
+    methods: List[Dict[str, object]] = []
+    seen = set()
+    for raw in codes or []:
+        token = str(raw.get("ma") if isinstance(raw, dict) else raw).strip().upper()
+        mapped = _UTH_METHOD_MAP.get(token)
+        if not mapped or mapped[0] in seen:
+            continue
+        seen.add(mapped[0])
+        code, label = mapped
+        extra = f" Môn xét: {formula}." if formula else ""
+        if group_note:
+            extra = f"{extra} {group_note}."
+        methods.append({
+            "id": code,
+            "ten": code,
+            "ap_dung": True,
+            "mo_ta": f"{label}.{extra}".strip(),
+            "chi_tiet": {"to_hop_xet_tuyen": [formula]} if formula else {},
+        })
+    return methods
+
+
+def uth_program_rows(payload: Dict[str, object]) -> List[Dict[str, object]]:
+    """Bóc ngành UTH và đổi PT1, PT2 sang mã phương thức chuẩn."""
+    school_name = clean_text(str(
+        payload.get("truong") or "Trường Đại học Giao thông Vận tải TP. Hồ Chí Minh"
+    ))
+    source = clean_text(str(payload.get("nguon") or ""))
+    groups = payload.get("nhom_mon_tu_chon") if isinstance(payload.get("nhom_mon_tu_chon"), dict) else {}
+    school_methods = [
+        item.get("ma") for item in (payload.get("phuong_thuc_tuyen_sinh") or [])
+        if isinstance(item, dict)
+    ]
+    rows: List[Dict[str, object]] = []
+    for major in payload.get("danh_muc_nganh") or []:
+        if not isinstance(major, dict):
+            continue
+        admission = clean_text(str(major.get("ma_xet_tuyen") or ""))
+        major_name = clean_text(str(major.get("ten_nganh") or ""))
+        if not admission and not major_name:
+            continue
+        formula = _uth_subject_formula(major)
+        optional = clean_text(str(major.get("mon_tu_chon") or ""))
+        place = clean_text(str(major.get("dia_diem") or ""))
+        methods = major.get("phuong_thuc") or school_methods
+        rows.append({
+            "ma_truong": "UTH",
+            "ten_truong": school_name,
+            "ma_xet_tuyen": admission,
+            "ten_chuong_trinh": place,
+            "ma_nganh": "",
+            "ten_nganh": major_name,
+            "chi_tieu": "",
+            "ghi_chu": place,
+            "nguon": source,
+            "hinh_thuc": _uth_methods(methods, formula, _uth_group_note(optional, groups)),
+        })
+    if not rows:
+        raise ValueError("Không thấy ngành nào trong dữ liệu Trường Đại học Giao thông Vận tải TP.HCM.")
+    return rows
+
+
 def program_rows_from_payload(payload) -> List[Dict[str, object]]:
     """Đọc nhiều cấu trúc JSON ngành và phương thức xét tuyển."""
     if _is_hvtc_payload(payload):
         return hvtc_program_rows(payload)
+    if _is_qsb_payload(payload):
+        return qsb_program_rows(payload)
+    if _is_huit_payload(payload):
+        return huit_program_rows(payload)
+    if _is_uth_payload(payload):
+        return uth_program_rows(payload)
     if isinstance(payload, dict):
         folded = _folded_item(payload)
         payload = next(

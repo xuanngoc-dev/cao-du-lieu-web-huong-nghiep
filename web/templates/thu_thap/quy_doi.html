@@ -176,6 +176,31 @@ window.MathJax = {
       </fieldset>
     `).join('');
     syncConditionalFields();
+    fillProfileDefaults(false);
+  }
+
+  let profileDefaults = {hoc_ba_12: {}, diem_thi: {}, v_act: ''};
+
+  function assignProfileValue(input, value, reset) {
+    if (!input) return;
+    if (reset) delete input.dataset.userEdited;
+    if (input.dataset.userEdited === '1') return;
+    input.value = value == null || value === '' ? '' : String(value);
+  }
+
+  function fillSubjectPair(index, reset) {
+    const subject = fields.querySelector(`[name="mon_${index}"]`)?.value || '';
+    const learned = subject ? profileDefaults.hoc_ba_12?.[subject] : '';
+    const tested = subject ? profileDefaults.diem_thi?.[subject] : '';
+    assignProfileValue(fields.querySelector(`[name="hb_${index}"]`), learned, reset);
+    assignProfileValue(fields.querySelector(`[name="tn_${index}"]`), tested, reset);
+  }
+
+  function fillProfileDefaults(resetSubjects) {
+    const doc = currentDoc();
+    if (!doc || doc.code !== 'UTH' || !fields) return;
+    for (let index = 1; index <= 3; index += 1) fillSubjectPair(index, resetSubjects);
+    assignProfileValue(fields.querySelector('[name="diem_dgnl"]'), profileDefaults.v_act, false);
   }
 
   function syncConditionalFields() {
@@ -282,8 +307,10 @@ window.MathJax = {
         renderAutoCards([]);
         return;
       }
+      profileDefaults = data.defaults || {hoc_ba_12: {}, diem_thi: {}, v_act: ''};
       paintProfile(data.groups || []);
       renderAutoCards(data.cards || []);
+      fillProfileDefaults(false);
     } catch (error) {
       if (token !== profileToken) return;
       profileBox.innerHTML = `<div class="alert alert-danger py-2 mb-0">${esc(error.message)}</div>`;
@@ -330,8 +357,15 @@ window.MathJax = {
   });
   yearSel.addEventListener('change', render);
   if (fields) {
+    fields.addEventListener('input', (event) => {
+      const name = event.target?.name || '';
+      if (/^(hb_|tn_|diem_dgnl$)/.test(name)) event.target.dataset.userEdited = '1';
+    });
     fields.addEventListener('change', (event) => {
-      if (event.target && event.target.name === 'nguon') syncConditionalFields();
+      syncConditionalFields();
+      const name = event.target?.name || '';
+      const match = name.match(/^mon_([123])$/);
+      if (match) fillSubjectPair(Number(match[1]), true);
     });
   }
   form.addEventListener('submit', async (event) => {
