@@ -6,17 +6,23 @@
   const scoreBox = document.getElementById('tvScores');
   const logEl = document.getElementById('tvLog');
   const form = document.getElementById('tvForm');
+  const aiEl = document.getElementById('tvAi');
+  const aiHint = document.getElementById('tvAiHint');
   if (!regionEl || !form) return;
+
+  let aiOptions = [];
 
   let catalog = null;
   let source = 'thi';
   let busy = false;
 
   const SUGGESTIONS = [
+    'Trường Đại học Bách khoa Hà Nội tuyển sinh những ngành nào?',
+    'Ngành công nghệ thông tin có ở những trường nào?',
+    'Ngành công nghệ thông tin của Bách khoa Hà Nội xét những tổ hợp nào?',
+    'Chỉ tiêu ngành công nghệ thông tin ở Đại học Bách khoa Hà Nội là bao nhiêu?',
+    'Điểm chuẩn ngành công nghệ thông tin ở Bách khoa Hà Nội là bao nhiêu?',
     'Với điểm thi THPT khối A00 của tôi thì có thể dự tuyển vào ngành nào của khối kỹ thuật?',
-    'Tổ hợp D01 của tôi phù hợp những ngành kinh tế nào ở miền Bắc?',
-    'Điểm A01 của tôi so với điểm chuẩn các ngành công nghệ ở Bách khoa Hà Nội thế nào?',
-    'Thống kê điểm chuẩn các ngành công nghệ ở Bách khoa Hà Nội cho tôi?',
   ];
 
   function esc(value) {
@@ -209,6 +215,30 @@
       </div>`;
   }
 
+  function majorTable(rows) {
+    if (!rows || !rows.length) return '';
+    const body = rows.map((row) => `
+      <tr>
+        <td>${esc(row.ten_truong)} <span class="text-muted">${esc(row.ma_truong)}</span></td>
+        <td>${esc(row.ten_nganh)}${row.ma_xet_tuyen ? ` <span class="text-muted">${esc(row.ma_xet_tuyen)}</span>` : ''}</td>
+        <td>${esc(row.to_hop || '—')}</td>
+        <td>${esc((row.phuong_thuc || []).join(', ') || '—')}</td>
+        <td class="text-end">${row.chi_tieu == null || row.chi_tieu === '' ? '—' : esc(row.chi_tieu)}</td>
+      </tr>`).join('');
+    return `
+      <div class="table-responsive mt-2">
+        <table class="table table-sm table-bordered align-middle mb-0 bg-white">
+          <thead class="table-light">
+            <tr>
+              <th>Trường</th><th>Ngành</th><th>Tổ hợp</th><th>Phương thức</th>
+              <th class="text-end">Chỉ tiêu</th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>`;
+  }
+
   function methodTable(rows) {
     if (!rows || !rows.length) return '';
     const body = rows.map((row) => `
@@ -305,6 +335,42 @@
       </div>`;
   }
 
+  function formatReply(text) {
+    return esc(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function currentAi() {
+    return aiOptions.find((item) => item.id === (aiEl ? aiEl.value : 'local')) || null;
+  }
+
+  function renderAiHint() {
+    if (!aiHint) return;
+    const item = currentAi();
+    aiHint.textContent = item ? item.detail : '';
+    aiHint.className = item && item.ready === false ? 'small text-warning' : 'small text-muted';
+  }
+
+  function loadAiOptions() {
+    if (!aiEl) return;
+    fetch('/api/danh-gia/ai')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.ok) return;
+        aiOptions = data.options || [];
+        const current = aiEl.value || data.provider || 'local';
+        aiEl.innerHTML = aiOptions.map((item) => (
+          `<option value="${esc(item.id)}">${esc(item.label)}</option>`
+        )).join('');
+        aiEl.value = aiOptions.some((item) => item.id === current) ? current : (data.provider || 'local');
+        renderAiHint();
+      })
+      .catch(() => {
+        if (aiHint) aiHint.textContent = 'Chưa kiểm tra được nguồn AI.';
+      });
+  }
+
   function addMessage(role, html) {
     const node = document.createElement('div');
     node.className = `tu-van-msg ${role}`;
@@ -318,8 +384,10 @@
     if (!text || busy) return;
     busy = true;
     document.getElementById('tvSend').disabled = true;
+    const ai = currentAi();
+    const aiId = aiEl ? aiEl.value : 'local';
     addMessage('user', esc(text));
-    addMessage('bot', 'Đang trả lời…');
+    addMessage('bot', aiId === 'local' ? 'Đang trả lời…' : `Đang hỏi ${ai ? ai.label : 'AI'}…`);
     const pending = logEl.lastElementChild;
     try {
       const res = await fetch('/api/danh-gia/hoi', {
@@ -333,6 +401,8 @@
           combos: values(comboEl),
           scores: readScores(),
           score_source: source,
+          ai: aiId,
+          ai_model: ai && ai.model ? ai.model : '',
         }),
       });
       const raw = await res.text();
@@ -346,6 +416,17 @@
       }
       if (!data.ok && data.error) throw new Error(data.error);
       const notes = (data.notes || []).map((note) => `<div class="small text-muted mt-1">${esc(note)}</div>`).join('');
+      let lead = '';
+      if (data.ai_error) {
+        lead += `<div class="small text-danger mb-1">${esc(data.ai_error)}</div>`;
+      }
+      if (data.ai_reply) {
+        const via = [data.ai_provider, data.ai_model].filter(Boolean).join(' · ');
+        lead += `<div class="tu-van-ai">${formatReply(data.ai_reply)}</div>`;
+        if (via) lead += `<div class="small text-muted mt-1">${esc(via)}</div>`;
+      } else {
+        lead += `<div>${esc(data.summary || '')}</div>`;
+      }
       const table = data.kind === 'schools'
         ? schoolTable(data.rows || [])
         : data.kind === 'stats'
@@ -354,14 +435,16 @@
             ? certTable(data.rows || [])
             : data.kind === 'methods'
               ? methodTable(data.rows || [])
-              : data.kind === 'catalog'
-                ? catalogTable(data.rows || [])
-              : data.kind === 'methodSchools'
+        : data.kind === 'catalog'
+          ? catalogTable(data.rows || [])
+          : data.kind === 'majors'
+            ? majorTable(data.rows || [])
+        : data.kind === 'methodSchools'
                 ? methodSchoolTable(data.rows || [])
               : data.kind === 'convert'
                 ? convertTable(data.rows || [])
                 : rowTable(data.rows || []);
-      pending.innerHTML = `<div>${esc(data.summary || '')}</div>${notes}${table}`;
+      pending.innerHTML = `${lead}${notes}${table}`;
     } catch (error) {
       pending.innerHTML = esc(error.message || 'Không trả lời được.');
     } finally {
@@ -407,6 +490,10 @@
   });
   bindSource('tvSrcThi', 'thi');
   bindSource('tvSrcHb', 'hoc_ba');
+  if (aiEl) aiEl.addEventListener('change', renderAiHint);
+  const aiReload = document.getElementById('tvAiReload');
+  if (aiReload) aiReload.addEventListener('click', loadAiOptions);
+  loadAiOptions();
 
   fetch('/api/danh-gia/tieu-chi')
     .then((res) => res.json())

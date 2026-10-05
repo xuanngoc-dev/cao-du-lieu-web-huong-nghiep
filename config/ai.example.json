@@ -1,0 +1,16 @@
+{
+  "provider": "local",
+  "ghi_chu": "Sao chép file này thành config/ai.json rồi sửa. config/ai.json không đưa lên git. Khóa API nên đặt bằng biến môi trường GEMINI_API_KEY hoặc GROQ_API_KEY. Ollama chạy trên máy: ollama serve, rồi ollama pull một model và ghi tên model vào ollama.model.",
+  "ollama": {
+    "base_url": "http://127.0.0.1:11434",
+    "model": ""
+  },
+  "gemini": {
+    "model": "gemini-2.0-flash",
+    "api_key": ""
+  },
+  "groq": {
+    "model": "llama-3.3-70b-versatile",
+    "api_key": ""
+  }
+}

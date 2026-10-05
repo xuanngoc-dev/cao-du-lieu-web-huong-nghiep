@@ -1088,6 +1088,9 @@ select.cn-multi-native {
 .tu-van-msg table {
   font-size: 0.82rem;
 }
+.tu-van-ai {
+  white-space: pre-wrap;
+}
 .tu-van-suggest {
   display: flex;
   flex-wrap: wrap;

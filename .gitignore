@@ -1,6 +1,9 @@
 # Dữ liệu runtime / output — không đẩy lên git
 data/
 
+# Cấu hình AI cục bộ, có thể chứa API key
+config/ai.json
+
 # Python
 __pycache__/
 *.py[cod]

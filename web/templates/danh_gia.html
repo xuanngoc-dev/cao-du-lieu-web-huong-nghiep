@@ -21,7 +21,8 @@
     <p class="small text-muted mb-3">
       Chọn khu vực, loại trường, trường và tổ hợp xét tuyển. Điểm môn lấy từ
       <a href="{{ url_for('ca_nhan_page') }}">hồ sơ cá nhân</a>
-      và sửa được ngay tại đây. Hỏi ví dụ: với điểm thi THPT khối A00, ngành nào của khối kỹ thuật có thể dự tuyển.
+      và sửa được ngay tại đây. Có thể hỏi ngành, tổ hợp, chỉ tiêu, điểm chuẩn, hoặc đối chiếu với điểm của bạn.
+      Ô «Trả lời bằng» chọn quy tắc nội bộ, Ollama, Gemini hoặc Groq.
     </p>
     <div class="row g-3 mb-3">
       <div class="col-md-4">
@@ -57,13 +58,21 @@
 
     <div class="tu-van-log mb-2" id="tvLog" aria-live="polite">
       <div class="tu-van-msg bot">
-        Chọn tiêu chí rồi đặt câu hỏi. Mình đối chiếu tổ hợp, điểm của bạn với điểm chuẩn thi THPT và phương thức tuyển sinh đã thu thập.
+        Đặt câu hỏi về ngành một trường đang tuyển, trường nào có một ngành, tổ hợp, chỉ tiêu, điểm chuẩn, hoặc đối chiếu với điểm của bạn.
       </div>
     </div>
     <div class="tu-van-suggest mb-2" id="tvSuggest"></div>
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <label class="form-label small mb-0" for="tvAi">Trả lời bằng</label>
+      <select id="tvAi" class="form-select form-select-sm w-auto">
+        <option value="local">Quy tắc nội bộ</option>
+      </select>
+      <span class="small text-muted" id="tvAiHint">Đang kiểm tra nguồn AI…</span>
+      <button type="button" class="btn btn-link btn-sm p-0" id="tvAiReload">Kiểm tra lại</button>
+    </div>
     <form id="tvForm" class="d-flex gap-2">
       <input id="tvInput" class="form-control" type="text" maxlength="500" autocomplete="off"
-        placeholder="Ví dụ: với điểm A00 của tôi, ngành kỹ thuật nào có thể dự tuyển?">
+        placeholder="Ví dụ: trường Bách khoa Hà Nội tuyển sinh những ngành nào?">
       <button class="btn btn-accent" type="submit" id="tvSend">
         <i class="bi bi-send"></i>
       </button>
@@ -1940,7 +1949,7 @@ async function loadSavedAnalysis(codes) {
   await bonusTask;
 }
 </script>
-<script src="{{ url_for('static', filename='js/danh-gia-tu-van.js') }}?v=20261001j"></script>
+<script src="{{ url_for('static', filename='js/danh-gia-tu-van.js') }}?v=20261005a"></script>
 <script>
 
 (async function bootDanhGia() {

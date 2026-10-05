@@ -619,12 +619,16 @@ def _mentioned_combos(question: str, catalog: Dict[str, Dict[str, Any]]) -> List
 def _extract_major(question: str, folded_question: str) -> Tuple[str, List[str]]:
     """Tên ngành trong câu hỏi, ví dụ «ngành công nghệ thông tin»."""
     match = re.search(
-        r"ngành\s+(?!nào\b)(.+?)(?=\s+(?:ở|tại|của|không|được)\b|\s+trường\s+nào\b|\s+miền\s+|\s+khối\b|\s+cho\s+|$)",
+        r"ngành\s+(?!nào\b)(.+?)(?=\s+(?:ở|tại|của|không|được|có)\b|\s+trường\b|\s+miền\s+|\s+khối\b|\s+cho\s+|\s+nào\b|$)",
         question,
         flags=re.IGNORECASE,
     )
     phrase = fold(match.group(1)) if match else ""
     phrase = re.sub(r"^(hoc|nay|do)\s+", "", phrase).strip(" .")
+    phrase = re.sub(r"(?:\s+(?:co|duoc|khong|nao|gi|vay|thi|nay|the))+$", "", phrase).strip()
+    phrase = re.sub(r"^(?:cua\s+)?(?:truong|dai hoc|hoc vien)\b.*", "", phrase).strip()
+    if phrase in {"cua", "truong", "o", "tai"}:
+        phrase = ""
     if len(phrase) < 3:
         phrase = ""
     if not phrase:
@@ -672,6 +676,74 @@ def _mentioned_regions(folded_question: str) -> List[str]:
     return found
 
 
+_SCHOOL_NOISE = {
+    "truong", "dai", "hoc", "vien", "thanh", "pho", "tp",
+    "phan", "hieu", "quoc", "gia",
+}
+_SCHOOL_PHRASE_STOP = (
+    "tuyen", "nhung", "cac", "danh", "nao", "nam", "xet", "dao", "thuoc",
+    "khong", "duoc", "cho", "voi", "theo", "nganh", "diem", "phuong", "hinh", "to",
+)
+
+
+def _place_tokens(words: List[str]) -> List[str]:
+    text = " ".join(words)
+    for source, target in (
+        ("tp hcm", "hcm"),
+        ("tphcm", "hcm"),
+        ("ho chi minh", "hcm"),
+        ("sai gon", "hcm"),
+        ("ha noi", "hanoi"),
+        ("da nang", "danang"),
+    ):
+        text = text.replace(source, target)
+    return [word for word in text.split() if word]
+
+
+def _school_content_tokens(name: str) -> List[str]:
+    text = fold(name)
+    for lead in ("truong dai hoc", "dai hoc", "hoc vien", "truong"):
+        if text.startswith(lead + " "):
+            text = text[len(lead) + 1:]
+            break
+    words = [word for word in text.split() if word not in _SCHOOL_NOISE]
+    return _place_tokens(words)
+
+
+def _school_phrases(folded: str) -> List[List[str]]:
+    """Cụm tên sau «trường / đại học / học viện», trước động từ của câu hỏi."""
+    phrases = []
+    for match in re.finditer(r"(?:hoc vien|dai hoc|truong)\s+(.+)", folded):
+        tail = re.sub(r"^(?:dai hoc|hoc vien)\s+", "", match.group(1))
+        tail = re.split(r"\b(?:" + "|".join(_SCHOOL_PHRASE_STOP) + r")\b", tail, maxsplit=1)[0]
+        words = _place_tokens(word for word in tail.split() if word not in _SCHOOL_NOISE)
+        if not words or words[0] in {"nao", "gi", "nay", "do"}:
+            continue
+        phrases.append(words[:8])
+    return phrases
+
+
+def _partial_school_codes(folded: str, schools: List[Dict[str, str]]) -> List[str]:
+    """Khớp tên rút gọn, ví dụ «trường bách khoa» hoặc «đại học giao thông vận tải»."""
+    found: List[str] = []
+    catalog = [(school["code"], _school_content_tokens(school["name"])) for school in schools]
+    for phrase in _school_phrases(folded):
+        scored = []
+        for code, tokens in catalog:
+            if tokens[:len(phrase)] == phrase:
+                scored.append((len(phrase), code))
+        if not scored:
+            continue
+        best = max(score for score, _code in scored)
+        if best == 1 and len(phrase[0]) < 4:
+            continue
+        chosen = [code for score, code in scored if score == best]
+        if len(chosen) > 5:
+            continue
+        found.extend(chosen)
+    return found
+
+
 def _mentioned_schools(folded_question: str, schools: List[Dict[str, str]]) -> List[str]:
     found = []
     padded = f" {folded_question} "
@@ -686,6 +758,7 @@ def _mentioned_schools(folded_question: str, schools: List[Dict[str, str]]) -> L
         name = re.sub(r"\s+", " ", name).strip()
         if len(name) >= 8 and f" {name} " in padded:
             found.append(school["code"])
+    found.extend(_partial_school_codes(folded_question, schools))
     return _unique(found)
 
 
@@ -804,9 +877,23 @@ _ADVICE_HINTS = (
 )
 
 
+_PERSONAL_HINTS = (
+    "cua toi", "cua em", "diem cua", "du tuyen", "nen thi", "nen hoc",
+    "phu hop", "co the thi", "co the du", "so voi",
+)
+
+
+def _personal_question(folded: str) -> bool:
+    return any(hint in folded for hint in _PERSONAL_HINTS)
+
+
 def _wants_score_stats(folded: str) -> bool:
-    """Câu xin thống kê điểm chuẩn đã thu thập, không so với điểm cá nhân."""
-    return "thong ke" in folded and "diem" in folded
+    """Câu xin điểm chuẩn đã thu thập, không so với điểm cá nhân."""
+    if "thong ke" in folded and "diem" in folded:
+        return True
+    if _personal_question(folded):
+        return False
+    return "diem chuan" in folded
 
 
 def _mentioned_year(question: str) -> Optional[int]:
@@ -2266,6 +2353,267 @@ def _answer_score_conversion(
     }
 
 
+def _catalog_programs(root: str) -> List[Dict[str, Any]]:
+    """Mỗi ngành một dòng, gộp tổ hợp và phương thức của năm mới nhất."""
+    payload = dataset_store.load_phuong_thuc(root) or {}
+    grouped: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    for record in payload.get("records") or []:
+        if not isinstance(record, dict):
+            continue
+        code = str(record.get("ma_truong") or "").strip().upper()
+        name = str(record.get("ten_nganh") or record.get("ten_chuong_trinh") or "").strip()
+        if not code or not name:
+            continue
+        year_value = _num(record.get("nam"))
+        year = int(year_value) if year_value and 2000 <= year_value <= 2100 else None
+        admit = str(record.get("ma_xet_tuyen") or "").strip().upper()
+        combos: List[str] = []
+        methods: List[str] = []
+        for form in record.get("hinh_thuc") or []:
+            if not isinstance(form, dict) or form.get("ap_dung") is False:
+                continue
+            label = _pretty_method(str(form.get("ten") or form.get("id") or "").strip())
+            if label and not label.isdigit() and label not in methods:
+                methods.append(label)
+            detail = form.get("chi_tiet") if isinstance(form.get("chi_tiet"), dict) else {}
+            for combo in _combo_codes(detail.get("to_hop_xet_tuyen") or detail.get("to_hop")):
+                if combo not in combos:
+                    combos.append(combo)
+            for combo in _combo_codes(form.get("mo_ta")):
+                if combo not in combos:
+                    combos.append(combo)
+        quota = _num(record.get("chi_tieu"))
+        key = (code, admit or fold(name))
+        current = grouped.get(key)
+        if current is None or (year or 0) > (current.get("nam") or 0):
+            grouped[key] = {
+                "ma_truong": code,
+                "ten_truong": str(record.get("ten_truong") or "").strip(),
+                "ten_nganh": name,
+                "ma_xet_tuyen": admit,
+                "to_hop": combos,
+                "phuong_thuc": methods,
+                "chi_tieu": int(quota) if quota is not None and quota == int(quota) else quota,
+                "nam": year,
+            }
+            continue
+        if year != current.get("nam"):
+            continue
+        for combo in combos:
+            if combo not in current["to_hop"]:
+                current["to_hop"].append(combo)
+        for method in methods:
+            if method not in current["phuong_thuc"]:
+                current["phuong_thuc"].append(method)
+        if quota is not None and (current.get("chi_tieu") is None or quota > current["chi_tieu"]):
+            current["chi_tieu"] = int(quota) if quota == int(quota) else quota
+    return list(grouped.values())
+
+
+def _program_focus(folded: str, major_keywords: List[str]) -> str:
+    """Kiểu hỏi danh mục ngành, không so điểm cá nhân."""
+    if _personal_question(folded):
+        return ""
+    if "diem chuan" in folded or ("thong ke" in folded and "diem" in folded):
+        return ""
+    if ("phuong thuc" in folded or "hinh thuc" in folded) and major_keywords:
+        if _wants_schools_by_method(folded):
+            return ""
+        return "methods"
+    if "to hop" in folded and any(hint in folded for hint in (
+        "to hop nao", "nhung to hop", "cac to hop", "to hop gi", "to hop xet",
+    )):
+        return "combos"
+    if "chi tieu" in folded:
+        return "quota"
+    asks_schools = any(hint in folded for hint in ("truong nao", "nhung truong", "cac truong"))
+    if asks_schools and major_keywords:
+        return "schools"
+    asks_majors = any(hint in folded for hint in (
+        "nganh nao", "nhung nganh", "cac nganh", "danh sach nganh", "nganh gi",
+    ))
+    if asks_majors and not asks_schools:
+        return "majors"
+    return ""
+
+
+def _school_label(code: str, school_map: Dict[str, Dict[str, str]], fallback: str = "") -> str:
+    school = school_map.get(code) or {}
+    name = school.get("name") or fallback or code
+    return f"{name} ({code})"
+
+
+def _answer_program_catalog(
+    root: str,
+    schools: List[Dict[str, str]],
+    regions: List[str],
+    sectors: List[str],
+    school_codes: List[str],
+    major_label: str,
+    major_keywords: List[str],
+    question: str,
+    folded: str,
+    focus: str,
+) -> Dict[str, Any]:
+    school_map = {school["code"]: school for school in schools}
+    narrowed = bool(school_codes or regions or sectors)
+    if focus == "majors" and not narrowed:
+        broad = bool(_school_phrases(folded))
+        summary = (
+            "Tên trường còn trùng nhiều nơi. Hãy thêm địa điểm hoặc mã, ví dụ Bách khoa Hà Nội hoặc BKA."
+            if broad else
+            "Hãy nêu tên hoặc mã trường. Ví dụ: Đại học Bách khoa Hà Nội tuyển sinh những ngành nào?"
+        )
+        return {"ok": True, "kind": "majors", "summary": summary, "notes": [], "rows": [], "counts": {}}
+    if focus == "combos" and not major_keywords and not narrowed:
+        return {
+            "ok": True,
+            "kind": "majors",
+            "summary": "Hãy nêu ngành và trường. Ví dụ: ngành công nghệ thông tin của Bách khoa Hà Nội xét những tổ hợp nào?",
+            "notes": [],
+            "rows": [],
+            "counts": {},
+        }
+    if focus == "quota" and not major_keywords and not narrowed:
+        return {
+            "ok": True,
+            "kind": "majors",
+            "summary": "Hãy nêu ngành hoặc trường. Ví dụ: chỉ tiêu ngành công nghệ thông tin ở Bách khoa Hà Nội là bao nhiêu?",
+            "notes": [],
+            "rows": [],
+            "counts": {},
+        }
+    programs = _catalog_programs(root)
+    scope_codes = {
+        school["code"] for school in schools
+        if _school_ok(school, regions, sectors, school_codes)
+    }
+    pool = [item for item in programs if item["ma_truong"] in scope_codes]
+    asked_year = _named_year(question)
+    years = sorted({item["nam"] for item in pool if item["nam"]})
+    year = asked_year if asked_year in years else (years[-1] if years and asked_year is None else None)
+    if year:
+        pool = [item for item in pool if item["nam"] == year]
+    matched = [item for item in pool if _major_matches(item["ten_nganh"], major_keywords)]
+    matched.sort(key=lambda item: (
+        (school_map.get(item["ma_truong"]) or {}).get("name") or item["ten_truong"],
+        item["ten_nganh"],
+        item["ma_xet_tuyen"],
+    ))
+    limit = 120
+    shown = matched[:limit]
+    rows = []
+    for item in shown:
+        school = school_map.get(item["ma_truong"]) or {}
+        rows.append({
+            "ma_truong": item["ma_truong"],
+            "ten_truong": school.get("name") or item["ten_truong"] or item["ma_truong"],
+            "ten_nganh": item["ten_nganh"],
+            "ma_xet_tuyen": item["ma_xet_tuyen"],
+            "to_hop": ", ".join(item["to_hop"]) if item["to_hop"] else "",
+            "phuong_thuc": item["phuong_thuc"],
+            "chi_tieu": item["chi_tieu"],
+            "nam": item["nam"],
+        })
+    present = []
+    for code in _unique(item["ma_truong"] for item in matched):
+        sample = next(item for item in matched if item["ma_truong"] == code)
+        present.append(_school_label(code, school_map, sample["ten_truong"]))
+    scope_bits = []
+    if sectors:
+        scope_bits.append("khối " + ", ".join(sectors))
+    if regions:
+        scope_bits.append("miền " + ", ".join(regions))
+    scope_text = f" ({', '.join(scope_bits)})" if scope_bits else ""
+    if len(present) == 1:
+        place = present[0]
+    elif 1 < len(present) <= 3:
+        place = ", ".join(present)
+    elif present:
+        place = f"{len(present)} trường{scope_text}"
+    else:
+        place = ""
+    major_text = f"«{major_label}»" if major_label else ""
+    year_text = f" năm {year}" if year else ""
+    if focus == "schools" and major_text:
+        summary = (
+            f"Ngành {major_text} có ở {len(present)} trường đã thu thập{year_text}, {len(matched)} chương trình."
+            if matched else
+            f"Chưa thấy ngành {major_text} trong danh mục tuyển sinh đã thu thập."
+        )
+    elif focus == "combos":
+        combo_sets = {tuple(item["to_hop"]) for item in matched if item["to_hop"]}
+        if len(combo_sets) == 1:
+            only = ", ".join(next(iter(combo_sets)))
+            summary = f"{major_text or 'Ngành này'} tại {place}{year_text} xét các tổ hợp {only}."
+        elif matched:
+            summary = f"{major_text or 'Ngành này'} tại {place}{year_text} có {len(matched)} chương trình, tổ hợp khác nhau theo chương trình."
+        else:
+            summary = f"Chưa thấy tổ hợp xét tuyển cho {major_text or 'ngành này'}{(' tại ' + place) if place else ''}."
+    elif focus == "methods":
+        method_names = _unique(method for item in matched for method in item["phuong_thuc"])
+        if matched and method_names:
+            summary = (
+                f"{major_text} tại {place}{year_text} xét theo {len(method_names)} phương thức: "
+                + ", ".join(method_names[:8]) + "."
+            )
+        elif matched:
+            summary = f"{major_text} tại {place}{year_text} chưa ghi phương thức theo từng ngành."
+        else:
+            summary = f"Chưa thấy ngành {major_text or 'đã nêu'} trong danh mục tuyển sinh đã thu thập."
+    elif focus == "quota":
+        quotas = [item["chi_tieu"] for item in matched if isinstance(item["chi_tieu"], (int, float))]
+        if len(matched) == 1 and quotas:
+            summary = f"Chỉ tiêu {major_text or matched[0]['ten_nganh']} tại {place}{year_text} là {int(quotas[0])}."
+        elif quotas:
+            summary = f"Tổng chỉ tiêu đã ghi của {len(quotas)}/{len(matched)} chương trình{(' ' + major_text) if major_text else ''} tại {place}{year_text} là {int(sum(quotas))}."
+        elif matched:
+            summary = f"Có {len(matched)} chương trình{(' ' + major_text) if major_text else ''} tại {place}{year_text}, chưa có chỉ tiêu đã lưu."
+        else:
+            summary = "Chưa thấy chỉ tiêu trong danh mục tuyển sinh đã thu thập."
+    elif matched:
+        if len(present) == 1:
+            summary = f"{place}{year_text} tuyển {len(matched)} ngành."
+        else:
+            summary = f"Có {len(matched)} ngành tại {place}{year_text}."
+        if major_text:
+            summary = f"Có {len(matched)} ngành có tên chứa {major_text} tại {place}{year_text}."
+    else:
+        if major_text and pool:
+            summary = f"Không thấy ngành {major_text} tại {place or 'phạm vi đã chọn'}. Danh mục đang có {len(pool)} ngành."
+        elif school_codes:
+            summary = "Các trường đã nêu chưa có danh mục ngành trong dữ liệu tuyển sinh đã thu thập."
+        else:
+            summary = "Chưa có danh mục ngành trong phạm vi đã chọn."
+    notes = ["Lấy từ dữ liệu phương thức tuyển sinh đã thu thập."]
+    if asked_year is None and matched:
+        notes.append("Câu hỏi không nêu năm, nên lấy năm mới nhất đang có.")
+    if asked_year and years and asked_year not in years:
+        notes.append(f"Không có năm {asked_year}. Đang dùng năm {year}.")
+    have = {item["ma_truong"] for item in programs}
+    missing = [code for code in school_codes if code not in have]
+    if missing and matched:
+        labels = [_school_label(code, school_map) for code in missing]
+        notes.append(f"Chưa có danh mục ngành: {', '.join(labels)}.")
+    if len(matched) > len(shown):
+        notes.append(f"Bảng hiện {len(shown)}/{len(matched)} ngành.")
+    return {
+        "ok": True,
+        "kind": "majors",
+        "summary": re.sub(r"\s+", " ", summary).strip(),
+        "notes": notes,
+        "rows": rows,
+        "counts": {"nganh": len(matched), "truong": len(present)},
+        "filters": {
+            "regions": regions,
+            "sectors": sectors,
+            "schools": school_codes,
+            "combos": [],
+            "major": major_label,
+        },
+    }
+
+
 def answer_advisor(
     root: str,
     payload: Dict[str, Any],
@@ -2305,6 +2653,12 @@ def answer_advisor(
     if _wants_schools_by_method(folded):
         return _answer_schools_by_method(
             root, schools, regions, sectors, school_codes, question, folded,
+        )
+    focus = _program_focus(folded, major_keywords)
+    if focus:
+        return _answer_program_catalog(
+            root, schools, regions, sectors, school_codes,
+            major_label, major_keywords, question, folded, focus,
         )
     if _wants_school_methods(question, folded):
         codes = _schools_in_scope(root, regions, sectors, school_codes, admissions) if regions or sectors else school_codes

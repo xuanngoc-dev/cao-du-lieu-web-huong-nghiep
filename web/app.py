@@ -83,6 +83,7 @@ from core.aggregator import METHOD_COLUMN_LABELS, build_grouped_score_view
 from core.bonus_policy import list_bonus_records, summarize_certificate_bonus
 from core import dataset_store
 from core.tu_van import advisor_options, answer_advisor
+from core.tu_van_ai import ai_status, attach_ai_answer
 
 
 CONVERSION_IMPORT_SOURCE = "Nhập quy chế quy đổi"
@@ -5162,6 +5163,10 @@ def create_app() -> Flask:
     def api_danh_gia_tieu_chi():
         return jsonify(advisor_options(ROOT))
 
+    @app.get("/api/danh-gia/ai")
+    def api_danh_gia_ai():
+        return jsonify(ai_status(ROOT))
+
     @app.post("/api/danh-gia/hoi")
     def api_danh_gia_hoi():
         data = request.get_json(silent=True) or {}
@@ -5169,7 +5174,13 @@ def create_app() -> Flask:
             return jsonify({"ok": False, "error": "Dữ liệu không hợp lệ."}), 400
         cached = app.config.get("LAST_CRAWL") or {}
         live = cached.get("admissions") if isinstance(cached.get("admissions"), list) else None
-        return jsonify(answer_advisor(ROOT, data, admissions=live or None))
+        result = answer_advisor(ROOT, data, admissions=live or None)
+        provider = str(data.get("ai") or "local").strip().lower()
+        if result.get("ok") and provider not in {"", "local"}:
+            result = attach_ai_answer(
+                ROOT, data, result, provider, str(data.get("ai_model") or ""),
+            )
+        return jsonify(result)
 
     @app.route("/du-lieu")
     def datasets_page():
