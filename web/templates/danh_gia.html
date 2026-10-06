@@ -14,15 +14,22 @@
 </p>
 
 <div class="card panel-card mb-3" id="tuVanCard">
-  <div class="card-header">
-    <span class="fw-normal"><i class="bi bi-chat-left-text me-1"></i> Tư vấn theo tiêu chí</span>
+  <div class="card-header dg-collapse-header">
+    <button class="dg-collapse-btn" type="button"
+      data-bs-toggle="collapse" data-bs-target="#tuVanCollapse"
+      aria-expanded="true" aria-controls="tuVanCollapse">
+      <span class="dg-collapse-title">
+        <i class="bi bi-sliders me-1"></i> Tư vấn theo tiêu chí
+      </span>
+      <i class="bi bi-chevron-down dg-collapse-chevron" aria-hidden="true"></i>
+    </button>
   </div>
+  <div id="tuVanCollapse" class="collapse show">
   <div class="card-body">
     <p class="small text-muted mb-3">
       Chọn khu vực, loại trường, trường và tổ hợp xét tuyển. Điểm môn lấy từ
       <a href="{{ url_for('ca_nhan_page') }}">hồ sơ cá nhân</a>
-      và sửa được ngay tại đây. Có thể hỏi ngành, tổ hợp, chỉ tiêu, điểm chuẩn, hoặc đối chiếu với điểm của bạn.
-      Ô «Trả lời bằng» chọn quy tắc nội bộ, Ollama, Gemini hoặc Groq.
+      và sửa được ngay tại đây.
     </p>
     <div class="row g-3 mb-3">
       <div class="col-md-4">
@@ -54,37 +61,69 @@
       </div>
     </div>
     <div class="row g-2 mb-2" id="tvScores"></div>
-    <div class="small text-muted mb-3" id="tvComboPreview"></div>
+    <div class="small text-muted mb-0" id="tvComboPreview"></div>
+  </div>
+  </div>
+</div>
 
+<div class="card panel-card mb-3" id="tuVanChatCard">
+  <div class="card-header">
+    <span class="fw-normal"><i class="bi bi-chat-left-text me-1"></i> Hỏi đáp</span>
+  </div>
+  <div class="card-body">
+    <p class="small text-muted mb-3">
+      Hỏi ngành, tổ hợp, chỉ tiêu, điểm chuẩn, hoặc đối chiếu với điểm đã chọn ở trên.
+      Nút bánh răng cạnh nút gửi chọn quy tắc nội bộ, Ollama, hoặc API miễn phí.
+    </p>
     <div class="tu-van-log mb-2" id="tvLog" aria-live="polite">
       <div class="tu-van-msg bot">
         Đặt câu hỏi về ngành một trường đang tuyển, trường nào có một ngành, tổ hợp, chỉ tiêu, điểm chuẩn, hoặc đối chiếu với điểm của bạn.
       </div>
     </div>
     <div class="tu-van-suggest mb-2" id="tvSuggest"></div>
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-      <label class="form-label small mb-0" for="tvAi">Trả lời bằng</label>
-      <select id="tvAi" class="form-select form-select-sm w-auto">
-        <option value="local">Quy tắc nội bộ</option>
-      </select>
-      <span class="small text-muted" id="tvAiHint">Đang kiểm tra nguồn AI…</span>
-      <button type="button" class="btn btn-link btn-sm p-0" id="tvAiReload">Kiểm tra lại</button>
-    </div>
     <form id="tvForm" class="d-flex gap-2">
       <input id="tvInput" class="form-control" type="text" maxlength="500" autocomplete="off"
         placeholder="Ví dụ: trường Bách khoa Hà Nội tuyển sinh những ngành nào?">
-      <button class="btn btn-accent" type="submit" id="tvSend">
+      <button class="btn btn-outline-secondary" type="button" id="tvAiOpen"
+        data-bs-toggle="modal" data-bs-target="#tvAiModal"
+        aria-label="Cài đặt cách trả lời" title="Cài đặt cách trả lời">
+        <i class="bi bi-gear" aria-hidden="true"></i>
+      </button>
+      <button class="btn btn-accent" type="submit" id="tvSend" aria-label="Gửi">
         <i class="bi bi-send"></i>
       </button>
     </form>
   </div>
 </div>
 
+<div class="modal fade" id="tvAiModal" tabindex="-1" aria-labelledby="tvAiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="tvAiModalLabel">Cài đặt trả lời</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label" for="tvAi">Trả lời bằng</label>
+        <select id="tvAi" class="form-select">
+          <option value="local">Quy tắc nội bộ</option>
+        </select>
+        <p class="small text-muted mt-2 mb-0" id="tvAiHint">Đang kiểm tra nguồn AI…</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" id="tvAiReload">Kiểm tra lại</button>
+        <button type="button" class="btn btn-accent" data-bs-dismiss="modal">Xong</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="pageAlert"></div>
 
 <div id="analysisWrap" class="d-none">
+<!-- Bốn khối dưới đang ẩn. Bật lại bằng cách xóa style="display: none" trên từng thẻ card. -->
 <!-- Quy chế cộng điểm theo chứng chỉ -->
-<div class="card panel-card mb-3" id="bonusCard">
+<div class="card panel-card mb-3" id="bonusCard" style="display: none">
   <div class="card-header dg-collapse-header">
     <button class="dg-collapse-btn" type="button"
       data-bs-toggle="collapse" data-bs-target="#bonusCollapse"
@@ -127,7 +166,7 @@
 </div>
 
 <!-- Biểu đồ biến động -->
-<div class="card panel-card mb-3" id="chartCard">
+<div class="card panel-card mb-3" id="chartCard" style="display: none">
   <div class="card-header dg-collapse-header">
     <button class="dg-collapse-btn" type="button"
       data-bs-toggle="collapse" data-bs-target="#chartCollapse"
@@ -172,7 +211,7 @@
 </div>
 
 <!-- Quy đổi điểm (nhúng từ bước 3) -->
-<div class="card panel-card mb-3 border-accent-calc" id="quyDoiCard">
+<div class="card panel-card mb-3 border-accent-calc" id="quyDoiCard" style="display: none">
   <div class="card-header dg-collapse-header">
     <button class="dg-collapse-btn" type="button"
       data-bs-toggle="collapse" data-bs-target="#quyDoiCollapse"
@@ -309,7 +348,7 @@
 </div>
 
 <!-- Đánh giá cơ hội -->
-<div class="card panel-card mb-4 border-accent-calc" id="chanceCard">
+<div class="card panel-card mb-4 border-accent-calc" id="chanceCard" style="display: none">
   <div class="card-header dg-collapse-header">
     <button class="dg-collapse-btn" type="button"
       data-bs-toggle="collapse" data-bs-target="#chanceCollapse"
@@ -1949,7 +1988,7 @@ async function loadSavedAnalysis(codes) {
   await bonusTask;
 }
 </script>
-<script src="{{ url_for('static', filename='js/danh-gia-tu-van.js') }}?v=20261005a"></script>
+<script src="{{ url_for('static', filename='js/danh-gia-tu-van.js') }}?v=20261005c"></script>
 <script>
 
 (async function bootDanhGia() {

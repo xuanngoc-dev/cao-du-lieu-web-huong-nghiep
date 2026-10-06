@@ -10,6 +10,7 @@
   const aiHint = document.getElementById('tvAiHint');
   if (!regionEl || !form) return;
 
+  const AI_STORAGE_KEY = 'huong_nghiep_danh_gia_ai';
   let aiOptions = [];
 
   let catalog = null;
@@ -345,11 +346,24 @@
     return aiOptions.find((item) => item.id === (aiEl ? aiEl.value : 'local')) || null;
   }
 
+  function savedAi() {
+    try { return localStorage.getItem(AI_STORAGE_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function rememberAi(id) {
+    try { if (id) localStorage.setItem(AI_STORAGE_KEY, id); } catch (e) {}
+  }
+
   function renderAiHint() {
     if (!aiHint) return;
     const item = currentAi();
     aiHint.textContent = item ? item.detail : '';
-    aiHint.className = item && item.ready === false ? 'small text-warning' : 'small text-muted';
+    aiHint.className = item && item.ready === false ? 'small text-warning mb-0' : 'small text-muted mb-0';
+    const openBtn = document.getElementById('tvAiOpen');
+    if (openBtn && item) {
+      openBtn.title = `Cài đặt cách trả lời · ${item.label}`;
+      openBtn.setAttribute('aria-label', `Cài đặt cách trả lời, đang dùng ${item.label}`);
+    }
   }
 
   function loadAiOptions() {
@@ -359,7 +373,7 @@
       .then((data) => {
         if (!data.ok) return;
         aiOptions = data.options || [];
-        const current = aiEl.value || data.provider || 'local';
+        const current = savedAi() || aiEl.value || data.provider || 'local';
         aiEl.innerHTML = aiOptions.map((item) => (
           `<option value="${esc(item.id)}">${esc(item.label)}</option>`
         )).join('');
@@ -387,7 +401,7 @@
     const ai = currentAi();
     const aiId = aiEl ? aiEl.value : 'local';
     addMessage('user', esc(text));
-    addMessage('bot', aiId === 'local' ? 'Đang trả lời…' : `Đang hỏi ${ai ? ai.label : 'AI'}…`);
+    addMessage('bot', aiId === 'local' ? 'Đang trả lời…' : `Đang tổng hợp thông tin…`);
     const pending = logEl.lastElementChild;
     try {
       const res = await fetch('/api/danh-gia/hoi', {
@@ -490,7 +504,10 @@
   });
   bindSource('tvSrcThi', 'thi');
   bindSource('tvSrcHb', 'hoc_ba');
-  if (aiEl) aiEl.addEventListener('change', renderAiHint);
+  if (aiEl) aiEl.addEventListener('change', () => {
+    rememberAi(aiEl.value);
+    renderAiHint();
+  });
   const aiReload = document.getElementById('tvAiReload');
   if (aiReload) aiReload.addEventListener('click', loadAiOptions);
   loadAiOptions();
